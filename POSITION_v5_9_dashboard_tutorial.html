@@ -2832,9 +2832,13 @@ function castEventVote(choice){
   else pick = state.currentEvents[0]; // tie → human (P0) chose
   state.currentEventChosen = pick;
   logRow(`[섹터 이벤트] 채택: <b>${pick.name}</b> (${pick.main} ${pick.mainEff>=0?'+':''}${pick.mainEff}/10)`, 'ev');
-  // (v5.10) briefly show chosen card highlight before settling
+  // (v1.1) 자동 전환(0.8초) 제거 — 결과를 충분히 읽고 클릭으로 넘어가도록 변경
   renderAction();
-  setTimeout(() => { phase5_settle(); setPhase(4); }, 800);
+}
+function goSettle(){
+  if(!state.currentEventChosen) return;
+  phase5_settle();
+  setPhase(4);
 }
 
 /* PHASE 5 — SETTLEMENT */
@@ -3828,7 +3832,8 @@ function renderAction(){
     const voteA = Object.values(state.eventVotes).filter(v=>v==='A').length;
     const voteB = Object.values(state.eventVotes).filter(v=>v==='B').length;
     const statusLine = chosen
-      ? `<div style="margin-top:6px;font-size:11px;color:var(--green);font-weight:700">✅ 채택 완료 — <b>${chosen.name}</b></div>`
+      ? `<div style="margin-top:6px;font-size:11px;color:var(--green);font-weight:700">✅ 채택 완료 — <b>${chosen.name}</b> (${chosen.main} ${chosen.mainEff>=0?'+':''}${chosen.mainEff}/10)</div>
+         <div style="margin-top:8px"><button class="btn" onclick="goSettle()">→ 정산으로</button></div>`
       : `<div style="margin-top:6px;font-size:11px;color:var(--mut)">봇 투표 현황 — A: <b>${voteA}</b>표 / B: <b>${voteB}</b>표 &nbsp;·&nbsp; 당신의 한 표가 결정권을 가집니다</div>`;
     a.innerHTML = `<div class="card"><div class="ttl">🗳️ 섹터 이벤트 투표 — 2장 중 1장 채택</div></div>
       <div class="vote" style="margin-top:8px">
@@ -4096,7 +4101,7 @@ const TUT_STEPS = [
     until: () => state.phase >= 3 || state.turn >= 2 },
   { sel:'#panelPhase', title:'4단계 — 🗳️ 섹터 이벤트 투표',
     text:'2장 중 1장을 <b>다수결</b>로 채택합니다. 봇들은 이미 투표했고(아래 집계), 동률이면 당신이 캐스팅보트! 내 베팅 섹터에 유리한 카드에 투표하세요. 다른 플레이어들의 포지션을 보면 봇들의 표도 예측할 수 있습니다.',
-    mission:'👆 둘 중 원하는 카드를 클릭해 투표하세요',
+    mission:'👆 둘 중 원하는 카드를 클릭해 투표하고, 결과를 읽은 뒤 "→ 정산으로"를 누르세요',
     until: () => state.phase >= 4 || state.turn >= 2 },
   { sel:'#panelPhase', title:'5단계 — 🧮 정산과 턴 리뷰',
     text:'맨 위 <b>턴 리뷰 카드</b>가 이번 턴을 S~D 등급으로 평가하고 ✅잘한 점 / ⚠️아쉬운 점 / 💡다음 턴 팁을 알려줍니다. 그 아래 정산 명세는 <b>손익 = 매크로 + 이벤트 + 슬롯 + BOND + 페르소나 + 전략 − 거래비용</b>의 분해표예요. 매 턴 리뷰를 읽는 습관이 실력을 만듭니다.',
