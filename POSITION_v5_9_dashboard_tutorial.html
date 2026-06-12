@@ -328,6 +328,23 @@
   .tut-sep::before,.tut-sep::after{content:'';flex:1;height:1px;background:var(--line)}
   .tut-sep #modeLabel{color:var(--acc);font-weight:700}
 
+  /* === (v5.9) cumulative stats & tier === */
+  .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+  .stat-cell{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    padding:7px 6px;text-align:center;position:relative;overflow:hidden}
+  .stat-cell .sc-tier{font-size:18px;line-height:1}
+  .stat-cell .sc-name{font-size:10px;color:var(--mut);margin:2px 0}
+  .stat-cell .sc-wr{font-size:13px;font-weight:800}
+  .stat-cell .sc-det{font-size:9px;color:var(--mut);margin-top:1px}
+  .stat-cell .sc-bar{position:absolute;bottom:0;left:0;height:3px;
+    background:var(--acc);transition:width .4s}
+  .tier-badge{display:inline-flex;align-items:center;gap:5px;
+    padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;
+    border:1px solid currentColor}
+  .tier-up-banner{padding:10px 12px;border-radius:8px;margin:8px 0;
+    background:#0b1622;border-left:4px solid var(--gold);font-size:12px;line-height:1.6}
+  .tier-up-banner b{color:var(--gold)}
+
   /* === (v5.9) tutorial mode === */
   #tutHL{position:fixed;z-index:60;pointer-events:none;display:none;
     border:2px solid var(--acc);border-radius:8px;
@@ -459,6 +476,8 @@
         <div class="mode-sub">16턴 · 긴 호흡<br>사이클을 두 배로</div>
       </div>
     </div>
+    <div class="tut-sep" style="margin-top:16px">전적 — 페르소나별 누적 성적</div>
+    <div class="stats-bar" id="statsBar"></div>
     <div class="tut-sep">페르소나 선택 — <span id="modeLabel">일반 게임 (8턴)</span>으로 시작</div>
     <div class="personas" id="personaPick"></div>
   </div>
@@ -2139,6 +2158,68 @@ const MODE_DEF = {
 };
 let PENDING_MODE = 'normal'; // 모달에서 고른 모드 — startGame에서 state에 반영
 
+/* ============================================================
+   (v5.9) CUMULATIVE STATS & TIER SYSTEM
+   ============================================================ */
+const TIER_DEF = [
+  {id:'bronze',   label:'브론즈',   icon:'🥉', color:'#b45309', min:0},
+  {id:'silver',   label:'실버',     icon:'🥈', color:'#9ca3af', min:3},
+  {id:'gold',     label:'골드',     icon:'🥇', color:'#d29922', min:8},
+  {id:'diamond',  label:'다이아',   icon:'💎', color:'#38bdf8', min:16},
+  {id:'legend',   label:'레전드',   icon:'👑', color:'#a78bfa', min:30},
+];
+
+function tierOf(wins){
+  let t = TIER_DEF[0];
+  for(const td of TIER_DEF) if(wins >= td.min) t = td;
+  return t;
+}
+
+const PSTATS_KEY = 'position_persona_stats_v1';
+
+function loadPStats(){
+  try{
+    const raw = localStorage.getItem(PSTATS_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {};
+}
+
+function savePStats(ps){ try{ localStorage.setItem(PSTATS_KEY, JSON.stringify(ps)); }catch(e){} }
+
+function recordGame(personaId, won){
+  const ps = loadPStats();
+  if(!ps[personaId]) ps[personaId] = {games:0, wins:0};
+  ps[personaId].games++;
+  if(won) ps[personaId].wins++;
+  savePStats(ps);
+  return ps[personaId];
+}
+
+function renderStatsBar(){
+  const bar = document.getElementById('statsBar');
+  if(!bar) return;
+  const ps = loadPStats();
+  const pids = ['ORACLE','MACRO_KING','HUNTER','QUANT'];
+  const pNames = {ORACLE:'오라클', MACRO_KING:'매크로킹', HUNTER:'헌터', QUANT:'퀀트'};
+  let html = '';
+  for(const pid of pids){
+    const d = ps[pid] || {games:0, wins:0};
+    const wr = d.games ? (d.wins/d.games*100) : 0;
+    const tier = tierOf(d.wins);
+    const wrStr = d.games ? wr.toFixed(0)+'%' : '-';
+    const wrColor = wr >= 35 ? 'var(--green)' : wr >= 20 ? 'var(--acc)' : wr > 0 ? 'var(--mut)' : 'var(--mut)';
+    html += `<div class="stat-cell">
+      <div class="sc-tier" title="${tier.label}">${tier.icon}</div>
+      <div class="sc-name">${pNames[pid]}</div>
+      <div class="sc-wr" style="color:${wrColor}">${wrStr}</div>
+      <div class="sc-det">${d.wins}승 / ${d.games}판</div>
+      <div class="sc-bar" style="width:${Math.min(100,wr)}%"></div>
+    </div>`;
+  }
+  bar.innerHTML = html;
+}
+
 function setGameMode(m){
   if(!MODE_DEF[m]) return;
   PENDING_MODE = m;
@@ -2842,10 +2923,38 @@ function endGame(){
     p.totalScore = p.cash + Object.values(p.bets).reduce((a,b)=>a+b,0) + p.questBonus - p.riskPenalty;
   }
   const sorted = [...state.players].sort((a,b) => b.totalScore - a.totalScore);
-  let html = '<div style="margin-top:10px">';
+
+  // --- Record cumulative stats for human player ---
+  const humanP = state.players.find(p => p.isHuman);
+  let tierBanner = '';
+  if(humanP){
+    const won = sorted[0].id === humanP.id;
+    const psBefore = loadPStats()[humanP.personaId] || {games:0, wins:0};
+    const tierBefore = tierOf(psBefore.wins);
+    const psAfter = recordGame(humanP.personaId, won);
+    const tierAfter = tierOf(psAfter.wins);
+    const wr = psAfter.games ? (psAfter.wins/psAfter.games*100).toFixed(0) : 0;
+    const promoted = tierAfter.id !== tierBefore.id;
+    if(promoted){
+      tierBanner = `<div class="tier-up-banner">
+        🎉 <b>티어 승급!</b> ${tierBefore.icon} ${tierBefore.label} → ${tierAfter.icon} <b>${tierAfter.label}</b><br>
+        ${humanP.personaId} · ${psAfter.wins}승 / ${psAfter.games}판 · 승률 ${wr}%
+      </div>`;
+    } else {
+      const tc = tierAfter.color;
+      tierBanner = `<div style="margin:6px 0;font-size:11px;color:var(--mut)">
+        <span class="tier-badge" style="color:${tc};border-color:${tc}">${tierAfter.icon} ${tierAfter.label}</span>
+        &nbsp;${humanP.personaId} · ${psAfter.wins}승 / ${psAfter.games}판 · 승률 ${wr}%
+        ${won ? ' &nbsp;<b style="color:var(--gold)">🏆 우승!</b>' : ''}
+      </div>`;
+    }
+  }
+
+  let html = tierBanner + '<div style="margin-top:6px">';
   sorted.forEach((p,i) => {
-    html += `<div style="padding:8px;background:var(--panel2);border-radius:6px;margin:6px 0;border-left:4px solid var(--p${p.id})">`;
-    html += `<b>${i+1}위 · ${p.name} (${p.personaId})</b> — ${p.totalScore}점<br>`;
+    const isHuman = humanP && p.id === humanP.id;
+    html += `<div style="padding:8px;background:var(--panel2);border-radius:6px;margin:6px 0;border-left:4px solid var(--p${p.id})${isHuman?';outline:1px solid var(--acc)':''}">`;
+    html += `<b>${i+1}위 · ${p.name} (${p.personaId})</b>${isHuman?' <span style="font-size:10px;color:var(--acc)">[나]</span>':''} — ${p.totalScore}점<br>`;
     html += `<span style="font-size:11px;color:var(--mut)">cash ${p.cash} + 베팅 ${Object.values(p.bets).reduce((a,b)=>a+b,0)} + 도전 ${p.questBonus} - 리스크 ${p.riskPenalty}</span>`;
     html += '</div>';
   });
@@ -3537,6 +3646,7 @@ function bootstrap(){
 
 window.addEventListener('DOMContentLoaded', () => {
   bootstrap();
+  renderStatsBar(); // (v5.9) cumulative stats
   // pre-render skeleton with default state
   initState();
   validateGameData(); // (v5.7) dev-time data integrity check
