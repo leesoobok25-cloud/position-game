@@ -2903,7 +2903,7 @@ function castEventVote(choice){
   let pick;
   if(aCount > bCount) pick = state.currentEvents[0];
   else if(bCount > aCount) pick = state.currentEvents[1];
-  else pick = state.currentEvents[0]; // tie → human (P0) chose
+  else pick = state.eventVotes[state.myId]==='B' ? state.currentEvents[1] : state.currentEvents[0]; // tie → 플레이어 선택 우선
   state.currentEventChosen = pick;
   logRow(`[섹터 이벤트] 채택: <b>${pick.name}</b> (${pick.main} ${pick.mainEff>=0?'+':''}${pick.mainEff}/10)`, 'ev');
   // (v1.1) 자동 전환(0.8초) 제거 — 결과를 충분히 읽고 클릭으로 넘어가도록 변경
