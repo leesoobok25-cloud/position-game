@@ -275,6 +275,27 @@
     background:linear-gradient(90deg,var(--green),var(--gold) 70%,var(--red));
     transition:width .35s ease}
 
+  /* === (v5.9) tutorial entry banner === */
+  @keyframes tutPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(210,153,34,.7),0 4px 18px #d2992240}
+    50%{box-shadow:0 0 0 8px rgba(210,153,34,0),0 4px 24px #d2992266}
+  }
+  .tut-banner{
+    margin-top:14px;border-radius:10px;background:#241c08;
+    border:2px solid var(--gold);padding:14px 16px;cursor:pointer;
+    animation:tutPulse 1.8s ease-in-out infinite;
+    display:flex;align-items:center;gap:12px;
+    transition:filter .15s}
+  .tut-banner:hover{filter:brightness(1.15)}
+  .tut-banner .tut-ico{font-size:32px;line-height:1;flex-shrink:0}
+  .tut-banner .tut-body{flex:1}
+  .tut-banner .tut-title{font-weight:700;font-size:14px;color:var(--gold);margin-bottom:3px}
+  .tut-banner .tut-sub{font-size:11px;color:#b89040;line-height:1.4}
+  .tut-banner .tut-arr{font-size:22px;color:var(--gold);flex-shrink:0}
+  .tut-sep{display:flex;align-items:center;gap:8px;margin:14px 0 0;
+    font-size:11px;color:var(--mut)}
+  .tut-sep::before,.tut-sep::after{content:'';flex:1;height:1px;background:var(--line)}
+
   /* === (v5.9) tutorial mode === */
   #tutHL{position:fixed;z-index:60;pointer-events:none;display:none;
     border:2px solid var(--acc);border-radius:8px;
@@ -389,7 +410,15 @@
   <div class="modal">
     <h2 style="margin:0">페르소나 선택</h2>
     <div style="color:var(--mut);font-size:12px">각 페르소나는 상시능력 · 금지 · 이익 · 도전 구획을 갖는다.</div>
-    <div style="margin-top:10px"><button class="btn gold" style="width:100%" onclick="startTutorial()">🎓 처음이신가요? — 튜토리얼로 배우기 (HUNTER 페르소나, 1턴 안내)</button></div>
+    <div class="tut-banner" onclick="startTutorial()">
+      <span class="tut-ico">🎓</span>
+      <div class="tut-body">
+        <div class="tut-title">처음이신가요? — 튜토리얼로 시작하기</div>
+        <div class="tut-sub">HUNTER 페르소나로 첫 1턴을 함께 플레이하며 게임 방법을 배웁니다</div>
+      </div>
+      <span class="tut-arr">→</span>
+    </div>
+    <div class="tut-sep">또는 페르소나를 직접 선택해 바로 시작</div>
     <div class="personas" id="personaPick"></div>
   </div>
 </div>
