@@ -3326,7 +3326,11 @@ function buildFinalReport(p){
   if(secs.length >= 7) comments.push('많은 섹터를 거쳤습니다. 확신 있는 소수에 집중하면 거래비용이 줄어듭니다.');
 
   return `<details style="margin-top:10px">
-    <summary style="cursor:pointer;font-weight:700;color:var(--acc);font-size:13px">📊 투자 결과 리포트 — 상세 분석 보기</summary>
+    <summary style="cursor:pointer;list-style:none;display:block;text-align:center;font-weight:800;color:#fff;font-size:15px;
+      background:linear-gradient(135deg,var(--acc),#7c3aed);border:2px solid var(--acc);border-radius:10px;
+      padding:14px 18px;box-shadow:0 0 14px rgba(96,165,250,.35)">
+      📊 투자 결과 리포트 — 상세 분석 보기 <span style="font-size:11px;font-weight:400;opacity:.85">(클릭해서 펼치기 ▼)</span>
+    </summary>
     <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:8px;font-size:11px;line-height:1.7;text-align:left">
       <div style="font-size:13px;margin-bottom:6px">최종 자산 <b>${finalAssets}점</b> · 수익률 <b style="color:${retColor}">${ret>=0?'+':''}${ret}%</b> <span style="color:var(--mut)">(시작 100점)</span></div>
       <div style="margin:8px 0"><b>턴별 손익</b> <span style="color:var(--mut)">(🪤=함정 발동 턴)</span>
@@ -3694,38 +3698,68 @@ function reportInsight(r){
       <button class="btn alt" style="font-size:10px;padding:4px 10px" onclick="toggleInsight()">📚 리포트 해설 보기</button>
     </div>`;
   }
+  // (v1.1) 애널리스트 노트 스타일 — 투자의견/유망 섹터/리스크 요인/근거를 리서치 어조로 서술
   const deckNames = {depression:'불황', downturn:'경기침체', recovery:'회복', boom:'호황'};
+  const TAG_KO = {ai:'AI 인프라', capex:'설비투자(CAPEX) 사이클', liquidity:'유동성 환경', policy:'정책 모멘텀',
+    earnings:'실적 모멘텀', breadth:'상승 종목 확산', rate:'금리 사이클', inflation:'인플레이션',
+    credit:'신용 여건', recession:'경기 둔화', geo:'지정학 리스크', commodity:'원자재 가격',
+    regulation:'규제 환경', mna:'M&A·딜 사이클', rotation:'섹터 로테이션', bubble:'밸류에이션 과열',
+    goldilocks:'골디락스 국면', shock:'시스템 충격', contra:'역발상 시그널', sector:'개별 섹터 모멘텀'};
   const mb = Object.entries(r.macroBias||{}).sort((a,b)=>b[1]-a[1]);
-  const mbUp = mb.filter(([,v])=>v>1).map(([d,v])=>`${deckNames[d]} 덱 ×${v}`).join(', ');
+  const mbUp = mb.filter(([,v])=>v>1);
   const eb = Object.entries(r.eventBias||{}).sort((a,b)=>b[1]-a[1]);
-  const fav = eb.filter(([,v])=>v>1).slice(0,5)
-    .map(([s,v])=>`<b>${s}</b> ×${v}`).join(' · ');
-  // 불리한 쪽: 가장 강하게 가중된 매크로 덱의 반대편 그룹
-  const topDeck = mb.length && mb[0][1] > 1 ? mb[0][0] : null;
-  let hurt = '';
+  const fav = eb.filter(([,v])=>v>1).slice(0,5);
+  const unfav = eb.filter(([,v])=>v<1);
+  const themes = Object.entries(r.tagBias||{}).filter(([,v])=>v>1).sort((a,b)=>b[1]-a[1]).slice(0,3)
+    .map(([t])=>TAG_KO[t]||t);
+
+  // ① 하우스 뷰 — 시황 판단
+  const stance = r.sentiment==='positive' ? '위험선호(Risk-On) 환경 지속'
+               : r.sentiment==='negative' ? '위험회피(Risk-Off) 전환 경계'
+               : '방향성 탐색 구간 — 중립';
+  const deckView = mbUp.length
+    ? mbUp.map(([d,v])=>`<b>${deckNames[d]}</b> 시나리오의 발생 확률을 <b>${v}배</b>로 상향`).join(', ')
+    : '특정 매크로 시나리오에 대한 확률 조정 없음';
+  const themeLine = themes.length ? ` 당사는 ${themes.map(t=>`<b>${t}</b>`).join('·')}을(를) 이번 구간의 핵심 동인으로 판단한다.` : '';
+
+  // ② 비중확대(Overweight) 후보 — 섹터별 근거 첨부
+  const favLines = fav.map(([s,v])=>
+    `<b>${s}</b> <span style="color:var(--green)">비중확대 ×${v}</span> <span style="color:var(--mut)">— ${SECTOR_TIPS[s]||''}</span>`);
+
+  // ③ 비중축소/소외 — 명시적 감쇠 + 국면 역풍 그룹
+  const hurtLines = unfav.map(([s,v])=>
+    `<b>${s}</b> <span style="color:var(--red)">비중축소 ×${v}</span> <span style="color:var(--mut)">— ${SECTOR_TIPS[s]||''}</span>`);
+  const topDeck = mbUp.length ? mbUp[0][0] : null;
   if(topDeck === 'boom' || topDeck === 'recovery'){
-    hurt = '상승 국면 가중 → <b>BOND·UTIL</b> 등 방어 자산은 상대적으로 소외되기 쉽습니다.';
+    hurtLines.push(`<b>BOND·UTIL</b> <span style="color:var(--red)">상대 소외</span> <span style="color:var(--mut)">— 상승 국면에서는 방어 자산의 기회비용이 커진다</span>`);
   } else if(topDeck === 'downturn' || topDeck === 'depression'){
-    hurt = '하강 국면 가중 → <b>TECH·SEMI·AUTO</b> 등 성장·경기민감 섹터가 압박받기 쉽습니다.';
+    hurtLines.push(`<b>TECH·SEMI·AUTO</b> <span style="color:var(--red)">멀티플 압박</span> <span style="color:var(--mut)">— 하강 국면에서는 성장·경기민감 섹터의 할인율 부담이 확대된다</span>`);
   }
-  // 신뢰도/함정
+
+  // ④ 신뢰도 — 함정 조건
   const t = r.trap || {};
   let trust;
   if(t.reverseProb){
     const cond = t.fgAbove != null ? `F&G ${t.fgAbove} 이상(과열)` : `F&G ${t.fgBelow} 이하(공포)`;
-    trust = `⚠️ <b>함정 리포트 가능성</b>: 지금 ${cond}이면 <b>${Math.round(t.reverseProb*100)}%</b> 확률로 추세가 <b>역전</b>된 카드가 우대됩니다. 현재 F&G ${state.fearGreed}.`;
+    const active = (t.fgAbove != null && state.fearGreed >= t.fgAbove) || (t.fgBelow != null && state.fearGreed <= t.fgBelow);
+    trust = `⚠️ <b>컨센서스 함정 주의</b>: 본 리포트와 같은 시각이 시장에 만연한 ${cond} 구간에서는 <b>${Math.round(t.reverseProb*100)}%</b> 확률로 추세 <b>역전</b> 카드가 우대된다. 현재 F&G <b>${state.fearGreed}</b>${active?' — <b style="color:var(--red)">함정 조건 충족 구간입니다</b>':' (아직 함정 조건 미충족)'}. 모두가 동의하는 전망일수록 가격에는 이미 반영되어 있다.`;
   } else {
-    trust = `이 리포트에는 함정 조건이 없습니다. 다만 가중치는 <b>확률</b>일 뿐 — 반대 방향 카드도 여전히 추첨될 수 있습니다.`;
+    trust = `본 리포트에는 함정(역전) 조건이 없다. 다만 확률 가중은 <b>기대값의 이동</b>일 뿐 보장이 아니며, 반대 방향 카드도 여전히 추첨될 수 있다.`;
   }
+
   return `<div class="card" style="margin-top:8px;border-left:3px solid var(--acc)">
-    <div class="ttl" style="display:flex;justify-content:space-between;align-items:center">📚 리포트 해설 <span style="font-size:10px;color:var(--mut);font-weight:400">— 무엇이, 왜 유리해지나</span>
+    <div class="ttl" style="display:flex;justify-content:space-between;align-items:center">📚 애널리스트 노트 <span style="font-size:10px;color:var(--mut);font-weight:400">— 하우스 뷰 · 섹터 전략 · 리스크 요인</span>
       <button class="btn alt" style="font-size:9px;padding:2px 8px" onclick="toggleInsight()">숨기기</button></div>
-    <div class="desc" style="line-height:1.6">
-      <b>의미</b>: 리포트는 예언이 아니라 <b>카드 추첨 확률 가중치</b>입니다. 이 리포트는 ${mbUp || '특정 매크로 덱 가중 없음'}으로 매크로 추첨을 기울입니다.<br>
-      ${fav ? `<b>유리</b>: 섹터 이벤트 출현 확률 — ${fav}<br>` : ''}
-      ${hurt ? `<b>불리</b>: ${hurt}<br>` : ''}
-      <b>근거</b>: 위 배수만큼 해당 카드가 추첨 풀에서 더 자주 뽑힙니다 (×1.5 = 1.5배). 보장이 아니므로 Omen·사이클과 교차 확인하세요.<br>
-      ${trust}
+    <div class="desc" style="line-height:1.7">
+      <b style="color:var(--acc)">투자의견 요약</b><br>
+      ${stance}. 본 리포트는 ${deckView}한다.${themeLine} 리포트는 예언이 아니라 <b>카드 추첨 확률의 가중치</b>다 — 시장이 그 방향으로 기울 가능성이 높아졌다는 의미로 읽어야 한다.<br>
+      ${favLines.length ? `<div style="margin-top:6px"><b style="color:var(--green)">유망 섹터 (비중확대 후보)</b><br>${favLines.map(l=>`· ${l}`).join('<br>')}</div>` : ''}
+      ${hurtLines.length ? `<div style="margin-top:6px"><b style="color:var(--red)">경계 섹터 (비중축소·소외 후보)</b><br>${hurtLines.map(l=>`· ${l}`).join('<br>')}</div>` : ''}
+      <div style="margin-top:6px"><b>판단 근거</b><br>
+      · 표기된 배수만큼 해당 카드가 추첨 풀에서 더 자주 뽑힌다 (×1.5 = 출현 확률 1.5배).<br>
+      · 단일 지표에 의존하지 말 것 — <b>Omen 게이지</b>(위기 카드 강제 발동), <b>사이클 위치</b>(극단은 평균회귀), <b>F&G</b>(군중 심리)와 교차 확인했을 때 비로소 베팅 근거가 완성된다.<br>
+      · 같은 방향 신호가 2개 이상 겹치는 섹터에 집중하고, 신호가 엇갈리면 베팅 규모를 줄이는 것이 정석이다.</div>
+      <div style="margin-top:6px">${trust}</div>
     </div>
   </div>`;
 }
