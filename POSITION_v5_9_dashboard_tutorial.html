@@ -3313,17 +3313,17 @@ function buildFinalReport(p){
   const hitRate = hist.length ? Math.round(hits/hist.length*100) : 0;
   const trapCount = hist.filter(h=>h.trap).length;
 
-  // 종합 코멘트 (rule-based)
+  // (v1.1) 종합 코멘트 — 운용보고서(애널리스트) 어조로 서술
   const comments = [];
   const goodTurns = gCount.S + gCount.A;
-  if(goodTurns >= hist.length*0.5) comments.push('절반 이상의 턴에서 A등급 이상 — 일관된 의사결정이 강점입니다.');
-  else if(gCount.D >= 3) comments.push(`D등급이 ${gCount.D}턴 — 큰 손실 턴의 공통점(역행 베팅·과집중)을 복기해보세요.`);
-  if(worstT && bestT && Math.abs(worstT.pl) > bestT.pl) comments.push('최악 턴의 손실이 최고 턴의 이익보다 컸습니다. 손실 관리가 수익 추구보다 먼저입니다.');
-  if(p.risk >= 3) comments.push(`리스크 토큰 ${p.risk}개 — 원칙 위반·과열 추격의 비용이 컸습니다.`);
-  else if(p.risk === 0) comments.push('리스크 토큰 0개 — 원칙을 지키는 깨끗한 운용이었습니다.');
-  if(p.questBonus > 0) comments.push('🎯 도전 과제 달성 — 페르소나 정체성을 점수로 연결했습니다.');
-  else comments.push('도전 과제 미달성 — 다음 판엔 페르소나 퀘스트를 의식하며 베팅해보세요.');
-  if(secs.length >= 7) comments.push('많은 섹터를 거쳤습니다. 확신 있는 소수에 집중하면 거래비용이 줄어듭니다.');
+  if(goodTurns >= hist.length*0.5) comments.push(`전체 ${hist.length}개 운용 구간 중 ${goodTurns}개 구간에서 A등급 이상을 기록했다. 의사결정의 일관성이 본 계좌의 핵심 경쟁력으로 평가된다.`);
+  else if(gCount.D >= 3) comments.push(`D등급 구간이 ${gCount.D}회 발생했다. 대규모 손실 구간의 공통 요인(추세 역행 베팅·단일 섹터 과집중)에 대한 복기가 선행되어야 한다.`);
+  if(worstT && bestT && Math.abs(worstT.pl) > bestT.pl) comments.push(`최대 손실 구간(T${worstT.turn}, ${worstT.pl}점)의 낙폭이 최대 수익 구간(T${bestT.turn}, +${bestT.pl}점)을 상회했다. 하방 관리가 수익 추구에 우선해야 한다는 것이 당사의 일관된 견해다.`);
+  if(p.risk >= 3) comments.push(`리스크 토큰 ${p.risk}개가 누적되어 정산에서 ${p.risk*5}점이 차감됐다. 원칙 위반과 과열 추격의 비용이 성과를 직접 잠식한 사례다.`);
+  else if(p.risk === 0) comments.push('리스크 토큰 0개 — 운용 원칙 준수 측면에서 흠잡을 곳 없는 깨끗한 운용이었다.');
+  if(p.questBonus > 0) comments.push('🎯 도전 과제 달성(+20점) — 스타일 일관성(페르소나 정체성)을 초과수익으로 전환하는 데 성공했다.');
+  else comments.push('도전 과제 미달성 — 페르소나 고유의 알파 원천을 활용하지 못했다. 차기 운용에서는 퀘스트 조건을 포트폴리오 구성 단계부터 반영할 것을 권고한다.');
+  if(secs.length >= 7) comments.push(`운용 기간 중 ${secs.length}개 섹터를 거쳤다. 회전율이 높을수록 거래비용이 성과를 잠식한다 — 확신도 높은 소수 섹터로의 집중을 권고한다.`);
 
   return `<details style="margin-top:10px">
     <summary style="cursor:pointer;list-style:none;display:block;text-align:center;font-weight:800;color:#fff;font-size:15px;
@@ -3332,13 +3332,23 @@ function buildFinalReport(p){
       📊 투자 결과 리포트 — 상세 분석 보기 <span style="font-size:11px;font-weight:400;opacity:.85">(클릭해서 펼치기 ▼)</span>
     </summary>
     <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:8px;font-size:11px;line-height:1.7;text-align:left">
-      <div style="font-size:13px;margin-bottom:6px">최종 자산 <b>${finalAssets}점</b> · 수익률 <b style="color:${retColor}">${ret>=0?'+':''}${ret}%</b> <span style="color:var(--mut)">(시작 100점)</span></div>
+      ${(()=>{ // (v1.1) 운용 성과 헤드라인 — 순위·상대 성과 포함
+        const ranked = [...state.players].sort((a,b)=>b.totalScore-a.totalScore);
+        const myRank = ranked.findIndex(x=>x.id===p.id)+1;
+        const peerAvg = Math.round(state.players.reduce((a,x)=>a+x.totalScore,0)/state.players.length);
+        const rel = finalAssets - peerAvg;
+        const verdictTxt = myRank===1 ? '시장 참여자 전원을 상회하는 성과로 운용을 마감했다'
+          : rel>=0 ? '시장 평균을 상회하며 경쟁력 있는 운용을 보였다'
+          : '시장 평균을 하회했다. 손실 구간의 의사결정 복기가 필요하다';
+        return `<div style="font-size:13px;margin-bottom:4px"><b>운용 성과 요약</b> — 최종 자산 <b>${finalAssets}점</b> · 누적 수익률 <b style="color:${retColor}">${ret>=0?'+':''}${ret}%</b> <span style="color:var(--mut)">(기초자산 100점)</span></div>
+        <div style="font-size:11px;color:var(--mut);margin-bottom:6px">최종 순위 <b style="color:var(--fg)">${myRank}위/${state.players.length}명</b> · 참여자 평균 대비 <b style="color:${rel>=0?'var(--green)':'var(--red)'}">${rel>=0?'+':''}${rel}점</b> — ${verdictTxt}.</div>`;
+      })()}
       <div style="margin:8px 0"><b>턴별 손익</b> <span style="color:var(--mut)">(🪤=함정 발동 턴)</span>
         <div style="display:flex;gap:2px;margin-top:4px;background:#0b0d12;border-radius:6px;padding:6px">${bars}</div></div>
       <div style="margin:8px 0"><b>턴 등급 분포</b><br><div style="margin-top:4px;display:flex;align-items:center">${gradeRow}</div></div>
       ${bestT?`<b>최고의 턴</b>: T${bestT.turn} <span style="color:var(--green)">+${bestT.pl}</span>${worstT&&worstT.pl<0?` · <b>최악의 턴</b>: T${worstT.turn} <span style="color:var(--red)">${worstT.pl}</span>`:''}<br>`:''}
-      <b>효자 섹터</b>: ${top3}<br>
-      <b>아픈 섹터</b>: ${bot3}<br>
+      <b>수익 기여 상위</b>: ${top3}<br>
+      <b>손실 기여 상위</b>: ${bot3}<br>
       <b>리포트 적중률</b>: ${hitRate}% (${hits}/${hist.length}턴)${(()=>{const sh=hist.reduce((a,h)=>a+(h.secHit||0),0),st=hist.reduce((a,h)=>a+(h.secTot||0),0);return st?` · 섹터 적중 ${sh}/${st}`:'';})()}${trapCount?` · 함정 발동 ${trapCount}회`:''} <span style="color:var(--mut)">— 리포트는 확률 가중일 뿐임을 기억하세요</span><br>
       <b>리스크 토큰</b>: ${p.risk}개${(p.riskReasons||[]).length?` <span style="color:var(--mut)">(${p.riskReasons.slice(0,3).join(', ')})</span>`:''}<br>
       ${(PERSONAS[p.personaId] && PERSONAS[p.personaId].id === 'QUANT' && p.defStats) ? `
@@ -3349,7 +3359,7 @@ function buildFinalReport(p){
         <span style="color:var(--mut)">QUANT의 강점은 크게 터뜨리기가 아니라 덜 잃고 살아남기입니다.</span>
       </div>` : ''}
       <div style="margin-top:8px;padding:8px 10px;border-left:3px solid var(--acc);background:#0b1622;border-radius:0 4px 4px 0">
-        <b style="color:var(--acc)">💡 종합 평가</b><br>${comments.map(c=>`· ${c}`).join('<br>')}
+        <b style="color:var(--acc)">💡 운용 총평 (Analyst View)</b><br>${comments.map(c=>`· ${c}`).join('<br>')}
       </div>
     </div>
   </details>`;
