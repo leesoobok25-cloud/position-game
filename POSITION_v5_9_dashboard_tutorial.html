@@ -129,6 +129,7 @@
 
   /* players */
   .players{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .players.players-row{grid-template-columns:repeat(4,1fr)}
   .player{background:var(--panel2);border:1px solid var(--line);
     border-radius:6px;padding:8px;position:relative}
   .player.me{outline:2px solid var(--acc)}
@@ -586,15 +587,14 @@
         <h3>활성 슬롯</h3>
         <div id="slotList" style="font-size:14px;color:var(--mut)">없음</div>
       </div>
-      <!-- 플레이어 패널 — 왼쪽 하단 -->
-      <div class="panel" style="margin-top:10px" id="panelPlayers">
-        <h3>플레이어</h3>
-        <div class="players" id="players"></div>
-      </div>
     </div>
 
-    <!-- MID-CENTER: 로그 + 섹터보드 -->
+    <!-- MID-CENTER: 플레이어(가로행) + 로그 + 섹터보드 -->
     <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="panel" id="panelPlayers">
+        <h3>플레이어</h3>
+        <div class="players players-row" id="players"></div>
+      </div>
       <div class="panel">
         <h3>로그</h3>
         <div class="log" id="log"></div>
