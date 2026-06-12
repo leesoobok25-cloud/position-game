@@ -528,7 +528,8 @@ const OMEN_FORCED = {
   rec: 'W_EARNINGS_RECESSION', // 침체 3 → 이익 침체
 };
 
-/* MACRO_CARDS (v5.7) — 4 cycle decks (depression/downturn/recovery/boom), 12 each = 48 cards.
+/* MACRO_CARDS (v5.9) — 4 cycle decks (depression/downturn/recovery/boom), 16 each = 64 cards.
+   (v5.9 확장: 덱당 4장 추가 — AI·기술 / 지정학·에너지 / 부동산·신용 / 기후·원자재 테마)
    each card: id, name, deck, cycleMove, inflMove, rateMove, omen{}, effects{sectorId:perTen},
               tags[], narrative, icon.
    cycleMove는 사이클을 직접 이동시키고, inflMove/rateMove는 applyMacroFactorMoves()에서
@@ -621,6 +622,35 @@ const MACRO_CARDS = [
     tags:['credit','fiscal','rate'], icon:'🏛️',
     narrative:'재정 신뢰가 흔들리며 채권도 안전하지 않은 국면이 온다.'
   },
+  // --- (v5.9) 확장 4장 ---
+  {
+    id:'W_CRE_CRISIS', name:'상업용 부동산 부실', deck:'depression',
+    cycleMove:-8, inflMove:-0.2, rateMove:-0.25, omen:{cred:1, rec:1},
+    effects:{FIN:-5, CONS:-2, INDU:-2, UTIL:+2, BOND:+4},
+    tags:['credit','realestate','recession'], icon:'🏢',
+    narrative:'공실률 상승과 리파이낸싱 실패가 은행 대차대조표를 위협한다.'
+  },
+  {
+    id:'W_ENERGY_CRUNCH', name:'한파 에너지 대란', deck:'depression',
+    cycleMove:-6, inflMove:+0.7, rateMove:+0.1, omen:{geo:1, infl:1},
+    effects:{ENG:+6, UTIL:+3, MATE:+2, CONS:-4, INDU:-3, AUTO:-2},
+    tags:['energy','inflation','climate'], icon:'🥶',
+    narrative:'기록적 한파와 공급 차질이 겹친다. 에너지는 강하지만 소비와 생산은 얼어붙는다.'
+  },
+  {
+    id:'W_AI_WINTER', name:'AI 투자 혹한기', deck:'depression',
+    cycleMove:-7, inflMove:-0.3, rateMove:-0.2, omen:{rec:1},
+    effects:{SEMI:-6, TECH:-5, UTIL:-2, BIO:+1, BOND:+4},
+    tags:['ai','capex','recession'], icon:'🧊',
+    narrative:'AI 수익화 실망이 인프라 투자 동결로 이어진다. 기대가 컸던 만큼 되돌림도 깊다.'
+  },
+  {
+    id:'W_DISTRESSED_BUYERS', name:'저점 매수 큰손들', deck:'depression',
+    cycleMove:+5, inflMove:+0.1, rateMove:0.0, omen:{},
+    effects:{FIN:+3, TECH:+3, ENG:+2, MATE:+2, BOND:-1},
+    tags:['contra','liquidity'], icon:'🦈',
+    narrative:'국부펀드와 사모 큰손들이 헐값 자산을 쓸어담기 시작한다. 바닥의 신호일까.'
+  },
 
   // =========================
   // 🍂 DOWNTURN / 가을·둔화
@@ -708,6 +738,35 @@ const MACRO_CARDS = [
     effects:{FIN:-3, MATE:-3, ENG:-2, BOND:+2, UTIL:+2},
     tags:['value','recession'], icon:'🪤',
     narrative:'싸 보였던 경기민감 가치주가 이익 하향과 함께 더 싸진다.'
+  },
+  // --- (v5.9) 확장 4장 ---
+  {
+    id:'A_HOUSING_FREEZE', name:'주택 거래 절벽', deck:'downturn',
+    cycleMove:-4, inflMove:-0.2, rateMove:-0.1, omen:{cred:1},
+    effects:{FIN:-3, CONS:-2, MATE:-2, INDU:-1, BOND:+2},
+    tags:['realestate','credit'], icon:'🏚️',
+    narrative:'높은 금리에 매수세가 실종된다. 주택 관련 신용과 내구재 소비가 식는다.'
+  },
+  {
+    id:'A_AI_MONETIZE_DOUBT', name:'AI 수익화 회의론', deck:'downturn',
+    cycleMove:-3, inflMove:0.0, rateMove:0.0, omen:{rec:1},
+    effects:{TECH:-4, SEMI:-3, UTIL:-1, FIN:+1, BOND:+2},
+    tags:['ai','earnings'], icon:'🤔',
+    narrative:'막대한 AI 투자 대비 매출이 보이지 않는다는 보고서가 확산된다.'
+  },
+  {
+    id:'A_OPEC_SQUEEZE', name:'감산 카르텔', deck:'downturn',
+    cycleMove:-3, inflMove:+0.5, rateMove:+0.15, omen:{infl:1, geo:1},
+    effects:{ENG:+5, MATE:+1, CONS:-2, AUTO:-2, INDU:-1, BOND:-1},
+    tags:['commodity','inflation','geo'], icon:'🛢️',
+    narrative:'산유국들이 공급을 조인다. 경기 둔화에도 유가는 버틴다 — 나쁜 조합이다.'
+  },
+  {
+    id:'A_GREEN_CAPEX_FLOOR', name:'그린 투자 하방 지지', deck:'downturn',
+    cycleMove:+3, inflMove:+0.1, rateMove:0.0, omen:{},
+    effects:{UTIL:+3, INDU:+2, MATE:+2, SEMI:+1, BOND:-1},
+    tags:['climate','capex','policy'], icon:'🌿',
+    narrative:'경기 둔화에도 전력망·재생에너지 투자는 계속된다. 구조적 수요가 바닥을 받친다.'
   },
 
   // =========================
@@ -797,6 +856,35 @@ const MACRO_CARDS = [
     tags:['inflation','commodity','rate'], icon:'🔥',
     narrative:'회복이 너무 빠르다. 물가와 금리가 다시 시장의 부담으로 등장한다.'
   },
+  // --- (v5.9) 확장 4장 ---
+  {
+    id:'S_AI_ADOPTION_WAVE', name:'AI 도입 확산', deck:'recovery',
+    cycleMove:+5, inflMove:-0.1, rateMove:0.0, omen:{},
+    effects:{TECH:+4, SEMI:+3, INDU:+2, CONS:+1, BOND:-1},
+    tags:['ai','productivity'], icon:'🤖',
+    narrative:'기업 현장의 AI 도입이 실제 비용 절감으로 확인된다. 기대가 실적이 되기 시작한다.'
+  },
+  {
+    id:'S_HOUSING_THAW', name:'부동산 신용 해빙', deck:'recovery',
+    cycleMove:+5, inflMove:+0.2, rateMove:-0.1, omen:{},
+    effects:{FIN:+4, MATE:+3, CONS:+2, INDU:+2, BOND:-1},
+    tags:['realestate','credit','liquidity'], icon:'🏗️',
+    narrative:'금리 부담이 줄며 멈췄던 거래와 착공이 재개된다. 신용이 다시 돌기 시작한다.'
+  },
+  {
+    id:'S_GRID_MODERNIZE', name:'전력망 현대화 투자', deck:'recovery',
+    cycleMove:+4, inflMove:+0.2, rateMove:+0.05, omen:{},
+    effects:{UTIL:+4, MATE:+3, INDU:+3, SEMI:+1, BOND:-1},
+    tags:['climate','capex','power'], icon:'🔌',
+    narrative:'노후 전력망 교체와 전기화 수요가 유틸리티·소재·산업재를 함께 끌어올린다.'
+  },
+  {
+    id:'S_ENERGY_DETENTE', name:'에너지 긴장 완화', deck:'recovery',
+    cycleMove:+4, inflMove:-0.4, rateMove:-0.1, omen:{},
+    effects:{CONS:+3, AUTO:+3, INDU:+2, BOND:+1, ENG:-4, MATE:-1},
+    tags:['geo','consumer'], icon:'🕊️',
+    narrative:'지정학 긴장이 풀리며 유가가 안정된다. 에너지의 손실이 소비자의 이득이 된다.'
+  },
 
   // =========================
   // 🔥 BOOM / 여름·호황·과열
@@ -884,6 +972,35 @@ const MACRO_CARDS = [
     effects:{UTIL:+5, INDU:+2, ENG:+2, SEMI:-2, TECH:-1, BOND:-2},
     tags:['ai','power','inflation'], icon:'⚡',
     narrative:'AI 인프라 수요가 전력망 한계와 만난다. 전력주는 강하지만 일부 성장주는 병목을 맞는다.'
+  },
+  // --- (v5.9) 확장 4장 ---
+  {
+    id:'H_AI_AGENT_BOOM', name:'AI 에이전트 슈퍼앱', deck:'boom',
+    cycleMove:+6, inflMove:+0.1, rateMove:+0.05, omen:{},
+    effects:{TECH:+5, SEMI:+4, CONS:+2, FIN:+1, BOND:-2},
+    tags:['ai','growth','riskon'], icon:'📱',
+    narrative:'소비자용 AI 에이전트가 폭발적으로 성장한다. 플랫폼 전쟁의 승자가 가려지기 시작한다.'
+  },
+  {
+    id:'H_PROPERTY_MANIA', name:'부동산 과열', deck:'boom',
+    cycleMove:+4, inflMove:+0.4, rateMove:+0.3, omen:{cred:1, infl:1},
+    effects:{FIN:+4, MATE:+3, CONS:+2, TECH:-1, BOND:-4},
+    tags:['realestate','bubble','inflation'], icon:'🏘️',
+    narrative:'자산 가격 상승이 대출 수요를 부르고, 대출이 다시 가격을 밀어올린다. 익숙한 그림이다.'
+  },
+  {
+    id:'H_CLIMATE_SHOCK', name:'기상 이변 충격', deck:'boom',
+    cycleMove:-3, inflMove:+0.5, rateMove:+0.1, omen:{infl:1},
+    effects:{ENG:+4, MATE:+3, UTIL:-3, CONS:-3, INDU:-2, BOND:-1},
+    tags:['climate','inflation','commodity'], icon:'🌪️',
+    narrative:'폭염과 태풍이 농산물·전력망·물류를 동시에 때린다. 호황 속 공급발 인플레가 살아난다.'
+  },
+  {
+    id:'H_LNG_EXPORT_BOOM', name:'에너지 수출 호황', deck:'boom',
+    cycleMove:+5, inflMove:+0.3, rateMove:+0.1, omen:{infl:1},
+    effects:{ENG:+5, INDU:+3, MATE:+2, FIN:+1, CONS:-1, BOND:-2},
+    tags:['energy','commodity','capex'], icon:'🚢',
+    narrative:'LNG 터미널과 운반선 발주가 쏟아진다. 에너지 인프라가 새 성장 산업이 된다.'
   },
 ];
 
@@ -1742,10 +1859,13 @@ function evaluatePrinciple(p, ctx){
   const msgs = [];
 
   if(persona.id === 'ORACLE'){
-    // always: same sector 3+ streak → 20점당 +1
+    // (v5.9) 장기(16턴) 모드에선 연속보유 기준 2배 — 그대로면 텐배거 +10/턴이
+    //        10턴 이상 누적되어 ORACLE 우승률이 95%+로 붕괴함 (1000판 테스트 확인)
+    const L = state.maxTurn >= 16 ? 2 : 1;
+    // always: same sector (3·L)+ streak → 20점당 +1
     let bonus = 0;
     for(const sid of Object.keys(p.betStreak)){
-      if(p.betStreak[sid] >= 3 && p.bets[sid] > 0){
+      if(p.betStreak[sid] >= 3*L && p.bets[sid] > 0){
         bonus += Math.floor(p.bets[sid]/20);
       }
     }
@@ -1773,9 +1893,9 @@ function evaluatePrinciple(p, ctx){
         if((p.bets[sid]||0) <= 0) continue;
         const streak = p.betStreak[sid];
         const d = ctx.sectorDelta[sid] || 0;
-        if(streak >= 6) tenbagger += 10;         // (v5.8) 6턴+ 보유 '텐배거 후보' 상시 가산 8→10
-        if(streak >= 3 && (p.bets[sid]||0) >= 20 && d > 0) longGood += 5;  // 3턴+ 보유 섹터에 호재
-        if(streak >= 5 && (p.bets[sid]||0) >= 20 && d < 0) longAbsorb += 5; // 5턴+ 보유 손실 흡수
+        if(streak >= (L===2 ? 14 : 6)) tenbagger += 10; // (v5.8) '텐배거 후보' 상시 가산 — 장기는 14턴+ (12턴 기준도 우승률 47%로 과함)
+        if(streak >= 3*L && (p.bets[sid]||0) >= 20 && d > 0) longGood += 5;  // 3턴+ 보유 섹터에 호재
+        if(streak >= 5*L && (p.bets[sid]||0) >= 20 && d < 0) longAbsorb += 5; // 5턴+ 보유 손실 흡수
       }
       longGood = Math.min(longGood, 12);
       longAbsorb = Math.min(longAbsorb, 10);
@@ -1804,9 +1924,11 @@ function evaluatePrinciple(p, ctx){
     if(state.cycle > 25 && state.cycle < 50 && (growBet+cycBet)/totalB >= 0.5){
       total -= 7; msgs.push('금지위반(성장/경기과다) -7');
     }
-    // (v5.6) ① 매크로 방향 정렬 +8 — 확장 카드(+)에 위험선호, 수축 카드(-)에 방어 정렬
-    if(macroMove > 0 && riskOn/allB >= 0.5){ total += 10; msgs.push('매크로 확장정렬 +10'); }
-    else if(macroMove < 0 && riskOff/allB >= 0.5){ total += 10; msgs.push('매크로 수축정렬 +10'); }
+    // (v5.6) ① 매크로 방향 정렬 — 확장 카드(+)에 위험선호, 수축 카드(-)에 방어 정렬
+    // (v5.9) 장기(16턴)는 +10 → +6: 매 턴 발동 가능한 보너스라 16턴 누적 시 우승률 44%까지 상승
+    const mkAlign = state.maxTurn >= 16 ? 6 : 10;
+    if(macroMove > 0 && riskOn/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 확장정렬 +${mkAlign}`); }
+    else if(macroMove < 0 && riskOff/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 수축정렬 +${mkAlign}`); }
     // (v5.7) 인플레 정렬 — 인플레 상승 카드에 가치/에너지/소재 비중
     const macroInflMove = state.currentMacro?.inflMove || 0;
     if(macroInflMove >= 0.4 && (valBet + (p.bets.ENG||0) + (p.bets.MATE||0))/totalB >= 0.35){
@@ -1845,7 +1967,9 @@ function evaluatePrinciple(p, ctx){
         else if(d<0) hunterDelta -= 5;
       }
     }
-    hunterDelta = clamp(hunterDelta, -9, 6);   // (v5.8) 상방 +9→+6 (총변경폭 거래비용이 집중형을 상대적 우대 → 상쇄)
+    // (v5.9) 장기(16턴)에선 상방 한도 +6 → +9 — 이벤트 적중이 늘어나는 만큼
+    //        집중형의 보상 천장도 함께 올려 우승률 15% → 25%선 회복
+    hunterDelta = clamp(hunterDelta, -9, state.maxTurn >= 16 ? 9 : 6); // (v5.8) 상방 +9→+6 (총변경폭 거래비용이 집중형을 상대적 우대 → 상쇄)
     if(hunterDelta){ total += hunterDelta; msgs.push(`헌터 상시 ${hunterDelta>=0?'+':''}${hunterDelta}`); }
     // ban: 4+ sectors
     const active = SECTORS.filter(s => (p.bets[s.id]||0) > 0).length;
@@ -1861,7 +1985,10 @@ function evaluatePrinciple(p, ctx){
   else if(persona.id === 'QUANT'){
     const active = SECTORS.filter(s => (p.bets[s.id]||0) >= 10).length;
     if(active >= 4){
-      const b = Math.min(3, active - 3);
+      // (v5.9) 장기(16턴)에선 누적형 페르소나(ORACLE 텐배거 등)에 밀려 우승률 4%까지
+      //        떨어짐 — 분산 보너스 상한을 +3 → +5로 상향해 긴 게임의 복리를 보전
+      const cap = state.maxTurn >= 16 ? 5 : 3;
+      const b = Math.min(cap, active - 3);
       total += b; msgs.push(`퀀트분산 +${b}`);
     }
     // ban: single sector 30+
@@ -1874,7 +2001,9 @@ function evaluatePrinciple(p, ctx){
     if(active >= 5){
       p.quintBetTurns = (p.quintBetTurns||0) + 1;
       if(ctx && ctx.turnPL >= 0){
-        total += 7; msgs.push('퀀트분산이익 +7');
+        // (v5.9) 장기(16턴)는 +7 → +12 — 분산형의 낮은 천장을 긴 게임에서 보전 (우승률 7.8% 보정)
+        const qb = state.maxTurn >= 16 ? 12 : 7;
+        total += qb; msgs.push(`퀀트분산이익 +${qb}`);
       }
     }
     // (v5.6) QUANT 약점 — '안정적이지만 폭발력은 약함'으로. 안정성과 수익성을 분리한다.
@@ -2033,6 +2162,12 @@ function questText(persona){
   if(persona.id === 'HUNTER') return `40점+ 베팅 섹터에서 호재 ${r.hunter}턴 이상 적중 → 종료 시 +20점`;
   if(persona.id === 'QUANT')  return `${r.quant}턴 이상에서 5섹터 동시 베팅 유지 → 종료 시 +20점`;
   return persona.quest;
+}
+function alwaysText(persona){
+  const long = state.players.length ? state.maxTurn >= 16 : PENDING_MODE === 'long';
+  if(persona.id === 'ORACLE' && long)
+    return '6턴+ 보유 섹터: 20점당 +1/턴, 호재 발현 시 +5(최대 +12). 14턴+ 보유 = 🚀텐배거 후보 +10/턴. 10턴+ 보유 섹터 악재 흡수 +5(최대 +10)';
+  return persona.always;
 }
 
 function startGame(humanPersonaId){
@@ -2362,7 +2497,7 @@ function phase5_settle(){
       let bd = bondD[sid]  * bet/10;
       // (v5.6) ORACLE 장기보유 손실 흡수 — 5턴+ 보유 섹터의 악재 30% 경감
       //         (장기 논리를 밀어붙인 섹터가 일시적 악재에 덜 흔들리도록)
-      if(p.personaId === 'ORACLE' && (p.betStreak[sid]||0) >= 5){
+      if(p.personaId === 'ORACLE' && (p.betStreak[sid]||0) >= (state.maxTurn >= 16 ? 10 : 5)){
         if(m < 0) m *= 0.7;
         if(e < 0) e *= 0.7;
         if(sl < 0) sl *= 0.7;
@@ -2825,7 +2960,7 @@ function render(){
     const persona = PERSONAS[me.personaId];
     document.getElementById('myBetsPanel').querySelector('h3').textContent = `내 베팅 (P0 · ${persona.id})`;
     document.getElementById('myPrinciple').innerHTML =
-      `<div style="color:var(--acc)">🔷 ${persona.always}</div>
+      `<div style="color:var(--acc)">🔷 ${alwaysText(persona)}</div>
        <div style="color:var(--red)">🚫 ${persona.ban}</div>
        <div style="color:var(--green)">⭐ ${persona.boon}</div>
        <div style="color:var(--gold)">🎯 ${questText(persona)}</div>`;
@@ -3392,7 +3527,7 @@ function bootstrap(){
     <div class="pcard ${p.color}" onclick="startGame('${p.id}')">
       <h4>${p.name}</h4>
       <div class="sub">${p.sub}</div>
-      <div class="pp always">🔷 ${p.always}</div>
+      <div class="pp always">🔷 ${alwaysText(p)}</div>
       <div class="pp ban">🚫 ${p.ban}</div>
       <div class="pp boon">⭐ ${p.boon}</div>
       <div class="pp quest">🎯 ${questText(p)}</div>
@@ -3447,8 +3582,11 @@ function validateGameData(){
    runAutoTest(40): 4명 전원 봇으로 8턴 완주하는 클린 밸런스 테스트.
    (이전 버전은 P0(인간)가 베팅하지 않아 1명이 비활성 → 밸런스 측정 부적합)
    매 게임 4 페르소나(ORACLE/MACRO_KING/HUNTER/QUANT)가 모두 참가한다. */
-function runAutoTest(n){
+function runAutoTest(n, mode){
   n = n || 40;
+  // (v5.9) mode: 'normal'(8턴) | 'long'(16턴) — 미지정 시 현재 PENDING_MODE
+  const prevMode = PENDING_MODE;
+  if(mode && MODE_DEF[mode]) PENDING_MODE = mode;
   const personaIds = Object.keys(PERSONAS);
   const stats = {};
   for(const pid of personaIds) stats[pid] = {games:0, scoreSum:0, wins:0, rankSum:0, nan:0, riskSum:0, questHit:0};
@@ -3465,7 +3603,7 @@ function runAutoTest(n){
       startGame(personaIds[0]);
       for(const p of state.players) p.isHuman = false;
       let guard = 0;
-      while(state.turn <= 8 && guard < 200){
+      while(state.turn <= state.maxTurn && guard < 500){
         guard++;
         // phase index: 0 report,1 betting,2 macro,3 event,4 settle,5 fg,6 next
         switch(state.phase){
@@ -3485,7 +3623,7 @@ function runAutoTest(n){
           case 5: phase7_next(); break;
           default: guard = 999; break;
         }
-        if(state.turn > 8) break;
+        if(state.turn > state.maxTurn) break;
       }
       // endGame() (called inside phase7_next at turn>8) computes p.totalScore.
       // Fallback compute if it didn't run (e.g. guard tripped).
@@ -3510,11 +3648,12 @@ function runAutoTest(n){
     }
   }
 
-  // restore logRow
+  // restore logRow & mode
   try { if(_logRow) window.logRow = _logRow; } catch(e){}
+  PENDING_MODE = prevMode;
 
   const totalGames = completed;
-  console.log(`=== runAutoTest(${n}) — 완주 ${completed}판, NaN ${nanHits} (4봇 클린 테스트) ===`);
+  console.log(`=== runAutoTest(${n}) [${state.maxTurn}턴] — 완주 ${completed}판, NaN ${nanHits} (4봇 클린 테스트) ===`);
   const summary = {};
   for(const pid of personaIds){
     const s = stats[pid];
