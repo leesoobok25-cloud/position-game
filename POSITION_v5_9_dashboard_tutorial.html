@@ -494,6 +494,21 @@
   #tutTip .prog{font-size:10px;color:var(--mut);margin-right:auto}
   #tutTip .btn{padding:5px 12px;font-size:12px}
   #tutTip .btn.alt{font-size:10px;padding:5px 8px}
+
+  /* === Mobile Tab Layout (≤768px) === */
+  #mobileTabs{display:none}
+  @media(max-width:768px){
+    .grid-mid{display:flex!important;flex-direction:column!important}
+    .grid-mid > div{display:none}
+    .grid-mid > div.mob-active{display:flex!important;flex-direction:column}
+    #mobileTabs{display:flex;gap:0;border-bottom:2px solid var(--line);margin:0 0 8px;overflow-x:auto;scrollbar-width:none}
+    #mobileTabs::-webkit-scrollbar{display:none}
+    .mob-tab{flex:1;min-width:60px;padding:8px 6px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;color:var(--mut);border-bottom:3px solid transparent;background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap}
+    .mob-tab.active{color:var(--acc);border-bottom-color:var(--acc)}
+    .grid{padding:6px!important}
+    .bet-grid{grid-template-columns:1fr!important}
+    .players.players-row{grid-template-columns:1fr 1fr!important}
+  }
 </style>
 </head>
 <body>
@@ -550,11 +565,18 @@
     <div id="narrative"></div>
   </div>
 
+  <!-- Mobile Tab Bar (hidden on desktop) -->
+  <div id="mobileTabs">
+    <button class="mob-tab active" onclick="switchMobTab(0)">📊 지표</button>
+    <button class="mob-tab" onclick="switchMobTab(1)">🏦 섹터/로그</button>
+    <button class="mob-tab" onclick="switchMobTab(2)">💰 베팅</button>
+  </div>
+
   <!-- MID ROW: 지표+플레이어 | 로그 | 베팅 -->
-  <div class="grid-mid">
+  <div class="grid-mid" id="gridMid">
 
     <!-- MID-LEFT: 지표 + 플레이어 -->
-    <div>
+    <div class="mob-active">
       <div class="panel" id="panelCycle">
         <h3>사이클 (계절)</h3>
         <div class="track"><div id="cycleMk" class="mk"></div></div>
@@ -1977,7 +1999,7 @@ function rollSentimentDice(){
    B안: 매크로카드는 사이클만 직접 조정. 인플레/금리는 사이클에서 자동 파생.
    inflation = clamp(2.0 + (cycle-50)*0.08, -1, 6.5)   range ~ -1% .. 6.5%
    rate      = clamp(2.0 + (cycle-50)*0.06, 0.25, 5.5) range ~ 0.25% .. 5.5%
-   임계점 (>4% 또는 <1%) 도달 시 phase5_settle 에서 섹터별 임계점 효과 추가. */
+   임계점 (≥3% 또는 ≤1.5%) 도달 시 phase5_settle 에서 섹터별 임계점 효과 추가. */
 function deriveInflRate(){
   const c = state.cycle;
   state.inflation = macroBaselineInfl(c);
@@ -2001,7 +2023,7 @@ function shiftCyclePreserveShock(delta){
 function activeThresholds(cycle){
   const infl = macroBaselineInfl(cycle);
   const rate = macroBaselineRate(cycle);
-  return (infl>=4?'I+':'') + (infl<=1?'I-':'') + (rate>=4?'R+':'') + (rate<=1?'R-':'');
+  return (infl>=3?'I+':'') + (infl<=1.5?'I-':'') + (rate>=3?'R+':'') + (rate<=1.5?'R-':'');
 }
 
 /* === BOND interest & capital — amplified variance (v5.5 Stage A) ===
@@ -2026,7 +2048,7 @@ function bondPerTen(){
   if(state.cycle < 25) per += 3;
   else if(state.cycle > 75) per -= 3;
   // 4) high inflation drag still applies (real yield erosion)
-  if(state.inflation >= 4) per -= 2;
+  if(state.inflation >= 3) per -= 2;
   return per;
 }
 
@@ -2036,7 +2058,7 @@ function bondPerTen(){
 function applyMacroThresholds(macroD){
   const out = {};
 
-  if(state.inflation >= 4.5){
+  if(state.inflation >= 3.5){
     out.TECH = -2;
     out.BIO = -2;
     out.CONS = -2;
@@ -2045,7 +2067,7 @@ function applyMacroThresholds(macroD){
     out.MATE = +2;
     out.ENG = +2;
     out.FIN = +1;
-  } else if(state.inflation <= 1.0){
+  } else if(state.inflation <= 1.5){
     out.BIO = +2;
     out.TECH = +1;
     out.BOND = +2;
@@ -2053,13 +2075,13 @@ function applyMacroThresholds(macroD){
     out.MATE = -1;
   }
 
-  if(state.rate >= 4.5){
+  if(state.rate >= 3.5){
     out.TECH = (out.TECH||0) - 3;
     out.BIO = (out.BIO||0) - 3;
     out.BOND = (out.BOND||0) - 3;
     out.FIN = (out.FIN||0) + 2;
     out.UTIL = (out.UTIL||0) - 1;
-  } else if(state.rate <= 1.0){
+  } else if(state.rate <= 1.5){
     out.TECH = (out.TECH||0) + 3;
     out.BIO = (out.BIO||0) + 2;
     out.BOND = (out.BOND||0) + 2;
@@ -3317,9 +3339,9 @@ function buildTurnReview(p, pl, sectorDelta, dampingMul){
     tip = `사이클 <b>${state.cycle}(여름·과열)</b> — 평균회귀 하방 압력에 대비하세요`;
   } else if(state.cycle <= 25){
     tip = `사이클 <b>${state.cycle}(겨울·바닥권)</b> — 회복 국면 베팅 기회를 살펴보세요`;
-  } else if(state.rate >= 4){
+  } else if(state.rate >= 3){
     tip = `금리 <b>${state.rate.toFixed(1)}%(긴축)</b> — 성장주·BOND 부담, FIN 상대 유리`;
-  } else if(state.inflation >= 4){
+  } else if(state.inflation >= 3){
     tip = `인플레 <b>${state.inflation.toFixed(1)}%(고인플레)</b> — ENG·MATE 유리, 성장주 부담`;
   } else {
     tip = `리포트는 카드 추첨 확률을 실제로 바꿉니다 — 다음 리포트가 가리키는 방향에 베팅을 맞춰보세요`;
@@ -3491,6 +3513,9 @@ function buildFinalReport(p){
       <div style="margin-top:8px;padding:8px 10px;border-left:3px solid var(--acc);background:#0b1622;border-radius:0 4px 4px 0">
         <b style="color:var(--acc)">💡 운용 총평 (Analyst View)</b><br>${comments.map(c=>`· ${c}`).join('<br>')}
       </div>
+      <div style="margin-top:12px;padding:8px 10px;background:#0a0a0a;border-radius:6px;border:1px solid #333;font-size:12px;color:#666;text-align:center;line-height:1.6">
+        ⚠️ 본 리포트는 게임 내 시뮬레이션 결과이며 실제 투자 조언이 아닙니다.<br>실제 투자는 원금 손실 위험이 있으며, 투자 결정은 본인의 책임입니다.
+      </div>
     </div>
   </details>`;
 }
@@ -3608,12 +3633,12 @@ function render(){
   document.getElementById('rateN').textContent = state.rate.toFixed(2) + '%';
   // Threshold badges
   const inflBadge = document.getElementById('inflBadge');
-  if(state.inflation >= 4) inflBadge.innerHTML = '<span style="color:#ef4444">⚠️ 고인플레</span>';
-  else if(state.inflation <= 1) inflBadge.innerHTML = '<span style="color:#3b82f6">⚠️ 디플레</span>';
+  if(state.inflation >= 3) inflBadge.innerHTML = '<span style="color:#ef4444">⚠️ 고인플레</span>';
+  else if(state.inflation <= 1.5) inflBadge.innerHTML = '<span style="color:#3b82f6">⚠️ 디플레</span>';
   else inflBadge.innerHTML = '';
   const rateBadge = document.getElementById('rateBadge');
-  if(state.rate >= 4) rateBadge.innerHTML = '<span style="color:#ef4444">⚠️ 긴축</span>';
-  else if(state.rate <= 1) rateBadge.innerHTML = '<span style="color:#10b981">⚠️ 완화</span>';
+  if(state.rate >= 3) rateBadge.innerHTML = '<span style="color:#ef4444">⚠️ 긴축</span>';
+  else if(state.rate <= 1.5) rateBadge.innerHTML = '<span style="color:#10b981">⚠️ 완화</span>';
   else rateBadge.innerHTML = '';
   // tracks: infl 0-10%, rate 0-10%
   // marker: 0~6.5 → 0~100%
@@ -3885,7 +3910,7 @@ function reportInsight(r){
   if(!r) return '';
   if(insightHidden()){
     return `<div style="margin-top:8px;text-align:right">
-      <button class="btn alt" style="font-size:14px;padding:4px 10px" onclick="toggleInsight()">📚 리포트 해설 보기</button>
+      <button class="btn" style="font-size:14px;padding:6px 14px;background:var(--acc);color:#fff;border:none;border-radius:6px;cursor:pointer" onclick="toggleInsight()">📚 애널리스트 노트 펼치기 ▼</button>
     </div>`;
   }
   // (v1.1) 애널리스트 노트 스타일 — 투자의견/유망 섹터/리스크 요인/근거를 리서치 어조로 서술
@@ -3954,7 +3979,7 @@ function reportInsight(r){
 
   return `<div class="card" style="margin-top:8px;border-left:3px solid var(--acc)">
     <div class="ttl" style="display:flex;justify-content:space-between;align-items:center">📚 애널리스트 노트 <span style="font-size:14px;color:var(--mut);font-weight:400">— 하우스 뷰 · 섹터 전략 · 리스크 요인</span>
-      <button class="btn alt" style="font-size:14px;padding:2px 8px" onclick="toggleInsight()">숨기기</button></div>
+      <button class="btn alt" style="font-size:14px;padding:4px 10px;border:1px solid var(--mut);border-radius:6px;color:var(--mut);cursor:pointer" onclick="toggleInsight()">📚 노트 접기 ▲</button></div>
     <div class="desc" style="line-height:1.7">
       <b style="color:var(--acc)">투자의견 요약</b><br>
       ${stance}. 본 리포트는 ${deckView}한다.${themeLine} 리포트는 예언이 아니라 <b>카드 추첨 확률의 가중치</b>다 — 시장이 그 방향으로 기울 가능성이 높아졌다는 의미로 읽어야 한다.<br>
@@ -4339,7 +4364,7 @@ const TUT_STEPS = [
     text:'플레이어들이 돈을 벌면 탐욕으로, 잃으면 공포로 움직입니다. <b>80 이상(극탐욕)</b>이면 다음 턴 하방 매크로 후보 2장 중 1장을 직접 선택하게 되고, <b>20 이하(극공포)</b>면 상방 후보가 나옵니다 — 극단은 평균회귀의 신호입니다!',
     next:true },
   { sel:'#panelInflRate', title:'🔥 인플레이션 / 기준금리',
-    text:'두 지표는 사이클을 따라가되 매크로 카드의 충격이 더해집니다. <b>인플레 ≥4%/≤1%</b>, <b>금리 ≥4%/≤1%</b> 임계점을 넘으면 정산 때 섹터별 추가 효과가 붙습니다 (예: 긴축 → 성장주 부담, 고인플레 → 에너지·소재 유리).',
+    text:'두 지표는 사이클을 따라가되 매크로 카드의 충격이 더해집니다. <b>인플레 ≥3%/≤1.5%</b>, <b>금리 ≥3%/≤1.5%</b> 임계점을 넘으면 정산 때 섹터별 추가 효과가 붙습니다 (예: 긴축 → 성장주 부담, 고인플레 → 에너지·소재 유리).',
     next:true },
   { sel:'#panelOmen', title:'🔮 Omen 게이지 (위험 누적)',
     text:'지정학·신용·인플레·침체 4종의 위험 누적도입니다. 카드가 나올 때마다 쌓이고 <b>3에 도달하면 다음 턴 해당 위기 매크로가 강제 발동</b>되며 3~4턴 지속되는 장기 레짐이 시작됩니다. 2 이상이면 경고와 대피 섹터 힌트가 표시돼요.',
@@ -4350,8 +4375,11 @@ const TUT_STEPS = [
   { sel:'#panelPlayers', title:'👥 플레이어와 전략 카드',
     text:'당신은 <b>P0(나)</b>, 나머지는 다른 페르소나의 봇 3명입니다. 각자 cash·자산·손익이 보이고, 이름 아래 <b>전략 카드 3장</b>은 게임당 1회씩 베팅 단계에서 클릭해 사용합니다.',
     next:true },
-  { sel:'#myBetsPanel', title:'🎯 HUNTER의 원칙',
-    text:'페르소나마다 4가지 원칙이 있습니다.<br>🔷 <b>상시</b>: 30점+ 베팅 섹터에 호재가 뜨면 +5점<br>🚫 <b>금지</b>: 동시에 4개 이상 섹터 베팅 → -10점<br>⭐ <b>이익</b>: 40점+ 베팅 + 호재 발현 → +3점<br>🎯 <b>도전</b>: 40점+ 섹터에서 호재 3턴 적중 → 종료 시 +20점<br><br>좁고 굵게 베팅하는 스타일이죠. 원칙 위반은 점수와 함께 <b>리스크 토큰</b>(개당 -5점)도 쌓습니다.',
+  { sel:'#myBetsPanel', title:'🎯 HUNTER의 원칙 — 상시 능력',
+    text:'페르소나마다 항상 작동하는 <b>상시 능력</b>이 있습니다.<br><br>🔷 <b>상시</b>: 30점 이상 베팅한 섹터에 호재가 뜨면 매번 <b>+5점</b> 자동 추가 (악재면 -5점)<br>🚫 <b>금지</b>: 동시에 4개 이상 섹터에 베팅하면 <b>-10점</b> 패널티<br>⭐ <b>이익</b>: 40점 이상 집중 + 호재 발현 → 추가 <b>+2점</b><br><br>상시 능력은 카드를 쓰지 않아도 자동으로 발동됩니다. 좁고 굵게 베팅하는 스타일입니다.',
+    next:true },
+  { sel:'#panelPlayers', title:'🃏 HUNTER의 전략 카드',
+    text:'플레이어 카드에서 <b>전략 카드 3장</b>을 게임 중 1회씩 클릭해 사용할 수 있습니다.<br><br>🔥 <b>집중 포화</b>: 이번 턴, 30점+ 섹터에 호재가 나올 때마다 추가 <b>+4점</b><br>📈 <b>한도 확장</b>: 이번 턴 단일 섹터 베팅 한도를 <b>70점</b>으로 확장<br>💸 <b>청산 면제</b>: 이번 턴 베팅 변경 시 <b>거래비용 0</b><br><br>🎯 <b>도전 과제</b>: 40점+ 섹터에서 호재 <b>3턴 이상</b> 적중 → 게임 종료 시 <b>+20점</b><br><br>카드는 베팅 단계에서만 사용할 수 있고 한 번 쓰면 되돌릴 수 없습니다.',
     next:true },
   { sel:'#panelPhase', title:'1단계 — 🎲 주사위와 리포트',
     text:'매 턴은 감성 주사위로 시작합니다. 결과(긍정/부정/중립)가 이번 턴 매크로 카드를 뽑을 <b>덱 2개</b>를 정하고, 📰리포트는 카드 추첨 확률에 <b>실제로 가중치</b>를 줍니다.<br><br>⚠️ 단, <b>리포트는 틀릴 수 있습니다</b>:<br>① 가중치는 확률일 뿐 — ×1.5 가중이라도 <b>반대 방향 카드가 그대로 뽑힐 수</b> 있습니다<br>② 일부 리포트는 <b>함정</b> — 시장이 극단(F&G 80+ 과열 / 25- 공포)일 때 <b>15~25% 확률로 추세가 역전</b>됩니다 (아래 📚해설에 함정 확률이 표시됩니다)<br>③ 실제 투자처럼, 리포트를 맹신하지 말고 Omen·사이클과 <b>교차 검증</b>하세요.',
@@ -4655,6 +4683,14 @@ function runAutoTest(n, mode){
   if(summary.MACRO_KING && summary.MACRO_KING.avgRank > 3.3) console.warn(`[balance] MACRO_KING 평균순위 ${summary.MACRO_KING.avgRank} > 3.3 — 추가 상향 검토`);
   if(summary.QUANT && summary.QUANT.avgRank < 1.8) console.warn(`[balance] QUANT 평균순위 ${summary.QUANT.avgRank} < 1.8 — 추가 너프 검토`);
   return summary;
+}
+
+/* === Mobile Tab Switching === */
+function switchMobTab(idx){
+  const cols = document.querySelectorAll('#gridMid > div');
+  const tabs = document.querySelectorAll('.mob-tab');
+  cols.forEach((c,i) => c.classList.toggle('mob-active', i === idx));
+  tabs.forEach((t,i) => t.classList.toggle('active', i === idx));
 }
 </script>
 </body>
