@@ -123,9 +123,9 @@
   .sec.g-safe    .sec-bar i{background:var(--purple)}
   .sec.crowded   .sec-bar i{background:var(--gold)}
   .sec.jammed    .sec-bar i{background:var(--red)}
-  /* ── 베팅 패널 — 스크롤 없이 전체 노출 (v1.2) ──────────────── */
-  .bet-grid{display:block} /* max-height 제거 */
-  .bet-row{padding:5px 2px;border-bottom:1px dotted #222}
+  /* ── 베팅 패널 — 2열 그리드, 스크롤 없이 전체 노출 ──────────── */
+  .bet-grid{display:grid!important;grid-template-columns:1fr 1fr;gap:0;max-height:none!important;overflow:visible!important}
+  .bet-row{padding:4px 6px;border-bottom:1px dotted #222;border-right:1px dotted #222}
 
   /* players */
   .players{display:grid;grid-template-columns:1fr 1fr;gap:8px}
