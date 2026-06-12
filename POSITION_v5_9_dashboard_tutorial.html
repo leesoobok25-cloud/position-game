@@ -396,6 +396,12 @@
   .tier-up-banner{padding:10px 12px;border-radius:8px;margin:8px 0;
     background:#0b1622;border-left:4px solid var(--gold);font-size:12px;line-height:1.6}
   .tier-up-banner b{color:var(--gold)}
+  /* 탐욕 함정 경고 플래시 */
+  @keyframes trapFlash{0%,100%{box-shadow:none}20%,60%{box-shadow:0 0 0 3px var(--red),0 0 24px 4px #ff000055}40%,80%{box-shadow:0 0 0 2px #ff6600,0 0 12px 2px #ff660044}}
+  .trap-flash{animation:trapFlash 1.2s ease-in-out}
+  /* 베팅 변경 비용 플로팅 */
+  @keyframes costFloat{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-28px)}}
+  .cost-float{position:fixed;pointer-events:none;font-size:13px;font-weight:700;color:var(--red);animation:costFloat .8s ease-out forwards;z-index:9999}
   /* === tier guide panel === */
   .tier-row{display:flex;align-items:center;gap:7px;padding:4px 0;
     border-bottom:1px solid var(--line);font-size:11px}
@@ -1901,7 +1907,14 @@ function drawMacro(){
     if(trap.fgAbove != null && state.fearGreed >= trap.fgAbove) trapReverse = +1;
     else if(trap.fgBelow != null && state.fearGreed <= trap.fgBelow) trapReverse = -1;
   }
-  if(trapReverse !== 0) logRow(`[리포트 함정] F&G ${state.fearGreed} 극단 → 추세 역전 경계 (${trapReverse>0?'하방':'상방'})`, 'ev');
+  if(trapReverse !== 0){
+    logRow(`[리포트 함정] F&G ${state.fearGreed} 극단 → 추세 역전 경계 (${trapReverse>0?'하방':'상방'})`, 'ev');
+    // 탐욕 함정 발동 시 액션 패널 플래시 효과
+    setTimeout(()=>{
+      const el = document.getElementById('panelPhase');
+      if(el){ el.classList.add('trap-flash'); setTimeout(()=>el.classList.remove('trap-flash'), 1300); }
+    }, 200);
+  }
   state._trapFired = trapReverse; // (v1.0) 리포트 복기용
   const card = weightedPick(pool, c => {
     let w = 1;
@@ -2199,7 +2212,7 @@ function evaluatePrinciple(p, ctx){
     }
     // (v5.9) 장기(16턴)에선 상방 한도 +6 → +9 — 이벤트 적중이 늘어나는 만큼
     //        집중형의 보상 천장도 함께 올려 우승률 15% → 25%선 회복
-    hunterDelta = clamp(hunterDelta, -9, state.maxTurn >= 16 ? 8 : 6); // (v5.9c) 장기 10→8: 랜덤 사이클 환경 보정
+    hunterDelta = clamp(hunterDelta, -9, state.maxTurn >= 16 ? 9 : 6); // (v5.9c) 장기 10→9
     if(hunterDelta){ total += hunterDelta; msgs.push(`헌터 상시 ${hunterDelta>=0?'+':''}${hunterDelta}`); }
     // ban: 4+ sectors
     const active = SECTORS.filter(s => (p.bets[s.id]||0) > 0).length;
@@ -3494,12 +3507,11 @@ function endGame(){
     } else if(persona.id === 'QUANT'){
       questOK = p.quintBetTurns >= questReq().quant;
     }
-    p.questBonus = questOK ? 20 : 0;
+    p.questBonus = questOK ? (persona.id === 'MACRO_KING' && state.maxTurn < 16 ? 17 : 20) : 0;
     // (v5.9c) QUANT 리스크 0개 종료 보너스 — '덜 잃는 운용'을 우승력으로 환산
-    p.zeroRiskBonus = (persona.id === 'QUANT' && p.risk === 0) ? (state.maxTurn >= 16 ? 5 : 3) : 0;
-    // (v5.10) HUNTER 16턴 한정 '테마 완주 보너스' — 평균점수 최고인데 우승 전환력이 약한 구조 보정.
-    //         마지막 4턴 중 2턴+ 40점+ 섹터 호재 적중 시 +5
-    p.finishBonus = (persona.id === 'HUNTER' && state.maxTurn >= 16 && (p.lateCatalystHits||0) >= 2) ? 5 : 0;
+    p.zeroRiskBonus = (persona.id === 'QUANT' && p.risk === 0) ? (state.maxTurn >= 16 ? 4 : 3) : 0;
+    // (v5.10) HUNTER 16턴 한정 '테마 완주 보너스'
+    p.finishBonus = (persona.id === 'HUNTER' && state.maxTurn >= 16 && (p.lateCatalystHits||0) >= 2) ? 6 : 0;
     // (v5.7) MACRO_KING은 국면을 적극 읽다가 리스크를 쉽게 얻으므로 첫 리스크 토큰 1개 면제
     // (v5.9) 16턴 장기전에서는 리스크 누적이 2.5개+ 까지 커져 면제가 과도한 우위가 됨 → 8턴 한정
     const effRisk = (persona.id === 'MACRO_KING' && state.maxTurn < 16) ? Math.max(0, p.risk - 1) : p.risk;
@@ -3726,7 +3738,7 @@ function render(){
         // 비활성: -는 현재값 부족, +는 (섹터 상한 초과 || 남은 예산 부족)
         const dis = plus ? (cur + d > perMax || d > remain) : (cur + d < 0);
         return `<button class="tok ${plus?'plus':'minus'}" ${dis?'disabled':''} `
-             + `onclick="bumpBet('${s.id}',${d})">${plus?'+':'−'}${Math.abs(d)}</button>`;
+             + `onclick="bumpBet('${s.id}',${d},event)">${plus?'+':'−'}${Math.abs(d)}</button>`;
       };
       return `<div class="bet-row">${head}
           <div class="bet-tokens">${tok(-10)}${tok(-5)}${tok(-1)}${tok(1)}${tok(5)}${tok(10)}</div>
@@ -4186,14 +4198,29 @@ function totalAbsChange(p){
   return t;
 }
 /* (v5.8) 토큰 버튼 — sid 베팅을 delta만큼 증감 (예산/상한 클램프 후 전체 렌더) */
-function bumpBet(sid, delta){
+function bumpBet(sid, delta, evt){
   const me = state.players[state.myId];
-  if(state.phase !== 1) return; // 베팅 단계에서만
+  if(state.phase !== 1) return;
   const perMax = me.activeStrategy === 'EXPAND' ? 70 : 50;
   const budget = me.cash + Object.values(me.prevBets).reduce((a,b)=>a+b,0);
   const others = Object.values(me.bets).reduce((a,b)=>a+b,0) - (me.bets[sid]||0);
-  const sectorMax = Math.min(perMax, Math.max(0, budget - others)); // 남은 예산 반영
-  me.bets[sid] = clamp((me.bets[sid]||0) + delta, 0, sectorMax);
+  const sectorMax = Math.min(perMax, Math.max(0, budget - others));
+  const before = me.bets[sid]||0;
+  me.bets[sid] = clamp(before + delta, 0, sectorMax);
+  const actual = me.bets[sid] - before;
+  // 변경비용 플로팅 애니메이션 (1턴 이후, 실제 변동 있을 때만)
+  if(state.turn > 1 && actual !== 0 && evt){
+    const cost = Math.ceil(Math.abs(actual) / 10);
+    if(cost > 0){
+      const f = document.createElement('div');
+      f.className = 'cost-float';
+      f.textContent = `-${cost} cash`;
+      f.style.left = (evt.clientX - 20) + 'px';
+      f.style.top  = (evt.clientY - 10) + 'px';
+      document.body.appendChild(f);
+      setTimeout(()=>f.remove(), 850);
+    }
+  }
   render();
 }
 function setBet(sid, val){
