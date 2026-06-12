@@ -4024,7 +4024,7 @@ function renderAction(){
           ${ev.narrative?`<div class="desc" style="font-size:14px;color:var(--mut)">${ev.narrative}</div>`:''}
           ${omenTxt(ev)}
           <div class="badge-row">${tagChips(ev.tags, 3)}</div>
-          ${voterChips(key)}
+          ${chosen ? voterChips(key) : ''}
         </div>`;
     };
     const voteA = Object.values(state.eventVotes).filter(v=>v==='A').length;
