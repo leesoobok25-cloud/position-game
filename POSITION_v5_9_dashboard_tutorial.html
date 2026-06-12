@@ -1945,7 +1945,7 @@ function evaluatePrinciple(p, ctx){
     }
     // (v5.6) ① 매크로 방향 정렬 — 확장 카드(+)에 위험선호, 수축 카드(-)에 방어 정렬
     // (v5.9) 장기(16턴)는 +10 → +6: 매 턴 발동 가능한 보너스라 16턴 누적 시 우승률 44%까지 상승
-    const mkAlign = state.maxTurn >= 16 ? 6 : 10;
+    const mkAlign = state.maxTurn >= 16 ? 5 : 10; // (v5.9b) 6→5: 리스크 면제 제거 후에도 29.8% 잔존
     if(macroMove > 0 && riskOn/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 확장정렬 +${mkAlign}`); }
     else if(macroMove < 0 && riskOff/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 수축정렬 +${mkAlign}`); }
     // (v5.7) 인플레 정렬 — 인플레 상승 카드에 가치/에너지/소재 비중
@@ -1988,7 +1988,7 @@ function evaluatePrinciple(p, ctx){
     }
     // (v5.9) 장기(16턴)에선 상방 한도 +6 → +9 — 이벤트 적중이 늘어나는 만큼
     //        집중형의 보상 천장도 함께 올려 우승률 15% → 25%선 회복
-    hunterDelta = clamp(hunterDelta, -9, state.maxTurn >= 16 ? 9 : 6); // (v5.8) 상방 +9→+6 (총변경폭 거래비용이 집중형을 상대적 우대 → 상쇄)
+    hunterDelta = clamp(hunterDelta, -9, state.maxTurn >= 16 ? 10 : 6); // (v5.9b) 장기 상방 9→10 (MK 너프 후 20.1% 보정)
     if(hunterDelta){ total += hunterDelta; msgs.push(`헌터 상시 ${hunterDelta>=0?'+':''}${hunterDelta}`); }
     // ban: 4+ sectors
     const active = SECTORS.filter(s => (p.bets[s.id]||0) > 0).length;
@@ -2024,6 +2024,11 @@ function evaluatePrinciple(p, ctx){
         const qb = state.maxTurn >= 16 ? 12 : 7;
         total += qb; msgs.push(`퀀트분산이익 +${qb}`);
       }
+    }
+    // (v5.9) 16턴 한정 후반 결정력 보강: 안정적 2~3위에 머무는 문제(우승률 20.7%)
+    //        → 10턴 이후 5섹터+ 유지 & 흑자 턴마다 +2 — '꾸준한 장기 분산 운용'을 우승력으로 환산
+    if(state.maxTurn >= 16 && state.turn > 10 && active >= 5 && ctx && ctx.turnPL > 0){
+      total += 2; msgs.push('장기분산 결정력 +2');
     }
     // (v5.6) QUANT 약점 — '안정적이지만 폭발력은 약함'으로. 안정성과 수익성을 분리한다.
     // ① 과도한 분산 페널티 (7섹터+)
@@ -2232,13 +2237,14 @@ function setGameMode(m){
 /* (v5.9) 장기전 퀘스트 기준 — 16턴에서 그대로면 너무 쉬워지는 항목만 상향 */
 function questReq(){
   return state.maxTurn >= 16
-    ? {hunter:5, quant:10, oracle:8}
-    : {hunter:3, quant:6,  oracle:6};
+    ? {hunter:5, quant:10, oracle:8, mk:3}
+    : {hunter:3, quant:6,  oracle:6, mk:2};
 }
 function questText(persona){
   // 게임 중에는 실제 모드, 시작 전 모달에서는 선택 중인 모드 기준으로 표시
   const long = state.players.length ? state.maxTurn >= 16 : PENDING_MODE === 'long';
-  const r = long ? {hunter:5, quant:10, oracle:8} : {hunter:3, quant:6, oracle:6};
+  const r = long ? {hunter:5, quant:10, oracle:8, mk:3} : {hunter:3, quant:6, oracle:6, mk:2};
+  if(persona.id === 'MACRO_KING') return `사이클 극단에서 정렬 ${r.mk}회 이상 성공 → 종료 시 +20점`;
   if(persona.id === 'ORACLE') return `한 섹터를 ${r.oracle}턴 이상 연속 보유 + 그 섹터 누적 손익 양수 → 종료 시 +20점`;
   if(persona.id === 'HUNTER') return `40점+ 베팅 섹터에서 호재 ${r.hunter}턴 이상 적중 → 종료 시 +20점`;
   if(persona.id === 'QUANT')  return `${r.quant}턴 이상에서 5섹터 동시 베팅 유지 → 종료 시 +20점`;
@@ -2908,7 +2914,8 @@ function endGame(){
     } else if(persona.id === 'MACRO_KING'){
       // (v5.6) 기존 '4계절 모두 경험'은 8턴에서 너무 어려워 거의 작동 안 함.
       //         '사이클 극단(≥75/≤25)에서 정렬 2회 이상'으로 변경 — 플레이어가 통제 가능.
-      questOK = (p.mkExtremeAligns||0) >= 2;
+      // (v5.9) 16턴에서는 기회가 2배이므로 3회로 상향
+      questOK = (p.mkExtremeAligns||0) >= questReq().mk;
     } else if(persona.id === 'HUNTER'){
       // (v5.8) 재설계: 40점 이상 베팅한 섹터에서 호재(상승) 3턴 이상 적중
       //         — 봇 단일 섹터 캡(45) 환경에서도 작동하되, 너무 쉽게 달성되지 않도록 3회
@@ -2918,7 +2925,8 @@ function endGame(){
     }
     p.questBonus = questOK ? 20 : 0;
     // (v5.7) MACRO_KING은 국면을 적극 읽다가 리스크를 쉽게 얻으므로 첫 리스크 토큰 1개 면제
-    const effRisk = (persona.id === 'MACRO_KING') ? Math.max(0, p.risk - 1) : p.risk;
+    // (v5.9) 16턴 장기전에서는 리스크 누적이 2.5개+ 까지 커져 면제가 과도한 우위가 됨 → 8턴 한정
+    const effRisk = (persona.id === 'MACRO_KING' && state.maxTurn < 16) ? Math.max(0, p.risk - 1) : p.risk;
     p.riskPenalty = effRisk * 5;
     p.totalScore = p.cash + Object.values(p.bets).reduce((a,b)=>a+b,0) + p.questBonus - p.riskPenalty;
   }
