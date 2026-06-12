@@ -1299,7 +1299,7 @@ const SECTOR_EVENTS = [
 
   // BIO
   {id:'E_BIO_LICENSE_OUT', name:'대형 기술수출', main:'BIO', mainEff:+6, related:{TECH:+1, FIN:+1}, omen:{}, tags:['bio','mna'], narrative:'빅파마와의 기술수출 계약이 바이오 섹터 프리미엄을 높이고, 딜 주관 수수료 기대가 금융에도 온기를 준다.'},
-  {id:'E_BIO_PHASE2_GOOD', name:'임상 2상 유효성 확인', main:'BIO', mainEff:+3, related:{}, omen:{}, tags:['bio','clinical'], narrative:'중간 임상 데이터가 플랫폼 가치 재평가를 만든다.'},
+  {id:'E_BIO_PHASE2_GOOD', name:'임상 2상 유효성 확인', main:'BIO', mainEff:+3, related:{TECH:+1, FIN:+1}, omen:{}, tags:['bio','clinical'], narrative:'중간 임상 데이터가 플랫폼 가치 재평가를 만들고, 성장주·금융 섹터에도 리스크온 온기를 준다.'},
   {id:'E_BIO_DRUG_PRICE', name:'약가 규제 압박', main:'BIO', mainEff:-3, related:{FIN:+1}, omen:{}, tags:['bio','policy'], narrative:'약가 인하와 보험 적용 기준 강화 우려가 커진다.'},
   {id:'E_BIO_PHASE3_FAIL', name:'임상 3상 실패', main:'BIO', mainEff:-6, related:{TECH:-1, FIN:-1, BOND:+1}, omen:{cred:1}, tags:['bio','clinical'], narrative:'대형 파이프라인 실패가 섹터 전반의 리스크 프리미엄을 높이고, 위험회피가 안전자산 선호로 이어진다.'},
 
@@ -2156,7 +2156,7 @@ function evaluatePrinciple(p, ctx){
     }
     // (v5.6) ① 매크로 방향 정렬 — 확장 카드(+)에 위험선호, 수축 카드(-)에 방어 정렬
     // (v5.9) 장기(16턴)는 +10 → +6: 매 턴 발동 가능한 보너스라 16턴 누적 시 우승률 44%까지 상승
-    const mkAlign = state.maxTurn >= 16 ? 5 : 7; // (v5.9c) 10→7: 랜덤 사이클 시작 보정
+    const mkAlign = state.maxTurn >= 16 ? 4 : 7; // (v5.9c) 장기 5→4: MACRO_KING 16턴 과강 보정
     if(macroMove > 0 && riskOn/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 확장 맞춤(성장·경기 비중확대) +${mkAlign}`); }
     else if(macroMove < 0 && riskOff/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 수축 맞춤(방어·안전자산 비중확대) +${mkAlign}`); }
     // (v5.7) 인플레 맞춤 — 인플레 상승 카드에 가치/에너지/소재 비중
@@ -2208,7 +2208,7 @@ function evaluatePrinciple(p, ctx){
     // (v5.8) 도전(catalyst)이 사실상 같은 조건을 누적 보상하므로 상시 보너스는 +10→+5 하향
     for(const sid of SECTORS.map(s=>s.id)){
       if((p.bets[sid]||0) >= 40 && ctx && ctx.sectorDelta && (ctx.sectorDelta[sid]||0) > 0){
-        total += 3; msgs.push('집중호재 +3'); break;
+        total += 2; msgs.push('집중호재 +2'); break;
       }
     }
   }
@@ -3130,6 +3130,12 @@ function phase5_settle(){
     }
   }
 
+  // Record score snapshot for sparkline chart
+  for(const p of state.players){
+    if(!p.scoreHistory) p.scoreHistory = [];
+    p.scoreHistory.push(p.cash + Object.values(p.bets).reduce((a,b)=>a+b,0));
+  }
+
   // (A) 인과 요약 — 인간 플레이어의 이번 턴 MVP / 최악 섹터
   const meP = state.players[state.myId];
   if(meP && meP.lastSectorPL){
@@ -3146,6 +3152,7 @@ function phase5_settle(){
   // 9) Apply turn PL to cash
   for(const p of state.players){
     p.lastTurnPL = turnPL[p.id];
+    if(!p.scoreHistory) p.scoreHistory = [];
     let pl = turnPL[p.id];
     if(pl >= 0){
       p.cash += pl;
@@ -3488,6 +3495,8 @@ function endGame(){
       questOK = p.quintBetTurns >= questReq().quant;
     }
     p.questBonus = questOK ? 20 : 0;
+    // (v5.9c) QUANT 리스크 0개 종료 보너스 — '덜 잃는 운용'을 우승력으로 환산
+    p.zeroRiskBonus = (persona.id === 'QUANT' && p.risk === 0) ? (state.maxTurn >= 16 ? 5 : 3) : 0;
     // (v5.10) HUNTER 16턴 한정 '테마 완주 보너스' — 평균점수 최고인데 우승 전환력이 약한 구조 보정.
     //         마지막 4턴 중 2턴+ 40점+ 섹터 호재 적중 시 +5
     p.finishBonus = (persona.id === 'HUNTER' && state.maxTurn >= 16 && (p.lateCatalystHits||0) >= 2) ? 5 : 0;
@@ -3495,7 +3504,7 @@ function endGame(){
     // (v5.9) 16턴 장기전에서는 리스크 누적이 2.5개+ 까지 커져 면제가 과도한 우위가 됨 → 8턴 한정
     const effRisk = (persona.id === 'MACRO_KING' && state.maxTurn < 16) ? Math.max(0, p.risk - 1) : p.risk;
     p.riskPenalty = effRisk * 5;
-    p.totalScore = p.cash + Object.values(p.bets).reduce((a,b)=>a+b,0) + p.questBonus + p.finishBonus - p.riskPenalty;
+    p.totalScore = p.cash + Object.values(p.bets).reduce((a,b)=>a+b,0) + p.questBonus + p.finishBonus + p.zeroRiskBonus - p.riskPenalty;
   }
   const sorted = [...state.players].sort((a,b) => b.totalScore - a.totalScore);
 
@@ -3532,10 +3541,30 @@ function endGame(){
     const isHuman = humanP && p.id === humanP.id;
     html += `<div style="padding:8px;background:var(--panel2);border-radius:6px;margin:6px 0;border-left:4px solid var(--p${p.id})${isHuman?';outline:1px solid var(--acc)':''}">`;
     html += `<b>${i+1}위 · ${p.name} (${p.personaId})</b>${isHuman?' <span style="font-size:14px;color:var(--acc)">[나]</span>':''} — ${p.totalScore}점<br>`;
-    html += `<span style="font-size:14px;color:var(--mut)">cash ${p.cash} + 베팅 ${Object.values(p.bets).reduce((a,b)=>a+b,0)} + 도전 ${p.questBonus}${p.finishBonus?` + 테마완주 ${p.finishBonus}`:''} - 리스크 ${p.riskPenalty}</span>`;
+    html += `<span style="font-size:14px;color:var(--mut)">cash ${p.cash} + 베팅 ${Object.values(p.bets).reduce((a,b)=>a+b,0)} + 도전 ${p.questBonus}${p.finishBonus?` + 테마완주 ${p.finishBonus}`:''}${p.zeroRiskBonus?` + 무결점 ${p.zeroRiskBonus}`:''} - 리스크 ${p.riskPenalty}</span>`;
     html += '</div>';
   });
   html += '</div>';
+  // (v5.9c) 자산 성장 스파크라인 차트
+  if(humanP && (humanP.scoreHistory||[]).length > 0){
+    const hist = humanP.scoreHistory;
+    const maxV = Math.max(...hist, 100);
+    const minV = Math.min(...hist, 0);
+    const range = maxV - minV || 1;
+    const bars = hist.map((v,i) => {
+      const h = Math.max(4, Math.round(((v-minV)/range)*60));
+      const col = v >= 100 ? 'var(--green)' : 'var(--red)';
+      return `<div title="T${i+1}: ${v}점" style="flex:1;height:${h}px;background:${col};border-radius:2px 2px 0 0;min-width:8px"></div>`;
+    }).join('');
+    html += `<div style="margin-top:10px;padding:10px;background:#0d1117;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:13px;color:var(--mut);margin-bottom:6px">📈 자산 성장 곡선 (시작: 100점 기준)</div>
+      <div style="display:flex;gap:3px;align-items:flex-end;height:68px;padding-bottom:2px">${bars}</div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:3px">
+        <span>T1</span><span>T${hist.length}</span>
+        <span style="margin-left:auto">최고 <b style="color:var(--green)">${maxV}</b> / 최저 <b style="color:var(--red)">${minV}</b></span>
+      </div>
+    </div>`;
+  }
   html += buildFinalReport(humanP); // (v1.0) 상세 투자 결과 리포트
   document.getElementById('endTitle').textContent =
     `${state.maxTurn}턴 종료 (${state.maxTurn>=16?'장기':'일반'} 게임) — 최종 결과`;
@@ -3903,7 +3932,7 @@ function reportInsight(r){
     <div class="desc" style="line-height:1.7">
       <b style="color:var(--acc)">투자의견 요약</b><br>
       ${stance}. 본 리포트는 ${deckView}한다.${themeLine} 리포트는 예언이 아니라 <b>카드 추첨 확률의 가중치</b>다 — 시장이 그 방향으로 기울 가능성이 높아졌다는 의미로 읽어야 한다.<br>
-      ${favLines.length ? `<div style="margin-top:6px"><b style="color:var(--green)">유망 섹터 (비중확대 후보)</b><br>${favLines.map(l=>`· ${l}`).join('<br>')}</div>` : ''}
+      ${favLines.length ? `<div style="margin-top:6px"><b style="color:${favColor}">${isPos?'유망 섹터 (비중확대 후보)':isNeg?'리스크 집중 섹터 (경계 후보)':isCon?'역발상 관찰 섹터':'관찰 섹터 (방향 확인 후보)'}</b><br>${favLines.map(l=>`· ${l}`).join('<br>')}</div>` : ''}
       ${hurtLines.length ? `<div style="margin-top:6px"><b style="color:var(--red)">경계 섹터 (비중축소·소외 후보)</b><br>${hurtLines.map(l=>`· ${l}`).join('<br>')}</div>` : ''}
       <div style="margin-top:6px"><b>판단 근거</b><br>
       · 표기된 배수만큼 해당 카드가 추첨 풀에서 더 자주 뽑힌다 (×1.5 = 출현 확률 1.5배).<br>
