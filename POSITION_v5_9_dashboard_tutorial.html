@@ -69,9 +69,12 @@
   .grp-cyclical .row{grid-template-columns:repeat(3,1fr)}
   .grp-value .row{grid-template-columns:repeat(2,1fr)}
   .grp-def .row,.grp-safe .row{grid-template-columns:1fr}
-  /* 하단 전폭 배치 — 섹터 그룹 가로 나열 */
-  .groups-wide{display:flex;flex-wrap:wrap;gap:8px}
-  .groups-wide .grp{flex:1;min-width:120px}
+  /* (v1.1) 섹터 테이블 — 3행 × 4열, 모든 셀 동일 크기 */
+  .groups-table{display:flex;flex-direction:column;gap:0}
+  .sec-row{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:4px}
+  .sec-row-label{font-size:11px;color:var(--mut);font-weight:600;letter-spacing:.4px;
+    text-transform:uppercase;margin:6px 0 3px;padding-left:2px}
+  .sec-row-label:first-child{margin-top:0}
 
   .sec{background:#0e1217;border:1px solid var(--line);border-radius:6px;
     padding:6px;position:relative;min-height:64px}
@@ -110,9 +113,19 @@
   .player.p3 .nm{color:var(--p3)}
   .player .strat{margin-top:4px;font-size:12px}
   .player .strat .sc{display:inline-block;background:#0b0d12;border:1px solid var(--line);
-    border-radius:4px;padding:2px 4px;margin:1px 2px 1px 0;cursor:pointer}
+    border-radius:4px;padding:2px 4px;margin:1px 2px 1px 0;cursor:pointer;
+    position:relative}
   .player .strat .sc.used{opacity:.35;text-decoration:line-through;cursor:default}
   .player .strat .sc.active{border-color:var(--gold);color:var(--gold)}
+  /* 전략 카드 툴팁 — 긴 설명을 풍선으로 표시 */
+  .player .strat .sc::after{
+    content:attr(data-tip);
+    display:none;position:absolute;bottom:calc(100% + 6px);left:0;
+    width:260px;background:#1a2030;border:1px solid var(--acc);
+    border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;
+    color:var(--txt);font-weight:400;white-space:normal;z-index:200;
+    box-shadow:0 4px 20px #0009;pointer-events:none}
+  .player .strat .sc:hover::after{display:block}
 
   /* center action */
   .action{display:flex;flex-direction:column;gap:8px}
@@ -546,10 +559,16 @@
       </div>
     </div>
 
-    <!-- MID-CENTER: 로그 -->
-    <div class="panel" style="height:fit-content">
-      <h3>로그</h3>
-      <div class="log" id="log"></div>
+    <!-- MID-CENTER: 로그 + 섹터보드 -->
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="panel">
+        <h3>로그</h3>
+        <div class="log" id="log"></div>
+      </div>
+      <div class="panel" id="panelSectors">
+        <h3>섹터 보드 (베팅 · 토큰)</h3>
+        <div class="groups-table" id="groups"></div>
+      </div>
     </div>
 
     <!-- MID-RIGHT: 내 베팅 + 등급 -->
@@ -572,13 +591,6 @@
     </div>
 
   </div><!-- /grid-mid -->
-
-  <!-- BOTTOM ROW: 섹터 보드 (전폭) -->
-  <div class="panel grid-bot" id="panelSectors">
-    <h3>섹터 보드 (베팅 · 토큰)</h3>
-    <!-- 하단 전폭 배치 → 섹터 그룹을 가로 한 줄로 -->
-    <div class="groups groups-wide" id="groups"></div>
-  </div>
 
 </div>
 
@@ -1562,24 +1574,48 @@ const PERSONAS = {
 /* STRATEGY cards per persona — array of {id,name,desc,phase,onUse} */
 const STRATEGIES = {
   ORACLE: [
-    {id:'PATIENCE', name:'인내의 보상', desc:'이번 턴 양의 변동 +30% 추가', phase:'phase2_locked'},
-    {id:'COMPOUND', name:'복리 가속',   desc:'cash +10 (5턴 이후)',          phase:'phase2_locked'},
-    {id:'VISION',   name:'장기 비전',   desc:'활성 슬롯 1개 +2턴 연장',     phase:'phase2_locked'},
+    {id:'PATIENCE', name:'인내의 보상',
+     desc:'이번 턴 내가 보유한 섹터에서 발생하는 이익을 +30% 증폭시킨다. 예: 정산 전 수익이 +20점이면 +26점이 된다. 장기 보유 섹터에 호재가 터질 것 같은 타이밍에 사용하면 가장 효과적이다.',
+     phase:'phase2_locked'},
+    {id:'COMPOUND', name:'복리 가속',
+     desc:'이번 턴 정산 후 현금(cash)을 +10점 직접 지급한다. 단, 5턴 이후에만 발동된다(1~4턴은 사용 불가). 게임 후반 복리 효과를 극대화할 타이밍에 쓰는 카드다. 이미 점수 차가 벌어진 상황에서 추격 기회를 만들 수도 있다.',
+     phase:'phase2_locked'},
+    {id:'VISION',   name:'장기 비전',
+     desc:'현재 활성화된 레짐 슬롯(보드 상단 "활성 슬롯" 칸에 표시되는 지속 효과) 중 하나를 +2턴 연장한다. 유리한 슬롯(예: 성장 사이클 +3, AI 인프라 붐 등)이 곧 만료될 때 사용하면 손익 우위를 연장할 수 있다.',
+     phase:'phase2_locked'},
   ],
   MACRO_KING: [
-    {id:'INSIGHT',  name:'사이클 통찰', desc:'이번 턴 MK 사이클 조정 ±5 → ±15', phase:'phase2_locked'},
-    {id:'AVOID',    name:'매크로 회피', desc:'이번 턴 매크로 효과 무효 (사이클은 적용)', phase:'phase2_locked'},
-    {id:'RATE_PLAY',name:'금리 활용',   desc:'이번 턴 FIN/UTIL +3/10',       phase:'phase2_locked'},
+    {id:'INSIGHT',  name:'사이클 통찰',
+     desc:'이번 턴 MACRO_KING이 사이클을 직접 조정하는 폭을 ±5에서 ±15로 3배 확대한다. 사이클을 겨울(0)→봄으로 끌어올리거나, 과열(여름100)→가을로 내리는 등 시장 방향을 강하게 틀 수 있다. 사이클 극단에서 역방향으로 쓰면 강력하다.',
+     phase:'phase2_locked'},
+    {id:'AVOID',    name:'매크로 회피',
+     desc:'이번 턴 매크로 카드의 섹터 효과를 완전히 무효화한다(사이클 이동은 그대로 적용). 쇼크 카드나 강력한 하방 매크로가 발동할 것이 확실시될 때 사용하면 손실을 0으로 막는다. Omen 3 도달 시 강제 매크로 발동 전 사용이 핵심 타이밍이다.',
+     phase:'phase2_locked'},
+    {id:'RATE_PLAY',name:'금리 활용',
+     desc:'이번 턴 FIN(금융)과 UTIL(유틸리티) 섹터의 손익 계산에 /10당 +3점을 추가로 부여한다. 예: FIN에 30점 베팅 시 기본 효과 외 +9점을 더 받는다. 금리 상승 국면(긴축 환경)에서 FIN을 집중 보유할 때 시너지가 크다.',
+     phase:'phase2_locked'},
   ],
   HUNTER: [
-    {id:'BARRAGE',  name:'집중 포화',   desc:'30점+ 섹터 호재마다 +4 추가',  phase:'phase2_locked'},
-    {id:'EXPAND',   name:'한도 확장',   desc:'단일 섹터 한도 70',           phase:'phase2_locked'},
-    {id:'NO_TX',    name:'청산 면제',   desc:'이번 턴 거래비용 0',          phase:'phase2_locked'},
+    {id:'BARRAGE',  name:'집중 포화',
+     desc:'이번 턴 30점 이상 베팅한 섹터에서 호재(플러스 효과)가 발생할 때마다 +4점을 추가로 얻는다. 여러 섹터에 30점+ 베팅하고 모두 상승하면 중복 발동된다. 리포트로 호재 확률이 높은 섹터를 확신할 때 가장 강력한 카드다.',
+     phase:'phase2_locked'},
+    {id:'EXPAND',   name:'한도 확장',
+     desc:'이번 턴 단일 섹터 베팅 한도를 50점에서 70점으로 확대한다. 확신도가 매우 높은 섹터 하나에 올인에 가까운 포지션을 잡을 때 사용한다. 단, 그 섹터가 하락하면 손실도 그만큼 커지므로 Omen·사이클·리포트 신호가 모두 일치할 때 써야 한다.',
+     phase:'phase2_locked'},
+    {id:'NO_TX',    name:'청산 면제',
+     desc:'이번 턴 포트폴리오를 전면 재배치해도 거래비용(베팅 변경 10점당 1점 차감)이 완전히 면제된다. 전 턴 포지션에서 완전히 방향을 바꾸고 싶을 때, 또는 신규 정보(충격 카드·Omen 경고)에 빠르게 대응해야 할 때 비용 없이 리밸런싱할 수 있다.',
+     phase:'phase2_locked'},
   ],
   QUANT: [
-    {id:'HEDGE',    name:'헤지',        desc:'이번 턴 풀 손실 50% 감소 (최대 -15)', phase:'phase2_locked'},
-    {id:'ARBI',     name:'차익 거래',   desc:'5섹터 이상 베팅 시 +8',        phase:'phase2_locked'},
-    {id:'REBAL',    name:'리밸런싱',    desc:'이번 턴 모든 섹터 +1/10',     phase:'phase2_locked'},
+    {id:'HEDGE',    name:'헤지',
+     desc:'이번 턴 정산에서 손실이 발생할 경우 그 손실을 50% 경감시킨다(최대 경감 상한 −15점). 예: −20점 손실이면 −10점으로 줄어든다. 하방 매크로가 강하게 올 것 같거나 Omen이 위기 수준에 근접했을 때 보험으로 사용하는 카드다.',
+     phase:'phase2_locked'},
+    {id:'ARBI',     name:'차익 거래',
+     desc:'이번 턴 5개 섹터 이상에 골고루 베팅한 상태로 정산에 진입하면 +8점을 즉시 추가 지급한다. QUANT의 분산 원칙과 맞닿아 있으며, 분산 보너스와 함께 이중으로 발동된다. 시장 방향이 불확실하고 리포트 신호가 약할 때 특히 유효하다.',
+     phase:'phase2_locked'},
+    {id:'REBAL',    name:'리밸런싱',
+     desc:'이번 턴 모든 섹터에 /10당 +1점을 추가로 부여한다. 베팅이 넓게 분산되어 있을수록 누적 효과가 커진다. 11개 섹터 전체에 10점씩 베팅했다면 최대 +11점의 추가 보너스를 얻는 셈이다. 분산 포트폴리오를 완전히 구성한 턴에 쓰는 것이 정석이다.',
+     phase:'phase2_locked'},
   ],
 };
 
@@ -3516,27 +3552,33 @@ function render(){
   slotList.innerHTML = state.slots.length===0 ? '없음' :
     state.slots.map(s => `<span class="pill slot">${s.name} (${s.dur}턴)</span>`).join(' ');
 
-  // sector board grouped
+  // (v1.1) 섹터 테이블 — 3행×4열, 동일 크기 셀
+  // Row1: 성장군(TECH·SEMI·BIO·AUTO), Row2: 경기군(INDU·FIN·CONS·empty), Row3: 가치·방어·안전(ENG·MATE·UTIL·BOND)
+  const SEC_ROWS = [
+    {label:'성장군 · 금리민감', ids:['TECH','SEMI','BIO','AUTO']},
+    {label:'경기군 · GDP민감', ids:['INDU','FIN','CONS',null]},
+    {label:'가치·방어·안전자산', ids:['ENG','MATE','UTIL','BOND']},
+  ];
+  const renderSecCell = sid => {
+    if(!sid) return `<div class="sec" style="background:none;border:1px dashed var(--line);opacity:.25"></div>`;
+    const s = SECTORS.find(x=>x.id===sid);
+    const totalSum = state.players.reduce((a,p)=>a+(p.bets[sid]||0),0);
+    const cls = totalSum>=80?'jammed':totalSum>=60?'crowded':'';
+    const heat = cls==='jammed'?'<span class="heat" title="과열 — 혼잡 감쇠 위험">🔥</span>'
+               : cls==='crowded'?'<span class="heat" title="쏠림 주의">⚠️</span>':'';
+    const tokens = state.players.filter(p=>(p.bets[sid]||0)>0)
+      .map(p=>`<span class="tok tok-p${p.id}" title="${p.name}${p.isHuman?' (나)':''}: ${p.bets[sid]}">${p.bets[sid]}</span>`).join('');
+    return `<div class="sec ${cls}">
+      <div class="nm"><span title="${SECTOR_TIPS[sid]||''}">${s.name}${heat}</span><span class="total ${cls}">${totalSum}</span></div>
+      <div class="tokens">${tokens}</div>
+      <div class="cbar"><i style="width:${Math.min(100,totalSum)}%"></i></div>
+    </div>`;
+  };
   const groupsDiv = document.getElementById('groups');
-  groupsDiv.innerHTML = GROUPS.map(g => {
-    const secs = SECTORS.filter(s => s.group === g.id);
-    return `<div class="grp ${g.cls}"><h4>${g.name}</h4><div class="row">${
-      secs.map(s => {
-        const totalSum = state.players.reduce((a,p)=>a+(p.bets[s.id]||0),0);
-        const cls = totalSum>=80?'jammed':totalSum>=60?'crowded':'';
-        const heat = cls==='jammed' ? '<span class="heat" title="과열 — 혼잡 감쇠 위험">🔥</span>'
-                   : cls==='crowded' ? '<span class="heat" title="쏠림 주의">⚠️</span>' : '';
-        const tokens = state.players
-          .filter(p => (p.bets[s.id]||0) > 0)
-          .map(p => `<span class="tok tok-p${p.id}" title="${p.name}${p.isHuman?' (나)':''}: ${p.bets[s.id]}">${p.bets[s.id]}</span>`).join('');
-        return `<div class="sec ${cls}">
-          <div class="nm"><span title="${SECTOR_TIPS[s.id]||''}">${s.name}${heat}</span><span class="total ${cls}">${totalSum}</span></div>
-          <div class="tokens">${tokens}</div>
-          <div class="cbar"><i style="width:${Math.min(100,totalSum)}%"></i></div>
-        </div>`;
-      }).join('')
-    }</div></div>`;
-  }).join('');
+  groupsDiv.innerHTML = SEC_ROWS.map(row =>
+    `<div class="sec-row-label">${row.label}</div>
+     <div class="sec-row">${row.ids.map(renderSecCell).join('')}</div>`
+  ).join('');
 
   // phase bar
   const pb = document.getElementById('phaseBar');
@@ -3554,7 +3596,7 @@ function render(){
       const used = p.strategyUsed[s.id];
       const act  = p.activeStrategy === s.id;
       const cls = used && !act ? 'used' : (act ? 'active' : '');
-      return `<span class="sc ${cls}" title="${s.desc}" ${(p.isHuman && !used) ? `onclick="useStrategy('${s.id}')"` : ''}>${s.name}</span>`;
+      return `<span class="sc ${cls}" data-tip="${s.desc}" ${(p.isHuman && !used) ? `onclick="useStrategy('${s.id}')"` : ''}>${s.name}</span>`;
     }).join('');
     return `<div class="player p${p.id} ${p.isHuman?'me':''}">
       <div class="head"><span class="nm">${p.name}</span><span class="pa">${persona.id}</span></div>
@@ -3827,13 +3869,17 @@ function renderAction(){
     const sentColor = s==='positive' ? 'var(--green)' : s==='negative' ? 'var(--red)' : 'var(--mut)';
     const typeLabel = r.type==='contra' ? '역발상' : r.type==='analysis' ? '분석' : '컨센서스';
     let cls = r.type==='contra' ? 'report-contra' : 'report-info';
-    a.innerHTML = `${midCheckpoint()}<div class="card" style="border-color:${sentColor}">
-      <div class="ttl" style="color:${sentColor}">🎲 주사위 ${state.diceRoll} → ${sLabel}</div>
-      <div class="desc">매크로 추첨 풀: <b>${decks}</b> 덱 + 배정 쇼크 카드</div>
-    </div>
-    <div class="card ${cls}" style="margin-top:8px">
-      <div class="ttl">📰 ${typeLabel}</div>
-      <div class="desc">${r.text}</div>
+    // (v1.1) 주사위 + 컨센서스를 한 행(좌·우)으로 배치
+    a.innerHTML = `${midCheckpoint()}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="card" style="border-color:${sentColor}">
+        <div class="ttl" style="color:${sentColor}">🎲 주사위 ${state.diceRoll} → ${sLabel}</div>
+        <div class="desc">추첨 풀: <b>${decks}</b> 덱<br>+ 배정 쇼크 카드</div>
+      </div>
+      <div class="card ${cls}">
+        <div class="ttl">📰 ${typeLabel}</div>
+        <div class="desc">${r.text}</div>
+      </div>
     </div>
     ${reportInsight(r)}
     <div style="margin-top:8px"><button class="btn" onclick="advanceToBetting()">→ 베팅 단계로</button></div>`;
