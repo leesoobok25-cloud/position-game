@@ -2023,7 +2023,7 @@ function shiftCyclePreserveShock(delta){
 function activeThresholds(cycle){
   const infl = macroBaselineInfl(cycle);
   const rate = macroBaselineRate(cycle);
-  return (infl>=4?'I+':'') + (infl<=1?'I-':'') + (rate>=4?'R+':'') + (rate<=1?'R-':'');
+  return (infl>=3?'I+':'') + (infl<=1?'I-':'') + (rate>=3?'R+':'') + (rate<=1?'R-':'');
 }
 
 /* === BOND interest & capital — amplified variance (v5.5 Stage A) ===
