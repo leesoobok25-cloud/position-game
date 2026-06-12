@@ -23,7 +23,10 @@
   header .turn{margin-left:auto;color:var(--mut)}
   header .ver{color:var(--mut);font-size:11px}
 
-  .grid{display:grid;grid-template-columns:280px 1fr 320px;gap:10px;padding:10px}
+  /* (v1.1) 새 레이아웃 — 상단: 현재단계(전폭) / 중단: 지표+플레이어 | 로그 | 베팅 / 하단: 섹터보드(전폭) */
+  .grid{display:grid;grid-template-columns:1fr;gap:10px;padding:10px}
+  .grid-mid{display:grid;grid-template-columns:280px 1fr 300px;gap:10px}
+  .grid-bot{margin-top:0}
   .panel{background:var(--panel);border:1px solid var(--line);
     border-radius:8px;padding:10px}
   .panel h3{margin:0 0 8px 0;font-size:12px;color:var(--mut);
@@ -66,6 +69,9 @@
   .grp-cyclical .row{grid-template-columns:repeat(3,1fr)}
   .grp-value .row{grid-template-columns:repeat(2,1fr)}
   .grp-def .row,.grp-safe .row{grid-template-columns:1fr}
+  /* 하단 전폭 배치 — 섹터 그룹 가로 나열 */
+  .groups-wide{display:flex;flex-wrap:wrap;gap:8px}
+  .groups-wide .grp{flex:1;min-width:120px}
 
   .sec{background:#0e1217;border:1px solid var(--line);border-radius:6px;
     padding:6px;position:relative;min-height:64px}
@@ -482,90 +488,98 @@
 </header>
 
 <div class="grid">
-  <!-- LEFT: tracks + omen + slots -->
-  <div>
-    <div class="panel" id="panelCycle">
-      <h3>사이클 (계절)</h3>
-      <div class="track"><div id="cycleMk" class="mk"></div></div>
-      <div class="seasons">
-        <span>❄️ 겨울 0</span><span>🍂 가을 25</span><span>🌱 봄 50</span><span>🔥 여름 75</span><span>100</span>
-      </div>
-    </div>
-    <div class="panel" style="margin-top:10px" id="panelFG">
-      <h3>Fear &amp; Greed (<span id="fgN">50</span>)</h3>
-      <div class="track">
-        <div class="fgseg fg-panic"></div>
-        <div class="fgseg fg-fear"></div>
-        <div class="fgseg fg-neutral"></div>
-        <div class="fgseg fg-greed"></div>
-        <div class="fgseg fg-mania"></div>
-        <div id="fgMk" class="mk"></div>
-      </div>
-      <div class="seasons">
-        <span>극공포</span><span>공포</span><span>중립</span><span>탐욕</span><span>극탐욕</span>
-      </div>
-    </div>
-    <div class="panel" style="margin-top:10px" id="panelInflRate">
-      <h3>인플레이션 / 기준금리 <span style="font-size:10px;color:var(--mut);font-weight:400">(사이클 파생)</span></h3>
-      <div style="font-size:11px;color:var(--mut)">인플레: <span id="inflN" style="color:var(--gold);font-weight:700">2.0%</span> <span id="inflBadge" style="font-size:10px"></span></div>
-      <div class="track" style="margin-top:4px"><div id="inflMk" class="mk" style="background:var(--gold)"></div></div>
-      <div style="font-size:11px;color:var(--mut);margin-top:6px">금리: <span id="rateN" style="color:var(--purple);font-weight:700">2.0%</span> <span id="rateBadge" style="font-size:10px"></span></div>
-      <div class="track" style="margin-top:4px"><div id="rateMk" class="mk" style="background:var(--purple)"></div></div>
-    </div>
-    <div class="panel" style="margin-top:10px" id="panelOmen">
-      <h3>Omen 게이지</h3>
-      <div class="omen-row" id="omenRow"></div>
-      <div id="omenWarn" style="font-size:11px;margin-top:6px;line-height:1.4"></div>
-    </div>
-    <div class="panel" style="margin-top:10px">
-      <h3>활성 슬롯</h3>
-      <div id="slotList" style="font-size:11px;color:var(--mut)">없음</div>
-    </div>
+
+  <!-- TOP ROW: 현재 단계 + 액션 (전폭) -->
+  <div class="panel" id="panelPhase">
+    <h3>현재 단계</h3>
+    <div class="phase-bar" id="phaseBar"></div>
+    <div id="actionArea" style="margin-top:10px"></div>
+    <div id="narrative"></div>
   </div>
 
-  <!-- CENTER: sectors + action -->
-  <div>
-    <div class="panel" id="panelSectors">
-      <h3>섹터 보드 (베팅 · 토큰)</h3>
-      <div class="groups" id="groups"></div>
+  <!-- MID ROW: 지표+플레이어 | 로그 | 베팅 -->
+  <div class="grid-mid">
+
+    <!-- MID-LEFT: 지표 + 플레이어 -->
+    <div>
+      <div class="panel" id="panelCycle">
+        <h3>사이클 (계절)</h3>
+        <div class="track"><div id="cycleMk" class="mk"></div></div>
+        <div class="seasons">
+          <span>❄️ 겨울 0</span><span>🍂 가을 25</span><span>🌱 봄 50</span><span>🔥 여름 75</span><span>100</span>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:10px" id="panelFG">
+        <h3>Fear &amp; Greed (<span id="fgN">50</span>)</h3>
+        <div class="track">
+          <div class="fgseg fg-panic"></div>
+          <div class="fgseg fg-fear"></div>
+          <div class="fgseg fg-neutral"></div>
+          <div class="fgseg fg-greed"></div>
+          <div class="fgseg fg-mania"></div>
+          <div id="fgMk" class="mk"></div>
+        </div>
+        <div class="seasons">
+          <span>극공포</span><span>공포</span><span>중립</span><span>탐욕</span><span>극탐욕</span>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:10px" id="panelInflRate">
+        <h3>인플레이션 / 기준금리 <span style="font-size:10px;color:var(--mut);font-weight:400">(사이클 파생)</span></h3>
+        <div style="font-size:11px;color:var(--mut)">인플레: <span id="inflN" style="color:var(--gold);font-weight:700">2.0%</span> <span id="inflBadge" style="font-size:10px"></span></div>
+        <div class="track" style="margin-top:4px"><div id="inflMk" class="mk" style="background:var(--gold)"></div></div>
+        <div style="font-size:11px;color:var(--mut);margin-top:6px">금리: <span id="rateN" style="color:var(--purple);font-weight:700">2.0%</span> <span id="rateBadge" style="font-size:10px"></span></div>
+        <div class="track" style="margin-top:4px"><div id="rateMk" class="mk" style="background:var(--purple)"></div></div>
+      </div>
+      <div class="panel" style="margin-top:10px" id="panelOmen">
+        <h3>Omen 게이지</h3>
+        <div class="omen-row" id="omenRow"></div>
+        <div id="omenWarn" style="font-size:11px;margin-top:6px;line-height:1.4"></div>
+      </div>
+      <div class="panel" style="margin-top:10px">
+        <h3>활성 슬롯</h3>
+        <div id="slotList" style="font-size:11px;color:var(--mut)">없음</div>
+      </div>
+      <!-- 플레이어 패널 — 왼쪽 하단 -->
+      <div class="panel" style="margin-top:10px" id="panelPlayers">
+        <h3>플레이어</h3>
+        <div class="players" id="players"></div>
+      </div>
     </div>
 
-    <div class="panel" style="margin-top:10px" id="panelPhase">
-      <h3>현재 단계</h3>
-      <div class="phase-bar" id="phaseBar"></div>
-      <div id="actionArea" style="margin-top:10px"></div>
-      <div id="narrative"></div>
-    </div>
-
-    <div class="panel" style="margin-top:10px">
+    <!-- MID-CENTER: 로그 -->
+    <div class="panel" style="height:fit-content">
       <h3>로그</h3>
       <div class="log" id="log"></div>
     </div>
-  </div>
 
-  <!-- RIGHT: players + my bets -->
-  <div>
-    <div class="panel" id="panelPlayers">
-      <h3>플레이어</h3>
-      <div class="players" id="players"></div>
-    </div>
-    <div class="panel" style="margin-top:10px" id="myBetsPanel">
-      <h3>내 베팅 (P0 · ORACLE)</h3>
-      <div id="myPrinciple" style="font-size:10px;color:var(--mut);margin-bottom:6px"></div>
-      <div class="bet-grid" id="myBets"></div>
-      <div style="margin-top:6px;font-size:11px;color:var(--mut)">
-        남은 cash: <span id="myCash" style="color:var(--green);font-weight:700">100</span>
-        · 베팅 합 <span id="myBetSum">0</span>
-        · 변경비용 <span id="myTxCost">0</span>
+    <!-- MID-RIGHT: 내 베팅 + 등급 -->
+    <div>
+      <div class="panel" id="myBetsPanel">
+        <h3>내 베팅 (P0 · ORACLE)</h3>
+        <div id="myPrinciple" style="font-size:10px;color:var(--mut);margin-bottom:6px"></div>
+        <div class="bet-grid" id="myBets"></div>
+        <div style="margin-top:6px;font-size:11px;color:var(--mut)">
+          남은 cash: <span id="myCash" style="color:var(--green);font-weight:700">100</span>
+          · 베팅 합 <span id="myBetSum">0</span>
+          · 변경비용 <span id="myTxCost">0</span>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:10px" id="panelTierGuide">
+        <h3>등급 체계</h3>
+        <div id="tierGuideNick" style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:4px"></div>
+        <div id="tierGuideBody"></div>
       </div>
     </div>
-    <!-- (v5.10) 등급 안내 패널 -->
-    <div class="panel" style="margin-top:10px" id="panelTierGuide">
-      <h3>등급 체계</h3>
-      <div id="tierGuideNick" style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:4px"></div>
-      <div id="tierGuideBody"></div>
-    </div>
+
+  </div><!-- /grid-mid -->
+
+  <!-- BOTTOM ROW: 섹터 보드 (전폭) -->
+  <div class="panel grid-bot" id="panelSectors">
+    <h3>섹터 보드 (베팅 · 토큰)</h3>
+    <!-- 하단 전폭 배치 → 섹터 그룹을 가로 한 줄로 -->
+    <div class="groups groups-wide" id="groups"></div>
   </div>
+
 </div>
 
 <!-- persona select modal -->
@@ -2902,12 +2916,22 @@ function phase5_settle(){
   const sectorDelta = {};
   SECTORS.forEach(s => sectorDelta[s.id] = macroD[s.id] + eventD[s.id] + slotD[s.id] + bondD[s.id]);
 
-  // (v1.1) 리포트 섹터 적중도 — 리포트가 가중(유리 예고)한 섹터 vs 실제 상승 섹터
+  // (v1.1) 리포트 섹터 적중도 — sentiment 기반으로 올바른 방향 판정
   if(state.reportCheck){
     const eb = (state.currentReport && state.currentReport.eventBias) || {};
-    const fav = SECTORS.map(s=>s.id).filter(sid => (eb[sid]||1) > 1);
-    state.reportCheck.favSectors = fav;
-    state.reportCheck.favRisen = fav.filter(sid => (sectorDelta[sid]||0) > 0);
+    const sent = (state.currentReport && state.currentReport.sentiment) || 'neutral';
+    const favSecs = SECTORS.map(s=>s.id).filter(sid => (eb[sid]||1) > 1);
+    state.reportCheck.favSectors = favSecs;
+    state.reportCheck.reportSent = sent;
+    if(sent === 'positive'){
+      // 긍정: 가중 섹터가 상승했으면 적중
+      state.reportCheck.favRisen = favSecs.filter(sid => (sectorDelta[sid]||0) > 0);
+    } else if(sent === 'negative'){
+      // 부정: 가중 섹터가 실제로 하락했으면 적중 (리스크가 실현됨)
+      state.reportCheck.favRisen = favSecs.filter(sid => (sectorDelta[sid]||0) < 0);
+    } else {
+      state.reportCheck.favRisen = favSecs.filter(sid => (sectorDelta[sid]||0) > 0);
+    }
   }
 
   // 6) Per-player breakdown
@@ -3732,16 +3756,31 @@ function reportInsight(r){
     : '특정 매크로 시나리오에 대한 확률 조정 없음';
   const themeLine = themes.length ? ` 당사는 ${themes.map(t=>`<b>${t}</b>`).join('·')}을(를) 이번 구간의 핵심 동인으로 판단한다.` : '';
 
-  // ② 비중확대(Overweight) 후보 — 섹터별 근거 첨부
+  // ② 섹터 라벨 — sentiment 기반으로 분리
+  // (v1.1 수정) eventBias > 1은 "이벤트 출현 빈도 상승"이지 "반드시 상승"이 아님.
+  // 긍정 리포트: 가중 섹터 = 비중확대 후보
+  // 부정/역발상 리포트: 가중 섹터 = 이벤트 리스크 집중 구간 (경계)
+  // 중립 리포트: 가중 섹터 = 관찰 섹터
+  const isNeg = r.sentiment === 'negative';
+  const isCon = r.type === 'contra';
+  const isPos = r.sentiment === 'positive';
+  let favLabel, favColor;
+  if(isPos)      { favLabel = '비중확대 후보';        favColor = 'var(--green)'; }
+  else if(isNeg) { favLabel = '이벤트 리스크 집중';   favColor = 'var(--red)'; }
+  else if(isCon) { favLabel = '역발상 관찰 구간';      favColor = 'var(--gold)'; }
+  else           { favLabel = '관찰 섹터';             favColor = 'var(--gold)'; }
+
   const favLines = fav.map(([s,v])=>
-    `<b>${s}</b> <span style="color:var(--green)">비중확대 ×${v}</span> <span style="color:var(--mut)">— ${SECTOR_TIPS[s]||''}</span>`);
+    `<b>${s}</b> <span style="color:${favColor}">${favLabel} ×${v}</span> <span style="color:var(--mut)">— ${SECTOR_TIPS[s]||''}</span>`);
 
   // ③ 비중축소/소외 — 명시적 감쇠 + 국면 역풍 그룹
   const hurtLines = unfav.map(([s,v])=>
-    `<b>${s}</b> <span style="color:var(--red)">비중축소 ×${v}</span> <span style="color:var(--mut)">— ${SECTOR_TIPS[s]||''}</span>`);
+    `<b>${s}</b> <span style="color:var(--red)">비중축소 ×${v.toFixed(1)}</span> <span style="color:var(--mut)">— ${SECTOR_TIPS[s]||''}</span>`);
   const topDeck = mbUp.length ? mbUp[0][0] : null;
+  // 상승 국면 소외 — BOND·UTIL은 eventBias에 포함된 경우 중복 경고 방지
   if(topDeck === 'boom' || topDeck === 'recovery'){
-    hurtLines.push(`<b>BOND·UTIL</b> <span style="color:var(--red)">상대 소외</span> <span style="color:var(--mut)">— 상승 국면에서는 방어 자산의 기회비용이 커진다</span>`);
+    const alreadyShown = fav.some(([s])=>s==='BOND'||s==='UTIL');
+    if(!alreadyShown) hurtLines.push(`<b>BOND·UTIL</b> <span style="color:var(--red)">상대 소외</span> <span style="color:var(--mut)">— 상승 국면에서는 방어 자산의 기회비용이 커진다</span>`);
   } else if(topDeck === 'downturn' || topDeck === 'depression'){
     hurtLines.push(`<b>TECH·SEMI·AUTO</b> <span style="color:var(--red)">멀티플 압박</span> <span style="color:var(--mut)">— 하강 국면에서는 성장·경기민감 섹터의 할인율 부담이 확대된다</span>`);
   }
@@ -3968,8 +4007,11 @@ function renderAction(){
         const verdict = k === n ? '<b style="color:var(--green)">완전 적중</b>'
                       : k > 0   ? '<b style="color:var(--gold)">부분 적중</b>'
                                 : '<b style="color:var(--red)">빗나감</b>';
-        secHitHtml = `<div style="margin-top:4px;font-size:11px;line-height:1.5">🎯 이번 턴 리포트 적중도: <b>${k}/${n}</b> — ${verdict}<br>
-          <span style="color:var(--mut)">예고한 유리 섹터: ${rc.favSectors.join('·')} / 실제 상승: ${(rc.favRisen||[]).join('·')||'없음'}</span></div>`;
+        const isNegR = rc.reportSent === 'negative';
+        const labelA = isNegR ? '리스크 예고 섹터' : '유리 예고 섹터';
+        const labelB = isNegR ? '실제 하락(리스크 실현)' : '실제 상승';
+        secHitHtml = `<div style="margin-top:4px;font-size:11px;line-height:1.5">🎯 이번 턴 리포트 방향 적중: <b>${k}/${n}</b> — ${verdict}<br>
+          <span style="color:var(--mut)">${labelA}: ${rc.favSectors.join('·')} / ${labelB}: ${(rc.favRisen||[]).join('·')||'없음'}</span></div>`;
       }
       recapHtml = `<div class="card" style="margin-bottom:8px;border-left:3px solid ${rc.trap?'var(--red)':'var(--line)'}">
         <div style="font-size:11px;line-height:1.5">${line}</div>${secHitHtml}${trapBadge}
