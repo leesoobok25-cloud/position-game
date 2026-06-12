@@ -18,10 +18,18 @@
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     font-size:15px;line-height:1.6}
   header{padding:10px 16px;border-bottom:1px solid var(--line);
-    display:flex;align-items:center;gap:12px;background:#0a0d12}
+    display:flex;align-items:center;gap:12px;background:#0a0d12;flex-wrap:wrap}
   header h1{margin:0;font-size:18px;font-weight:600}
   header .turn{margin-left:auto;color:var(--mut);font-size:13px}
   header .ver{color:var(--mut);font-size:11px}
+  /* 헤더 등급체계 */
+  .header-tier-guide{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}
+  .htier-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;
+    border:1px solid transparent;border-radius:12px;font-size:11px;
+    background:#0d1117;white-space:nowrap;opacity:.65}
+  .htier-chip.htier-active{opacity:1;background:#1a2030}
+  .htier-req{color:var(--mut);font-size:10px}
+  .htier-nick{font-size:12px;font-weight:700;color:var(--gold);margin-right:4px;white-space:nowrap}
 
   /* (v1.1) 새 레이아웃 — 상단: 현재단계(전폭) / 중단: 지표+플레이어 | 로그 | 베팅 / 하단: 섹터보드(전폭) */
   .grid{display:grid;grid-template-columns:1fr;gap:10px;padding:10px}
@@ -59,40 +67,65 @@
   .omen.warn{border-color:var(--gold);background:#3a2d10}
   .omen.crit{border-color:var(--red);background:#3a1818}
 
-  /* sectors board */
-  .groups{display:flex;flex-direction:column;gap:8px}
-  .grp{background:var(--panel2);border:1px solid var(--line);
-    border-radius:6px;padding:6px}
-  .grp h4{margin:0 0 4px 0;font-size:13px;color:var(--mut);font-weight:600}
-  .grp .row{display:grid;gap:6px}
-  .grp-growth .row{grid-template-columns:repeat(4,1fr)}
-  .grp-cyclical .row{grid-template-columns:repeat(3,1fr)}
-  .grp-value .row{grid-template-columns:repeat(2,1fr)}
-  .grp-def .row,.grp-safe .row{grid-template-columns:1fr}
-  /* (v1.1) 섹터 테이블 — 3행 × 4열, 모든 셀 동일 크기 */
-  .groups-table{display:flex;flex-direction:column;gap:0}
-  .sec-row{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:4px}
-  .sec-row-label{font-size:11px;color:var(--mut);font-weight:600;letter-spacing:.4px;
-    text-transform:uppercase;margin:6px 0 3px;padding-left:2px}
-  .sec-row-label:first-child{margin-top:0}
-
-  .sec{background:#0e1217;border:1px solid var(--line);border-radius:6px;
-    padding:6px;position:relative;min-height:64px}
+  /* ── 섹터 보드 (v1.2 리디자인) ─────────────────────────────── */
+  .groups-table{display:flex;flex-direction:column;gap:6px}
+  /* 행 공통 — 4열 균등 그리드 */
+  .sec-row{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+  /* 행 레이블 줄 */
+  .sec-row-header{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+  .sec-row-header .rh-label{font-size:11px;font-weight:700;letter-spacing:.5px;
+    text-transform:uppercase}
+  .sec-row-header .rh-line{flex:1;height:1px;background:var(--line)}
+  /* 하단행 — 3그룹 구획 분리 */
+  .sec-bottom-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+    background:var(--line);border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+  .sec-bottom-row .sec{border-radius:0;border:none;border-right:1px solid var(--line);margin:0}
+  .sec-bottom-row .sec:last-child{border-right:none}
+  .sec-bottom-row .sec-divider{width:3px;background:#0a0d12;border-left:1px solid var(--acc2,#30363d);
+    border-right:1px solid var(--acc2,#30363d)}
+  /* 하단행 레이블 — 4열 그리드 + span */
+  .sec-bottom-labels{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;
+    margin-bottom:2px}
+  .sec-bottom-labels span{font-size:11px;font-weight:700;letter-spacing:.5px;
+    text-transform:uppercase;padding-left:2px}
+  /* 개별 섹터 셀 */
+  .sec{background:#0b0f17;border:1px solid var(--line);border-radius:7px;
+    padding:8px 9px;position:relative;min-height:64px;
+    display:flex;flex-direction:column;
+    transition:box-shadow .12s,border-color .12s}
+  .sec:hover{box-shadow:0 0 0 1px rgba(255,255,255,.13)}
   .sec.crowded{border-color:var(--gold)}
-  .sec.jammed{border-color:var(--red);background:#1a0f0f}
-  .sec .nm{font-weight:700;font-size:14px;display:flex;justify-content:space-between}
-  .sec .total{font-size:12px;color:var(--mut)}
-  .sec .tokens{display:flex;gap:2px;flex-wrap:wrap;margin-top:4px;min-height:14px}
-  .tok{display:inline-block;height:14px;padding:0 5px;border-radius:6px;
-    font-size:11px;color:#000;font-weight:700;line-height:14px}
-  .tok-p0{background:var(--p0)}
-  .tok-p1{background:var(--p1)}
-  .tok-p2{background:var(--p2)}
-  .tok-p3{background:var(--p3)}
-  .sec .delta{position:absolute;top:4px;right:6px;font-size:12px;
-    color:var(--mut)}
-  .sec.up .delta{color:var(--green)}
-  .sec.dn .delta{color:var(--red)}
+  .sec.jammed{border-color:var(--red);background:#150a0a}
+  /* 그룹별 상단 accent 라인 */
+  .sec.g-growth {border-top:3px solid var(--acc)}
+  .sec.g-cyclical{border-top:3px solid var(--gold)}
+  .sec.g-value  {border-top:3px solid #f0883e}
+  .sec.g-def    {border-top:3px solid var(--green)}
+  .sec.g-safe   {border-top:3px solid var(--purple)}
+  .sec .nm{font-weight:700;font-size:14px;display:flex;
+    justify-content:space-between;align-items:baseline;gap:4px}
+  .sec .sec-ttl{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sec .sec-sum{font-size:12px;color:var(--mut);font-weight:500;flex-shrink:0}
+  .sec.crowded .sec-sum{color:var(--gold)}
+  .sec.jammed  .sec-sum{color:var(--red)}
+  .sec .tokens{display:flex;gap:3px;flex-wrap:wrap;margin-top:5px;flex:1;min-height:16px}
+  .tok{display:inline-flex;align-items:center;height:16px;padding:0 6px;
+    border-radius:8px;font-size:11px;color:#000;font-weight:700;line-height:1}
+  .tok-p0{background:var(--p0)}.tok-p1{background:var(--p1)}
+  .tok-p2{background:var(--p2)}.tok-p3{background:var(--p3)}
+  .sec .sec-bar{margin-top:auto;padding-top:5px;height:4px;
+    background:#1a1f28;border-radius:2px;overflow:hidden}
+  .sec .sec-bar i{display:block;height:100%;border-radius:2px;transition:width .3s}
+  .sec.g-growth  .sec-bar i{background:var(--acc)}
+  .sec.g-cyclical .sec-bar i{background:var(--gold)}
+  .sec.g-value   .sec-bar i{background:#f0883e}
+  .sec.g-def     .sec-bar i{background:var(--green)}
+  .sec.g-safe    .sec-bar i{background:var(--purple)}
+  .sec.crowded   .sec-bar i{background:var(--gold)}
+  .sec.jammed    .sec-bar i{background:var(--red)}
+  /* ── 베팅 패널 — 스크롤 없이 전체 노출 (v1.2) ──────────────── */
+  .bet-grid{display:block} /* max-height 제거 */
+  .bet-row{padding:5px 2px;border-bottom:1px dotted #222}
 
   /* players */
   .players{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -497,6 +530,7 @@
 <header>
   <h1>POSITION <span class="ver">v5.9 · Tutorial Build</span></h1>
   <button class="btn alt" style="font-size:14px;padding:4px 10px" onclick="startTutorial()">🎓 튜토리얼</button>
+  <div id="headerTierGuide" class="header-tier-guide"></div>
   <div class="turn">턴 <span id="turnNo">1</span>/<span id="maxTurnNo">8</span> · <span id="phaseName">시작</span> · 사이클 <span id="cycleN">50</span> (<span id="seasonN">봄</span>)</div>
 </header>
 
@@ -583,11 +617,7 @@
           · 변경비용 <span id="myTxCost">0</span>
         </div>
       </div>
-      <div class="panel" style="margin-top:10px" id="panelTierGuide">
-        <h3>등급 체계</h3>
-        <div id="tierGuideNick" style="font-size:14px;color:var(--gold);font-weight:700;margin-bottom:4px"></div>
-        <div id="tierGuideBody"></div>
-      </div>
+      <!-- tier guide moved to header -->
     </div>
 
   </div><!-- /grid-mid -->
@@ -2534,45 +2564,30 @@ function renderStatsBar(){
 }
 
 function renderTierGuide(){
-  const el = document.getElementById('tierGuideBody');
+  const el = document.getElementById('headerTierGuide');
   if(!el) return;
-  // (v5.10) 등급은 닉네임(프로필) 단위 — 누적 승수 기준
   const pr = CURRENT_NICK ? getProfile(CURRENT_NICK) : null;
   const myWins = pr ? pr.wins : null;
   const myTier = myWins !== null ? tierOf(myWins) : null;
-  const hd = document.getElementById('tierGuideNick');
-  if(hd) hd.textContent = CURRENT_NICK
-    ? `${CURRENT_NICK} · ${myTier.icon} ${myTier.label} (${myWins}승)` : '';
 
-  let html = '';
-  for(let i = 0; i < TIER_DEF.length; i++){
-    const t = TIER_DEF[i];
+  const chips = TIER_DEF.map((t, i) => {
     const next = TIER_DEF[i+1];
     const isActive = myTier && myTier.id === t.id;
-    const reqText = next ? `${t.min}~${next.min-1}승` : `${t.min}승 이상`;
-    let prog = '';
-    if(isActive && myWins !== null && next){
-      const left = next.min - myWins;
-      prog = `다음까지 ${left}승`;
-    } else if(isActive && !next){
-      prog = '최고 등급!';
-    }
-    html += `<div class="tier-row${isActive?' active-tier':''}">
-      <span class="t-ico">${t.icon}</span>
-      <span class="t-label" style="color:${t.color}">${t.label}</span>
-      <span class="t-req">${reqText}</span>
-      ${prog ? `<span class="t-prog">${prog}</span>` : ''}
-    </div>`;
-  }
-  // If no game started yet, just show the table without active highlight
-  if(!myTier){
-    html = TIER_DEF.map(t => `<div class="tier-row">
-      <span class="t-ico">${t.icon}</span>
-      <span class="t-label" style="color:${t.color}">${t.label}</span>
-      <span class="t-req">${TIER_DEF[TIER_DEF.indexOf(t)+1] ? t.min+'~'+(TIER_DEF[TIER_DEF.indexOf(t)+1].min-1)+'승' : t.min+'승 이상'}</span>
-    </div>`).join('');
-  }
-  el.innerHTML = html;
+    const reqText = next ? `${t.min}~${next.min-1}승` : `${t.min}승+`;
+    let progText = '';
+    if(isActive && myWins !== null && next) progText = ` (다음까지 ${next.min - myWins}승)`;
+    else if(isActive && !next) progText = ' ★';
+    return `<span class="htier-chip${isActive?' htier-active':''}" style="border-color:${t.color}">
+      <span>${t.icon}</span>
+      <span style="color:${t.color};font-weight:700">${t.label}</span>
+      <span class="htier-req">${reqText}${progText}</span>
+    </span>`;
+  }).join('');
+
+  const nickPart = CURRENT_NICK && myTier
+    ? `<span class="htier-nick">${CURRENT_NICK} · ${myTier.icon} ${myTier.label} (${myWins}승)</span>`
+    : '';
+  el.innerHTML = nickPart + chips;
 }
 
 function setGameMode(m){
@@ -3552,14 +3567,17 @@ function render(){
   slotList.innerHTML = state.slots.length===0 ? '없음' :
     state.slots.map(s => `<span class="pill slot">${s.name} (${s.dur}턴)</span>`).join(' ');
 
-  // (v1.1) 섹터 테이블 — 3행×4열, 동일 크기 셀
-  // Row1: 성장군(TECH·SEMI·BIO·AUTO), Row2: 경기군(INDU·FIN·CONS·empty), Row3: 가치·방어·안전(ENG·MATE·UTIL·BOND)
-  const SEC_ROWS = [
-    {label:'성장군 · 금리민감', ids:['TECH','SEMI','BIO','AUTO']},
-    {label:'경기군 · GDP민감', ids:['INDU','FIN','CONS',null]},
-    {label:'가치·방어·안전자산', ids:['ENG','MATE','UTIL','BOND']},
+  // (v1.2) 섹터 테이블 — 성장/경기 2행 + 가치·방어·안전 1행(구획 구분)
+  const TOP_ROWS = [
+    {label:'성장군 · 금리민감', color:'var(--acc)',  ids:['TECH','SEMI','BIO','AUTO'], grp:'g-growth'},
+    {label:'경기군 · GDP민감',  color:'var(--gold)', ids:['INDU','FIN','CONS',null],  grp:'g-cyclical'},
   ];
-  const renderSecCell = sid => {
+  const BOTTOM_GROUPS = [
+    {label:'가치군 · 인플레', color:'#f0883e',       ids:['ENG','MATE'],  grp:'g-value'},
+    {label:'방어주',           color:'var(--green)',  ids:['UTIL'],        grp:'g-def'},
+    {label:'안전자산',          color:'var(--purple)', ids:['BOND'],        grp:'g-safe'},
+  ];
+  const renderSecCell = (sid, grpCls='') => {
     if(!sid) return `<div class="sec" style="background:none;border:1px dashed var(--line);opacity:.25"></div>`;
     const s = SECTORS.find(x=>x.id===sid);
     const totalSum = state.players.reduce((a,p)=>a+(p.bets[sid]||0),0);
@@ -3568,17 +3586,33 @@ function render(){
                : cls==='crowded'?'<span class="heat" title="쏠림 주의">⚠️</span>':'';
     const tokens = state.players.filter(p=>(p.bets[sid]||0)>0)
       .map(p=>`<span class="tok tok-p${p.id}" title="${p.name}${p.isHuman?' (나)':''}: ${p.bets[sid]}">${p.bets[sid]}</span>`).join('');
-    return `<div class="sec ${cls}">
+    return `<div class="sec ${grpCls} ${cls}">
       <div class="nm"><span title="${SECTOR_TIPS[sid]||''}">${s.name}${heat}</span><span class="total ${cls}">${totalSum}</span></div>
       <div class="tokens">${tokens}</div>
-      <div class="cbar"><i style="width:${Math.min(100,totalSum)}%"></i></div>
+      <div class="sec-bar"><i style="width:${Math.min(100,totalSum)}%"></i></div>
     </div>`;
   };
   const groupsDiv = document.getElementById('groups');
-  groupsDiv.innerHTML = SEC_ROWS.map(row =>
-    `<div class="sec-row-label">${row.label}</div>
-     <div class="sec-row">${row.ids.map(renderSecCell).join('')}</div>`
+  const topHtml = TOP_ROWS.map(row =>
+    `<div class="sec-row-header">
+       <span class="rh-label" style="color:${row.color}">${row.label}</span>
+       <span class="rh-line"></span>
+     </div>
+     <div class="sec-row">${row.ids.map(sid=>renderSecCell(sid, row.grp)).join('')}</div>`
   ).join('');
+  // bottom row: value(2) + def(1) + safe(1) = 4 cells, with group sub-labels and dividers
+  const bottomCells = BOTTOM_GROUPS.map(g =>
+    g.ids.map(sid => renderSecCell(sid, g.grp)).join('')
+  ).join('');
+  const bottomLabelCols = BOTTOM_GROUPS.map(g =>
+    `<span class="rh-label" style="color:${g.color};grid-column:span ${g.ids.length}">${g.label}</span>`
+  ).join('');
+  const bottomHtml = `
+    <div class="sec-row-header" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:5px">
+      ${BOTTOM_GROUPS.map(g=>`<span class="rh-label" style="color:${g.color}">${g.label}</span>`).join('')}
+    </div>
+    <div class="sec-bottom-row">${bottomCells}</div>`;
+  groupsDiv.innerHTML = topHtml + bottomHtml;
 
   // phase bar
   const pb = document.getElementById('phaseBar');
