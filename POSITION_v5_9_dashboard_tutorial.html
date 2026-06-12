@@ -16,11 +16,11 @@
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--txt);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-    font-size:13px;line-height:1.5}
+    font-size:15px;line-height:1.6}
   header{padding:10px 16px;border-bottom:1px solid var(--line);
     display:flex;align-items:center;gap:12px;background:#0a0d12}
-  header h1{margin:0;font-size:16px;font-weight:600}
-  header .turn{margin-left:auto;color:var(--mut)}
+  header h1{margin:0;font-size:18px;font-weight:600}
+  header .turn{margin-left:auto;color:var(--mut);font-size:13px}
   header .ver{color:var(--mut);font-size:11px}
 
   /* (v1.1) 새 레이아웃 — 상단: 현재단계(전폭) / 중단: 지표+플레이어 | 로그 | 베팅 / 하단: 섹터보드(전폭) */
@@ -29,7 +29,7 @@
   .grid-bot{margin-top:0}
   .panel{background:var(--panel);border:1px solid var(--line);
     border-radius:8px;padding:10px}
-  .panel h3{margin:0 0 8px 0;font-size:12px;color:var(--mut);
+  .panel h3{margin:0 0 8px 0;font-size:13px;color:var(--mut);
     text-transform:uppercase;letter-spacing:.5px;font-weight:600}
 
   /* tracks */
@@ -40,7 +40,7 @@
     box-shadow:0 0 8px var(--acc)}
   .track .lbl{position:absolute;top:1px;font-size:10px;color:var(--mut);
     transform:translateX(-50%);pointer-events:none}
-  .seasons{display:flex;font-size:10px;color:var(--mut);
+  .seasons{display:flex;font-size:12px;color:var(--mut);
     justify-content:space-between;margin-top:2px}
   .fgseg{position:absolute;top:0;bottom:0;opacity:.25}
   .fg-panic{background:#7c1c1c;left:0;width:25%}
@@ -53,9 +53,9 @@
   .omen-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
     margin-top:8px}
   .omen{background:var(--panel2);border:1px solid var(--line);
-    border-radius:6px;padding:6px;text-align:center;font-size:11px}
-  .omen .ic{font-size:18px;display:block;margin-bottom:2px}
-  .omen .val{font-weight:700;font-size:14px}
+    border-radius:6px;padding:6px;text-align:center;font-size:13px}
+  .omen .ic{font-size:22px;display:block;margin-bottom:2px}
+  .omen .val{font-weight:700;font-size:17px}
   .omen.warn{border-color:var(--gold);background:#3a2d10}
   .omen.crit{border-color:var(--red);background:#3a1818}
 
@@ -63,7 +63,7 @@
   .groups{display:flex;flex-direction:column;gap:8px}
   .grp{background:var(--panel2);border:1px solid var(--line);
     border-radius:6px;padding:6px}
-  .grp h4{margin:0 0 4px 0;font-size:11px;color:var(--mut);font-weight:600}
+  .grp h4{margin:0 0 4px 0;font-size:13px;color:var(--mut);font-weight:600}
   .grp .row{display:grid;gap:6px}
   .grp-growth .row{grid-template-columns:repeat(4,1fr)}
   .grp-cyclical .row{grid-template-columns:repeat(3,1fr)}
@@ -77,16 +77,16 @@
     padding:6px;position:relative;min-height:64px}
   .sec.crowded{border-color:var(--gold)}
   .sec.jammed{border-color:var(--red);background:#1a0f0f}
-  .sec .nm{font-weight:700;font-size:12px;display:flex;justify-content:space-between}
-  .sec .total{font-size:10px;color:var(--mut)}
+  .sec .nm{font-weight:700;font-size:14px;display:flex;justify-content:space-between}
+  .sec .total{font-size:12px;color:var(--mut)}
   .sec .tokens{display:flex;gap:2px;flex-wrap:wrap;margin-top:4px;min-height:14px}
-  .tok{display:inline-block;height:12px;padding:0 5px;border-radius:6px;
-    font-size:10px;color:#000;font-weight:700;line-height:12px}
+  .tok{display:inline-block;height:14px;padding:0 5px;border-radius:6px;
+    font-size:11px;color:#000;font-weight:700;line-height:14px}
   .tok-p0{background:var(--p0)}
   .tok-p1{background:var(--p1)}
   .tok-p2{background:var(--p2)}
   .tok-p3{background:var(--p3)}
-  .sec .delta{position:absolute;top:4px;right:6px;font-size:10px;
+  .sec .delta{position:absolute;top:4px;right:6px;font-size:12px;
     color:var(--mut)}
   .sec.up .delta{color:var(--green)}
   .sec.dn .delta{color:var(--red)}
@@ -99,16 +99,16 @@
   .player.active{box-shadow:0 0 0 2px var(--gold) inset}
   .player .head{display:flex;justify-content:space-between;align-items:center;
     margin-bottom:4px}
-  .player .nm{font-weight:700;font-size:12px}
-  .player .pa{font-size:10px;color:var(--mut)}
+  .player .nm{font-weight:700;font-size:14px}
+  .player .pa{font-size:12px;color:var(--mut)}
   .player .cash{font-weight:700;color:var(--green)}
-  .player .total{font-size:11px;color:var(--mut);margin-top:2px}
-  .player .risk-box{margin-top:4px;font-size:10px;color:var(--red);min-height:14px}
+  .player .total{font-size:13px;color:var(--mut);margin-top:2px}
+  .player .risk-box{margin-top:4px;font-size:12px;color:var(--red);min-height:16px}
   .player.p0 .nm{color:var(--p0)}
   .player.p1 .nm{color:var(--p1)}
   .player.p2 .nm{color:var(--p2)}
   .player.p3 .nm{color:var(--p3)}
-  .player .strat{margin-top:4px;font-size:10px}
+  .player .strat{margin-top:4px;font-size:12px}
   .player .strat .sc{display:inline-block;background:#0b0d12;border:1px solid var(--line);
     border-radius:4px;padding:2px 4px;margin:1px 2px 1px 0;cursor:pointer}
   .player .strat .sc.used{opacity:.35;text-decoration:line-through;cursor:default}
@@ -117,7 +117,7 @@
   /* center action */
   .action{display:flex;flex-direction:column;gap:8px}
   .phase-bar{display:flex;gap:4px;flex-wrap:wrap}
-  .phase-bar .ph{flex:1;text-align:center;padding:4px 2px;font-size:10px;
+  .phase-bar .ph{flex:1;text-align:center;padding:5px 3px;font-size:12px;
     background:var(--panel2);border:1px solid var(--line);border-radius:4px;
     color:var(--mut)}
   .phase-bar .ph.cur{background:var(--acc);color:#000;border-color:var(--acc);font-weight:700}
@@ -125,8 +125,8 @@
 
   .card{background:var(--panel2);border:1px solid var(--line);border-radius:6px;
     padding:8px}
-  .card .ttl{font-weight:700;font-size:13px;margin-bottom:4px}
-  .card .desc{font-size:11px;color:var(--mut)}
+  .card .ttl{font-weight:700;font-size:15px;margin-bottom:4px}
+  .card .desc{font-size:13px;color:var(--mut)}
   .card.report-info{border-color:var(--acc)}
   .card.report-fake{border-color:var(--red);background:#1a0f0f}
   .card.report-contra{border-color:var(--purple)}
@@ -149,14 +149,14 @@
   .cyc-badge.up{color:var(--green);border-color:var(--green);background:#13301f}
   .cyc-badge.dn{color:var(--red);border-color:var(--red);background:#2a0f0f}
   .cyc-badge.flat{color:var(--mut);border-color:var(--line);background:var(--panel2)}
-  .meta-chip{font-size:10px;color:var(--mut);background:var(--panel2);
+  .meta-chip{font-size:11px;color:var(--mut);background:var(--panel2);
     border:1px solid var(--line);border-radius:8px;padding:2px 7px}
   .eff-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-  .sec-chip{font-size:10px;font-weight:600;padding:1px 6px;border-radius:6px;
+  .sec-chip{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;
     border:1px solid}
   .sec-chip.pos{color:var(--green);border-color:#1a4a2a;background:#0f2417}
   .sec-chip.neg{color:var(--red);border-color:#4a1a1a;background:#240f0f}
-  .eff-more{font-size:10px;color:var(--mut);align-self:center}
+  .eff-more{font-size:11px;color:var(--mut);align-self:center}
 
   .btn{background:var(--acc);color:#000;border:none;border-radius:6px;
     padding:8px 14px;font-weight:700;cursor:pointer;font-size:13px}
@@ -169,15 +169,15 @@
   /* (v5.8) 토큰형 베팅 UI */
   .bet-grid{display:block;max-height:340px;overflow-y:auto}
   .bet-row{padding:6px 2px;border-bottom:1px dotted #222}
-  .bet-row-head{display:flex;align-items:center;gap:8px;font-size:11px}
+  .bet-row-head{display:flex;align-items:center;gap:8px;font-size:13px}
   .bet-row-head .lbl{flex:1;color:var(--txt);font-weight:600}
-  .bet-row-head .pre{color:var(--mut);font-size:10px}
+  .bet-row-head .pre{color:var(--mut);font-size:12px}
   .bet-row-head .betval{min-width:32px;text-align:right;font-weight:700;
-    font-size:15px;color:var(--mut)}
+    font-size:17px;color:var(--mut)}
   .bet-row-head .betval.on{color:var(--green)}
   .bet-tokens{display:flex;gap:3px;margin-top:5px}
-  .bet-tokens .tok{flex:1;padding:5px 0;border-radius:5px;border:1px solid var(--line);
-    background:var(--panel2);color:var(--txt);font-size:11px;font-weight:700;
+  .bet-tokens .tok{flex:1;padding:6px 0;border-radius:5px;border:1px solid var(--line);
+    background:var(--panel2);color:var(--txt);font-size:13px;font-weight:700;
     cursor:pointer;line-height:1;transition:background .1s}
   .bet-tokens .tok.plus{border-color:#2e6b3e;color:#7fd49a}
   .bet-tokens .tok.plus:hover{background:#1c3a25}
@@ -186,7 +186,7 @@
   .bet-tokens .tok:disabled{opacity:.35;cursor:not-allowed}
 
   .log{background:var(--panel2);border:1px solid var(--line);border-radius:6px;
-    padding:8px;font-size:11px;max-height:220px;overflow-y:auto;
+    padding:8px;font-size:13px;max-height:280px;overflow-y:auto;
     font-family:ui-monospace,Menlo,monospace}
   .log .row{padding:2px 0;border-bottom:1px dotted #222}
   .log .t{color:var(--mut);margin-right:6px}
@@ -483,7 +483,7 @@
 </div>
 <header>
   <h1>POSITION <span class="ver">v5.9 · Tutorial Build</span></h1>
-  <button class="btn alt" style="font-size:11px;padding:4px 10px" onclick="startTutorial()">🎓 튜토리얼</button>
+  <button class="btn alt" style="font-size:14px;padding:4px 10px" onclick="startTutorial()">🎓 튜토리얼</button>
   <div class="turn">턴 <span id="turnNo">1</span>/<span id="maxTurnNo">8</span> · <span id="phaseName">시작</span> · 사이클 <span id="cycleN">50</span> (<span id="seasonN">봄</span>)</div>
 </header>
 
@@ -524,20 +524,20 @@
         </div>
       </div>
       <div class="panel" style="margin-top:10px" id="panelInflRate">
-        <h3>인플레이션 / 기준금리 <span style="font-size:10px;color:var(--mut);font-weight:400">(사이클 파생)</span></h3>
-        <div style="font-size:11px;color:var(--mut)">인플레: <span id="inflN" style="color:var(--gold);font-weight:700">2.0%</span> <span id="inflBadge" style="font-size:10px"></span></div>
+        <h3>인플레이션 / 기준금리 <span style="font-size:14px;color:var(--mut);font-weight:400">(사이클 파생)</span></h3>
+        <div style="font-size:14px;color:var(--mut)">인플레: <span id="inflN" style="color:var(--gold);font-weight:700">2.0%</span> <span id="inflBadge" style="font-size:14px"></span></div>
         <div class="track" style="margin-top:4px"><div id="inflMk" class="mk" style="background:var(--gold)"></div></div>
-        <div style="font-size:11px;color:var(--mut);margin-top:6px">금리: <span id="rateN" style="color:var(--purple);font-weight:700">2.0%</span> <span id="rateBadge" style="font-size:10px"></span></div>
+        <div style="font-size:14px;color:var(--mut);margin-top:6px">금리: <span id="rateN" style="color:var(--purple);font-weight:700">2.0%</span> <span id="rateBadge" style="font-size:14px"></span></div>
         <div class="track" style="margin-top:4px"><div id="rateMk" class="mk" style="background:var(--purple)"></div></div>
       </div>
       <div class="panel" style="margin-top:10px" id="panelOmen">
         <h3>Omen 게이지</h3>
         <div class="omen-row" id="omenRow"></div>
-        <div id="omenWarn" style="font-size:11px;margin-top:6px;line-height:1.4"></div>
+        <div id="omenWarn" style="font-size:14px;margin-top:6px;line-height:1.4"></div>
       </div>
       <div class="panel" style="margin-top:10px">
         <h3>활성 슬롯</h3>
-        <div id="slotList" style="font-size:11px;color:var(--mut)">없음</div>
+        <div id="slotList" style="font-size:14px;color:var(--mut)">없음</div>
       </div>
       <!-- 플레이어 패널 — 왼쪽 하단 -->
       <div class="panel" style="margin-top:10px" id="panelPlayers">
@@ -556,9 +556,9 @@
     <div>
       <div class="panel" id="myBetsPanel">
         <h3>내 베팅 (P0 · ORACLE)</h3>
-        <div id="myPrinciple" style="font-size:10px;color:var(--mut);margin-bottom:6px"></div>
+        <div id="myPrinciple" style="font-size:14px;color:var(--mut);margin-bottom:6px"></div>
         <div class="bet-grid" id="myBets"></div>
-        <div style="margin-top:6px;font-size:11px;color:var(--mut)">
+        <div style="margin-top:6px;font-size:14px;color:var(--mut)">
           남은 cash: <span id="myCash" style="color:var(--green);font-weight:700">100</span>
           · 베팅 합 <span id="myBetSum">0</span>
           · 변경비용 <span id="myTxCost">0</span>
@@ -566,7 +566,7 @@
       </div>
       <div class="panel" style="margin-top:10px" id="panelTierGuide">
         <h3>등급 체계</h3>
-        <div id="tierGuideNick" style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:4px"></div>
+        <div id="tierGuideNick" style="font-size:14px;color:var(--gold);font-weight:700;margin-bottom:4px"></div>
         <div id="tierGuideBody"></div>
       </div>
     </div>
@@ -586,7 +586,7 @@
 <div class="modal-bg on" id="personaModal">
   <div class="modal">
     <h2 style="margin:0">게임 시작</h2>
-    <div style="color:var(--mut);font-size:12px">닉네임 → 모드 → 페르소나 순서로 선택하면 게임이 시작됩니다.</div>
+    <div style="color:var(--mut);font-size:14px">닉네임 → 모드 → 페르소나 순서로 선택하면 게임이 시작됩니다.</div>
     <div class="tut-sep" style="margin-top:14px">1. 플레이어 — 기존 닉네임 또는 신규 등록</div>
     <div id="nickArea"></div>
     <div class="tut-sep" style="margin-top:14px">2. 게임 모드</div>
@@ -2454,7 +2454,7 @@ function renderNickArea(){
     </div>`;
   }).join('');
   el.innerHTML = `
-    <div class="nick-list">${chips || '<span style="font-size:11px;color:var(--mut)">저장된 플레이어가 없습니다 — 새 닉네임을 등록하세요.</span>'}</div>
+    <div class="nick-list">${chips || '<span style="font-size:14px;color:var(--mut)">저장된 플레이어가 없습니다 — 새 닉네임을 등록하세요.</span>'}</div>
     <div class="nick-new">
       <input id="nickInput" type="text" maxlength="12" placeholder="새 닉네임 (12자 이내)"
         onkeydown="if(event.key==='Enter')createNick()">
@@ -3353,9 +3353,9 @@ function buildFinalReport(p){
     <summary style="cursor:pointer;list-style:none;display:block;text-align:center;font-weight:800;color:#fff;font-size:15px;
       background:linear-gradient(135deg,var(--acc),#7c3aed);border:2px solid var(--acc);border-radius:10px;
       padding:14px 18px;box-shadow:0 0 14px rgba(96,165,250,.35)">
-      📊 투자 결과 리포트 — 상세 분석 보기 <span style="font-size:11px;font-weight:400;opacity:.85">(클릭해서 펼치기 ▼)</span>
+      📊 투자 결과 리포트 — 상세 분석 보기 <span style="font-size:14px;font-weight:400;opacity:.85">(클릭해서 펼치기 ▼)</span>
     </summary>
-    <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:8px;font-size:11px;line-height:1.7;text-align:left">
+    <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:8px;font-size:14px;line-height:1.7;text-align:left">
       ${(()=>{ // (v1.1) 운용 성과 헤드라인 — 순위·상대 성과 포함
         const ranked = [...state.players].sort((a,b)=>b.totalScore-a.totalScore);
         const myRank = ranked.findIndex(x=>x.id===p.id)+1;
@@ -3364,8 +3364,8 @@ function buildFinalReport(p){
         const verdictTxt = myRank===1 ? '시장 참여자 전원을 상회하는 성과로 운용을 마감했다'
           : rel>=0 ? '시장 평균을 상회하며 경쟁력 있는 운용을 보였다'
           : '시장 평균을 하회했다. 손실 구간의 의사결정 복기가 필요하다';
-        return `<div style="font-size:13px;margin-bottom:4px"><b>운용 성과 요약</b> — 최종 자산 <b>${finalAssets}점</b> · 누적 수익률 <b style="color:${retColor}">${ret>=0?'+':''}${ret}%</b> <span style="color:var(--mut)">(기초자산 100점)</span></div>
-        <div style="font-size:11px;color:var(--mut);margin-bottom:6px">최종 순위 <b style="color:var(--fg)">${myRank}위/${state.players.length}명</b> · 참여자 평균 대비 <b style="color:${rel>=0?'var(--green)':'var(--red)'}">${rel>=0?'+':''}${rel}점</b> — ${verdictTxt}.</div>`;
+        return `<div style="font-size:14px;margin-bottom:4px"><b>운용 성과 요약</b> — 최종 자산 <b>${finalAssets}점</b> · 누적 수익률 <b style="color:${retColor}">${ret>=0?'+':''}${ret}%</b> <span style="color:var(--mut)">(기초자산 100점)</span></div>
+        <div style="font-size:14px;color:var(--mut);margin-bottom:6px">최종 순위 <b style="color:var(--fg)">${myRank}위/${state.players.length}명</b> · 참여자 평균 대비 <b style="color:${rel>=0?'var(--green)':'var(--red)'}">${rel>=0?'+':''}${rel}점</b> — ${verdictTxt}.</div>`;
       })()}
       <div style="margin:8px 0"><b>턴별 손익</b> <span style="color:var(--mut)">(🪤=함정 발동 턴)</span>
         <div style="display:flex;gap:2px;margin-top:4px;background:#0b0d12;border-radius:6px;padding:6px">${bars}</div></div>
@@ -3442,7 +3442,7 @@ function endGame(){
       </div>`;
     } else {
       const tc = tierAfter.color;
-      tierBanner = `<div style="margin:6px 0;font-size:11px;color:var(--mut)">
+      tierBanner = `<div style="margin:6px 0;font-size:14px;color:var(--mut)">
         <span class="tier-badge" style="color:${tc};border-color:${tc}">${tierAfter.icon} ${tierAfter.label}</span>
         &nbsp;<b style="color:var(--txt)">${CURRENT_NICK}</b> 통산 ${prAfter.wins}승 / ${prAfter.games}판 · 승률 ${wr}%
         &nbsp;·&nbsp; ${humanP.personaId} ${pp.wins}승/${pp.games}판
@@ -3455,8 +3455,8 @@ function endGame(){
   sorted.forEach((p,i) => {
     const isHuman = humanP && p.id === humanP.id;
     html += `<div style="padding:8px;background:var(--panel2);border-radius:6px;margin:6px 0;border-left:4px solid var(--p${p.id})${isHuman?';outline:1px solid var(--acc)':''}">`;
-    html += `<b>${i+1}위 · ${p.name} (${p.personaId})</b>${isHuman?' <span style="font-size:10px;color:var(--acc)">[나]</span>':''} — ${p.totalScore}점<br>`;
-    html += `<span style="font-size:11px;color:var(--mut)">cash ${p.cash} + 베팅 ${Object.values(p.bets).reduce((a,b)=>a+b,0)} + 도전 ${p.questBonus}${p.finishBonus?` + 테마완주 ${p.finishBonus}`:''} - 리스크 ${p.riskPenalty}</span>`;
+    html += `<b>${i+1}위 · ${p.name} (${p.personaId})</b>${isHuman?' <span style="font-size:14px;color:var(--acc)">[나]</span>':''} — ${p.totalScore}점<br>`;
+    html += `<span style="font-size:14px;color:var(--mut)">cash ${p.cash} + 베팅 ${Object.values(p.bets).reduce((a,b)=>a+b,0)} + 도전 ${p.questBonus}${p.finishBonus?` + 테마완주 ${p.finishBonus}`:''} - 리스크 ${p.riskPenalty}</span>`;
     html += '</div>';
   });
   html += '</div>';
@@ -3729,7 +3729,7 @@ function reportInsight(r){
   if(!r) return '';
   if(insightHidden()){
     return `<div style="margin-top:8px;text-align:right">
-      <button class="btn alt" style="font-size:10px;padding:4px 10px" onclick="toggleInsight()">📚 리포트 해설 보기</button>
+      <button class="btn alt" style="font-size:14px;padding:4px 10px" onclick="toggleInsight()">📚 리포트 해설 보기</button>
     </div>`;
   }
   // (v1.1) 애널리스트 노트 스타일 — 투자의견/유망 섹터/리스크 요인/근거를 리서치 어조로 서술
@@ -3797,8 +3797,8 @@ function reportInsight(r){
   }
 
   return `<div class="card" style="margin-top:8px;border-left:3px solid var(--acc)">
-    <div class="ttl" style="display:flex;justify-content:space-between;align-items:center">📚 애널리스트 노트 <span style="font-size:10px;color:var(--mut);font-weight:400">— 하우스 뷰 · 섹터 전략 · 리스크 요인</span>
-      <button class="btn alt" style="font-size:9px;padding:2px 8px" onclick="toggleInsight()">숨기기</button></div>
+    <div class="ttl" style="display:flex;justify-content:space-between;align-items:center">📚 애널리스트 노트 <span style="font-size:14px;color:var(--mut);font-weight:400">— 하우스 뷰 · 섹터 전략 · 리스크 요인</span>
+      <button class="btn alt" style="font-size:14px;padding:2px 8px" onclick="toggleInsight()">숨기기</button></div>
     <div class="desc" style="line-height:1.7">
       <b style="color:var(--acc)">투자의견 요약</b><br>
       ${stance}. 본 리포트는 ${deckView}한다.${themeLine} 리포트는 예언이 아니라 <b>카드 추첨 확률의 가중치</b>다 — 시장이 그 방향으로 기울 가능성이 높아졌다는 의미로 읽어야 한다.<br>
@@ -3840,9 +3840,9 @@ function renderAction(){
   } else if(state.phase === 1){
     // Phase 2: betting (input grid is in right panel)
     a.innerHTML = `<div class="card">
-      <div class="ttl">💰 베팅 조정 <span style="font-size:10px;color:var(--mut);font-weight:400">— 🔒 동시 비공개 베팅</span></div>
+      <div class="ttl">💰 베팅 조정 <span style="font-size:14px;color:var(--mut);font-weight:400">— 🔒 동시 비공개 베팅</span></div>
       <div class="desc">우측 입력칸에 섹터별 토큰을 배치한 뒤 확정하세요. 단일 한도 50점 (HUNTER 한도확장 시 70).<br>
-      <span style="color:var(--mut);font-size:10px">보드에 보이는 다른 플레이어의 베팅은 <b>직전 턴</b> 포지션입니다. 이번 턴 베팅은 모두가 확정한 뒤 동시에 공개됩니다.</span></div>
+      <span style="color:var(--mut);font-size:14px">보드에 보이는 다른 플레이어의 베팅은 <b>직전 턴</b> 포지션입니다. 이번 턴 베팅은 모두가 확정한 뒤 동시에 공개됩니다.</span></div>
     </div>
     <div style="margin-top:8px;display:flex;gap:6px">
       <button class="btn" onclick="confirmBetting()">베팅 확정 →</button>
@@ -3872,7 +3872,7 @@ function renderAction(){
         mkBtn = `<div style="margin-top:6px">
           <button class="btn alt" onclick="macroKingShift(-1)">⟵ -${mag}</button>
           <button class="btn alt" onclick="macroKingShift(+1)">+${mag} ⟶</button>
-          <span style="font-size:11px;color:var(--mut)">MK 능력 사용${mag===15?' (통찰 강화)':''}</span>
+          <span style="font-size:14px;color:var(--mut)">MK 능력 사용${mag===15?' (통찰 강화)':''}</span>
         </div>`;
       }
       a.innerHTML = `<div class="card reveal ${cls}">
@@ -3901,7 +3901,7 @@ function renderAction(){
     const pColors = ['#3b82f6','#f59e0b','#10b981','#a78bfa'];
     const voterChips = (key) => {
       const voters = state.players.filter(p => state.eventVotes[p.id] === key);
-      if(!voters.length) return '<div class="voter-chips"><span style="font-size:9px;color:var(--mut)">투표 없음</span></div>';
+      if(!voters.length) return '<div class="voter-chips"><span style="font-size:14px;color:var(--mut)">투표 없음</span></div>';
       return `<div class="voter-chips">${voters.map(p =>
         `<span class="voter-chip" style="color:${pColors[p.id]};border-color:${pColors[p.id]}">${p.isHuman?'👤 나':p.personaId}</span>`
       ).join('')}</div>`;
@@ -3915,7 +3915,7 @@ function renderAction(){
           <div class="ttl">${key} · ${ev.name}</div>
           <div class="desc">메인 <b>${ev.main}</b> ${ev.mainEff>=0?'+':''}${ev.mainEff}/10</div>
           <div class="eff-row">${effChips(evEff(ev), 5)}</div>
-          ${ev.narrative?`<div class="desc" style="font-size:11px;color:var(--mut)">${ev.narrative}</div>`:''}
+          ${ev.narrative?`<div class="desc" style="font-size:14px;color:var(--mut)">${ev.narrative}</div>`:''}
           ${omenTxt(ev)}
           <div class="badge-row">${tagChips(ev.tags, 3)}</div>
           ${voterChips(key)}
@@ -3928,10 +3928,10 @@ function renderAction(){
       .filter(pp => state.eventVotes[pp.id] === key)
       .map(pp => pp.isHuman ? '👤 나' : pp.personaId).join(' · ') || '없음';
     const statusLine = chosen
-      ? `<div style="margin-top:6px;font-size:11px;color:var(--green);font-weight:700">✅ 채택 완료 — <b>${chosen.name}</b> (${chosen.main} ${chosen.mainEff>=0?'+':''}${chosen.mainEff}/10)</div>
-         <div style="margin-top:4px;font-size:11px;color:var(--mut)">🗳️ A <b>${A.name}</b>: ${voteNames('A')}<br>🗳️ B <b>${B.name}</b>: ${voteNames('B')}</div>
+      ? `<div style="margin-top:6px;font-size:14px;color:var(--green);font-weight:700">✅ 채택 완료 — <b>${chosen.name}</b> (${chosen.main} ${chosen.mainEff>=0?'+':''}${chosen.mainEff}/10)</div>
+         <div style="margin-top:4px;font-size:14px;color:var(--mut)">🗳️ A <b>${A.name}</b>: ${voteNames('A')}<br>🗳️ B <b>${B.name}</b>: ${voteNames('B')}</div>
          <div style="margin-top:8px"><button class="btn" onclick="goSettle()">→ 정산으로</button></div>`
-      : `<div style="margin-top:6px;font-size:11px;color:var(--mut)">봇 투표 현황 — A: <b>${voteA}</b>표 / B: <b>${voteB}</b>표 &nbsp;·&nbsp; 당신의 한 표가 결정권을 가집니다</div>`;
+      : `<div style="margin-top:6px;font-size:14px;color:var(--mut)">봇 투표 현황 — A: <b>${voteA}</b>표 / B: <b>${voteB}</b>표 &nbsp;·&nbsp; 당신의 한 표가 결정권을 가집니다</div>`;
     a.innerHTML = `<div class="card"><div class="ttl">🗳️ 섹터 이벤트 투표 — 2장 중 1장 채택</div></div>
       <div class="vote" style="margin-top:8px">
         ${evCard(A,'A')}
@@ -3950,7 +3950,7 @@ function renderAction(){
       const b = p.lastBreakdown || {macro:0,event:0,slot:0,bondInt:0,persona:0,strategy:0,tx:0};
       const totalColor = p.lastTurnPL>=0 ? 'var(--green)' : 'var(--red)';
       return `<tr>
-        <td style="color:var(--p${p.id});font-weight:700">${p.name}<br><span style="font-size:9px;color:var(--mut)">${p.personaId}</span></td>
+        <td style="color:var(--p${p.id});font-weight:700">${p.name}<br><span style="font-size:14px;color:var(--mut)">${p.personaId}</span></td>
         <td>${fmt(b.macro)}</td>
         <td>${fmt(b.event)}</td>
         <td>${fmt(b.slot)}</td>
@@ -3998,7 +3998,7 @@ function renderAction(){
         line = `📰 리포트 복기: 카드는 <b>${deckNames[rc.deck]||rc.deck}</b> 덱 — 리포트가 가중한 덱이 아니었습니다 → <b style="color:var(--red)">빗나감 ❌</b> (가중치는 확률일 뿐!)`;
       }
       const trapBadge = rc.trap
-        ? `<div style="margin-top:4px"><span style="background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px">🪤 함정 리포트 발동!</span> <span style="font-size:10px;color:var(--mut)">F&G 극단에서 추세 역전(${rc.trap>0?'하방':'상방'}) 가중이 실제로 적용된 턴입니다.</span></div>`
+        ? `<div style="margin-top:4px"><span style="background:var(--red);color:#fff;font-size:14px;font-weight:800;padding:2px 8px;border-radius:10px">🪤 함정 리포트 발동!</span> <span style="font-size:14px;color:var(--mut)">F&G 극단에서 추세 역전(${rc.trap>0?'하방':'상방'}) 가중이 실제로 적용된 턴입니다.</span></div>`
         : '';
       // (v1.1) 섹터 적중도 — 리포트가 유리하다고 예고한 섹터 중 실제 상승한 비율
       let secHitHtml = '';
@@ -4010,15 +4010,15 @@ function renderAction(){
         const isNegR = rc.reportSent === 'negative';
         const labelA = isNegR ? '리스크 예고 섹터' : '유리 예고 섹터';
         const labelB = isNegR ? '실제 하락(리스크 실현)' : '실제 상승';
-        secHitHtml = `<div style="margin-top:4px;font-size:11px;line-height:1.5">🎯 이번 턴 리포트 방향 적중: <b>${k}/${n}</b> — ${verdict}<br>
+        secHitHtml = `<div style="margin-top:4px;font-size:14px;line-height:1.5">🎯 이번 턴 리포트 방향 적중: <b>${k}/${n}</b> — ${verdict}<br>
           <span style="color:var(--mut)">${labelA}: ${rc.favSectors.join('·')} / ${labelB}: ${(rc.favRisen||[]).join('·')||'없음'}</span></div>`;
       }
       recapHtml = `<div class="card" style="margin-bottom:8px;border-left:3px solid ${rc.trap?'var(--red)':'var(--line)'}">
-        <div style="font-size:11px;line-height:1.5">${line}</div>${secHitHtml}${trapBadge}
+        <div style="font-size:14px;line-height:1.5">${line}</div>${secHitHtml}${trapBadge}
       </div>`;
     }
     a.innerHTML = `${recapHtml}${rvHtml}<div class="card" style="margin-top:8px"><div class="ttl">🧮 정산 명세 (이번 턴)</div>
-      <table style="width:100%;font-size:11px;border-collapse:collapse;margin-top:6px;text-align:center">
+      <table style="width:100%;font-size:14px;border-collapse:collapse;margin-top:6px;text-align:center">
         <thead><tr style="color:var(--mut);border-bottom:1px solid var(--line)">
           <th style="text-align:left">플레이어</th>
           <th>매크로</th><th>이벤트</th><th>슬롯</th><th>BOND</th>
@@ -4090,19 +4090,19 @@ function renderSectorBreakdown(){
   const r = v => { v = Math.round(v); if(v===0) return '<span style="color:var(--mut)">0</span>';
     return `<span style="color:${v>0?'var(--green)':'var(--red)'}">${v>0?'+':''}${v}</span>`; };
   const rows = ents.map(([sid,d]) => `<tr>
-      <td style="text-align:left;font-weight:700">${sid}<span style="font-size:9px;color:var(--mut)"> ${d.bet}</span></td>
+      <td style="text-align:left;font-weight:700">${sid}<span style="font-size:14px;color:var(--mut)"> ${d.bet}</span></td>
       <td>${r(d.macro)}</td><td>${r(d.event)}</td><td>${r(d.slot)}</td><td>${r(d.bond)}</td>
       <td style="font-weight:700;border-left:1px solid var(--line)">${r(d.total)}${d.capped?'<span style="color:var(--gold)" title="섹터 손익 상한 적용">▲</span>':''}</td>
     </tr>`).join('');
-  return `<div class="card" style="margin-top:6px"><div class="ttl" style="font-size:12px">🔎 내 섹터별 인과 (베팅 섹터만)</div>
-    <table style="width:100%;font-size:11px;border-collapse:collapse;margin-top:4px;text-align:center">
+  return `<div class="card" style="margin-top:6px"><div class="ttl" style="font-size:14px">🔎 내 섹터별 인과 (베팅 섹터만)</div>
+    <table style="width:100%;font-size:14px;border-collapse:collapse;margin-top:4px;text-align:center">
       <thead><tr style="color:var(--mut);border-bottom:1px solid var(--line)">
-        <th style="text-align:left">섹터 <span style="font-size:9px">(베팅)</span></th>
+        <th style="text-align:left">섹터 <span style="font-size:14px">(베팅)</span></th>
         <th>매크로</th><th>이벤트</th><th>슬롯</th><th>BOND</th>
         <th style="border-left:1px solid var(--line)">합계</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <div style="font-size:10px;color:var(--mut);margin-top:4px">▲ = 섹터 손익 상한(±${SECTOR_PL_CAP}) 적용됨 · 혼잡 비용은 출처값에 이미 반영</div>
+    <div style="font-size:14px;color:var(--mut);margin-top:4px">▲ = 섹터 손익 상한(±${SECTOR_PL_CAP}) 적용됨 · 혼잡 비용은 출처값에 이미 반영</div>
   </div>`;
 }
 function useStrategy(id){
