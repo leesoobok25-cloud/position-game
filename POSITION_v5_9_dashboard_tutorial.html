@@ -2198,7 +2198,7 @@ function evaluatePrinciple(p, ctx){
     }
     // (v5.6) ① 매크로 방향 정렬 — 확장 카드(+)에 위험선호, 수축 카드(-)에 방어 정렬
     // (v5.9) 장기(16턴)는 +10 → +6: 매 턴 발동 가능한 보너스라 16턴 누적 시 우승률 44%까지 상승
-    const mkAlign = state.maxTurn >= 16 ? 5 : 6; // (v5.9d) 임계점 하향으로 인플레맞춤 시너지 증가 → 8턴 너프
+    const mkAlign = state.maxTurn >= 16 ? 5 : 7; // (v5.9d) 임계점 효과 크기 축소로 시너지 감소 → 8턴 원복
     if(macroMove > 0 && riskOn/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 확장 맞춤(성장·경기 비중확대) +${mkAlign}`); }
     else if(macroMove < 0 && riskOff/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 수축 맞춤(방어·안전자산 비중확대) +${mkAlign}`); }
     // (v5.7) 인플레 맞춤 — 인플레 상승 카드에 가치/에너지/소재 비중
@@ -2274,7 +2274,7 @@ function evaluatePrinciple(p, ctx){
       p.quintBetTurns = (p.quintBetTurns||0) + 1;
       if(ctx && ctx.turnPL >= 0){
         // (v5.9) 장기(16턴)는 +7 → +12 — 분산형의 낮은 천장을 긴 게임에서 보전 (우승률 7.8% 보정)
-        const qb = state.maxTurn >= 16 ? 13 : 9; // (v5.9c) 8턴 7→9, 16턴 12→13: 랜덤 사이클 환경 보정
+        const qb = state.maxTurn >= 16 ? 14 : 9; // (v5.9d) 16턴 인플레/금리 임계효과 드래그 보정
         total += qb; msgs.push(`퀀트분산이익 +${qb}`);
       }
     }
@@ -3543,7 +3543,7 @@ function endGame(){
     // (v5.9c) QUANT 리스크 0개 종료 보너스 — '덜 잃는 운용'을 우승력으로 환산
     p.zeroRiskBonus = (persona.id === 'QUANT' && p.risk === 0) ? (state.maxTurn >= 16 ? 5 : 3) : 0;
     // (v5.10) HUNTER 16턴 한정 '테마 완주 보너스'
-    p.finishBonus = (persona.id === 'HUNTER' && state.maxTurn >= 16 && (p.lateCatalystHits||0) >= 2) ? 6 : 0;
+    p.finishBonus = (persona.id === 'HUNTER' && state.maxTurn >= 16 && (p.lateCatalystHits||0) >= 2) ? 5 : 0;
     // (v5.7) MACRO_KING은 국면을 적극 읽다가 리스크를 쉽게 얻으므로 첫 리스크 토큰 1개 면제
     // (v5.9) 16턴 장기전에서는 리스크 누적이 2.5개+ 까지 커져 면제가 과도한 우위가 됨 → 8턴 한정
     const effRisk = (persona.id === 'MACRO_KING' && state.maxTurn < 16) ? Math.max(0, p.risk - 1) : p.risk;
