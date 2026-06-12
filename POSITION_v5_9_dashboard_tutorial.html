@@ -2023,7 +2023,7 @@ function shiftCyclePreserveShock(delta){
 function activeThresholds(cycle){
   const infl = macroBaselineInfl(cycle);
   const rate = macroBaselineRate(cycle);
-  return (infl>=3?'I+':'') + (infl<=1.5?'I-':'') + (rate>=3?'R+':'') + (rate<=1.5?'R-':'');
+  return (infl>=4?'I+':'') + (infl<=1?'I-':'') + (rate>=4?'R+':'') + (rate<=1?'R-':'');
 }
 
 /* === BOND interest & capital — amplified variance (v5.5 Stage A) ===
@@ -2048,7 +2048,7 @@ function bondPerTen(){
   if(state.cycle < 25) per += 3;
   else if(state.cycle > 75) per -= 3;
   // 4) high inflation drag still applies (real yield erosion)
-  if(state.inflation >= 3) per -= 2;
+  if(state.inflation >= 3.0) per -= 2;
   return per;
 }
 
@@ -2058,32 +2058,29 @@ function bondPerTen(){
 function applyMacroThresholds(macroD){
   const out = {};
 
-  if(state.inflation >= 3.5){
-    out.TECH = -2;
-    out.BIO = -2;
-    out.CONS = -2;
-    out.BOND = -3;
-    out.UTIL = -1;
-    out.MATE = +2;
+  if(state.inflation >= 3.0){
+    out.TECH = -1;
+    out.BIO = -1;
+    out.CONS = -1;
+    out.BOND = -2;
+    out.MATE = +1;
     out.ENG = +2;
     out.FIN = +1;
-  } else if(state.inflation <= 1.5){
-    out.BIO = +2;
+  } else if(state.inflation <= 1.0){
+    out.BIO = +1;
     out.TECH = +1;
     out.BOND = +2;
     out.ENG = -1;
-    out.MATE = -1;
   }
 
-  if(state.rate >= 3.5){
-    out.TECH = (out.TECH||0) - 3;
-    out.BIO = (out.BIO||0) - 3;
-    out.BOND = (out.BOND||0) - 3;
+  if(state.rate >= 3.0){
+    out.TECH = (out.TECH||0) - 2;
+    out.BIO = (out.BIO||0) - 2;
+    out.BOND = (out.BOND||0) - 2;
     out.FIN = (out.FIN||0) + 2;
-    out.UTIL = (out.UTIL||0) - 1;
-  } else if(state.rate <= 1.5){
-    out.TECH = (out.TECH||0) + 3;
-    out.BIO = (out.BIO||0) + 2;
+  } else if(state.rate <= 1.0){
+    out.TECH = (out.TECH||0) + 2;
+    out.BIO = (out.BIO||0) + 1;
     out.BOND = (out.BOND||0) + 2;
     out.FIN = (out.FIN||0) - 1;
   }
@@ -2201,13 +2198,13 @@ function evaluatePrinciple(p, ctx){
     }
     // (v5.6) ① 매크로 방향 정렬 — 확장 카드(+)에 위험선호, 수축 카드(-)에 방어 정렬
     // (v5.9) 장기(16턴)는 +10 → +6: 매 턴 발동 가능한 보너스라 16턴 누적 시 우승률 44%까지 상승
-    const mkAlign = state.maxTurn >= 16 ? 5 : 7; // (v5.9c) 슬롯 버그 수정 후 16턴 MK 보정 복원
+    const mkAlign = state.maxTurn >= 16 ? 5 : 6; // (v5.9d) 임계점 하향으로 인플레맞춤 시너지 증가 → 8턴 너프
     if(macroMove > 0 && riskOn/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 확장 맞춤(성장·경기 비중확대) +${mkAlign}`); }
     else if(macroMove < 0 && riskOff/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 수축 맞춤(방어·안전자산 비중확대) +${mkAlign}`); }
     // (v5.7) 인플레 맞춤 — 인플레 상승 카드에 가치/에너지/소재 비중
     const macroInflMove = state.currentMacro?.inflMove || 0;
     if(macroInflMove >= 0.4 && (valBet + (p.bets.ENG||0) + (p.bets.MATE||0))/totalB >= 0.35){
-      total += 8; msgs.push('인플레 상승 맞춤(ENG·MATE·가치군 비중확대) +8');
+      total += 6; msgs.push('인플레 상승 맞춤(ENG·MATE·가치군 비중확대) +6');
     }
     // (v5.7) 금리 급등 회피 — 금리 오를 때 BOND/TECH/BIO 노출을 줄였으면 보상
     if((state.rate - (state.prevRate || state.rate)) >= 0.3 && bondBet <= 10 && (p.bets.TECH||0)+(p.bets.BIO||0) <= 25){
@@ -2244,7 +2241,7 @@ function evaluatePrinciple(p, ctx){
     }
     // (v5.9) 장기(16턴)에선 상방 한도 +6 → +9 — 이벤트 적중이 늘어나는 만큼
     //        집중형의 보상 천장도 함께 올려 우승률 15% → 25%선 회복
-    hunterDelta = clamp(hunterDelta, -9, state.maxTurn >= 16 ? 9 : 6); // (v5.9c) 장기 10→9
+    hunterDelta = clamp(hunterDelta, -9, state.maxTurn >= 16 ? 9 : 6); // (v5.9c) 원복
     if(hunterDelta){ total += hunterDelta; msgs.push(`헌터 상시 ${hunterDelta>=0?'+':''}${hunterDelta}`); }
     // ban: 4+ sectors
     const active = SECTORS.filter(s => (p.bets[s.id]||0) > 0).length;
@@ -3544,7 +3541,7 @@ function endGame(){
     }
     p.questBonus = questOK ? (persona.id === 'MACRO_KING' && state.maxTurn < 16 ? 17 : 20) : 0;
     // (v5.9c) QUANT 리스크 0개 종료 보너스 — '덜 잃는 운용'을 우승력으로 환산
-    p.zeroRiskBonus = (persona.id === 'QUANT' && p.risk === 0) ? (state.maxTurn >= 16 ? 4 : 3) : 0;
+    p.zeroRiskBonus = (persona.id === 'QUANT' && p.risk === 0) ? (state.maxTurn >= 16 ? 5 : 3) : 0;
     // (v5.10) HUNTER 16턴 한정 '테마 완주 보너스'
     p.finishBonus = (persona.id === 'HUNTER' && state.maxTurn >= 16 && (p.lateCatalystHits||0) >= 2) ? 6 : 0;
     // (v5.7) MACRO_KING은 국면을 적극 읽다가 리스크를 쉽게 얻으므로 첫 리스크 토큰 1개 면제
@@ -3634,11 +3631,11 @@ function render(){
   // Threshold badges
   const inflBadge = document.getElementById('inflBadge');
   if(state.inflation >= 3) inflBadge.innerHTML = '<span style="color:#ef4444">⚠️ 고인플레</span>';
-  else if(state.inflation <= 1.5) inflBadge.innerHTML = '<span style="color:#3b82f6">⚠️ 디플레</span>';
+  else if(state.inflation <= 1) inflBadge.innerHTML = '<span style="color:#3b82f6">⚠️ 디플레</span>';
   else inflBadge.innerHTML = '';
   const rateBadge = document.getElementById('rateBadge');
   if(state.rate >= 3) rateBadge.innerHTML = '<span style="color:#ef4444">⚠️ 긴축</span>';
-  else if(state.rate <= 1.5) rateBadge.innerHTML = '<span style="color:#10b981">⚠️ 완화</span>';
+  else if(state.rate <= 1) rateBadge.innerHTML = '<span style="color:#10b981">⚠️ 완화</span>';
   else rateBadge.innerHTML = '';
   // tracks: infl 0-10%, rate 0-10%
   // marker: 0~6.5 → 0~100%
@@ -4364,7 +4361,7 @@ const TUT_STEPS = [
     text:'플레이어들이 돈을 벌면 탐욕으로, 잃으면 공포로 움직입니다. <b>80 이상(극탐욕)</b>이면 다음 턴 하방 매크로 후보 2장 중 1장을 직접 선택하게 되고, <b>20 이하(극공포)</b>면 상방 후보가 나옵니다 — 극단은 평균회귀의 신호입니다!',
     next:true },
   { sel:'#panelInflRate', title:'🔥 인플레이션 / 기준금리',
-    text:'두 지표는 사이클을 따라가되 매크로 카드의 충격이 더해집니다. <b>인플레 ≥3%/≤1.5%</b>, <b>금리 ≥3%/≤1.5%</b> 임계점을 넘으면 정산 때 섹터별 추가 효과가 붙습니다 (예: 긴축 → 성장주 부담, 고인플레 → 에너지·소재 유리).',
+    text:'두 지표는 사이클을 따라가되 매크로 카드의 충격이 더해집니다. <b>정상 범위는 1~3%</b> — 인플레·금리가 이 구간을 벗어나면 정산 때 섹터별 추가 효과가 붙습니다 (예: 긴축 → 성장주 부담, 고인플레 → 에너지·소재 유리).',
     next:true },
   { sel:'#panelOmen', title:'🔮 Omen 게이지 (위험 누적)',
     text:'지정학·신용·인플레·침체 4종의 위험 누적도입니다. 카드가 나올 때마다 쌓이고 <b>3에 도달하면 다음 턴 해당 위기 매크로가 강제 발동</b>되며 3~4턴 지속되는 장기 레짐이 시작됩니다. 2 이상이면 경고와 대피 섹터 힌트가 표시돼요.',
