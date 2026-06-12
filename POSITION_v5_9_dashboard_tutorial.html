@@ -2285,10 +2285,19 @@ function botPickStrategy(p){
 }
 
 function botVoteEvent(p, evA, evB){
-  // pick the event whose main sector this bot has more bet on
-  const a = p.bets[evA.main] || 0;
-  const b = p.bets[evB.main] || 0;
-  return a >= b ? 'A' : 'B';
+  // (v1.1) 버그 수정 — 기존엔 효과 부호를 무시하고 '메인 섹터 베팅이 많은 카드'에 투표해
+  //         자기 베팅 섹터의 악재 카드를 스스로 뽑았음. 내 베팅 기준 기대 손익(main+related)으로 판단.
+  // 70%는 기대 손익(main+related)으로 합리 투표, 30%는 기존 '관심 섹터' 휴리스틱 유지
+  // — 완전 합리화는 MACRO_KING 우승률을 31%+로 밀어올려 밸런스를 깨뜨림
+  if(Math.random() < 0.5){
+    const expPL = ev => {
+      let pl = (ev.mainEff||0) * (p.bets[ev.main]||0) / 10;
+      for(const sid in (ev.related||{})) pl += ev.related[sid] * (p.bets[sid]||0) / 10;
+      return pl;
+    };
+    return expPL(evA) >= expPL(evB) ? 'A' : 'B';
+  }
+  return (p.bets[evA.main]||0) >= (p.bets[evB.main]||0) ? 'A' : 'B';
 }
 
 /* === PHASE MACHINE === */
@@ -3831,8 +3840,13 @@ function renderAction(){
     };
     const voteA = Object.values(state.eventVotes).filter(v=>v==='A').length;
     const voteB = Object.values(state.eventVotes).filter(v=>v==='B').length;
+    // (v1.1) 채택 후 누가 어느 카드에 투표했는지 페르소나별 요약
+    const voteNames = key => state.players
+      .filter(pp => state.eventVotes[pp.id] === key)
+      .map(pp => pp.isHuman ? '👤 나' : pp.personaId).join(' · ') || '없음';
     const statusLine = chosen
       ? `<div style="margin-top:6px;font-size:11px;color:var(--green);font-weight:700">✅ 채택 완료 — <b>${chosen.name}</b> (${chosen.main} ${chosen.mainEff>=0?'+':''}${chosen.mainEff}/10)</div>
+         <div style="margin-top:4px;font-size:11px;color:var(--mut)">🗳️ A <b>${A.name}</b>: ${voteNames('A')}<br>🗳️ B <b>${B.name}</b>: ${voteNames('B')}</div>
          <div style="margin-top:8px"><button class="btn" onclick="goSettle()">→ 정산으로</button></div>`
       : `<div style="margin-top:6px;font-size:11px;color:var(--mut)">봇 투표 현황 — A: <b>${voteA}</b>표 / B: <b>${voteB}</b>표 &nbsp;·&nbsp; 당신의 한 표가 결정권을 가집니다</div>`;
     a.innerHTML = `<div class="card"><div class="ttl">🗳️ 섹터 이벤트 투표 — 2장 중 1장 채택</div></div>
