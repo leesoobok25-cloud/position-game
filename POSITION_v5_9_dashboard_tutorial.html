@@ -2895,19 +2895,45 @@ function resolveEventVote(){
 
 function castEventVote(choice){
   state.eventVotes[state.myId] = choice;
-  // Resolve: majority wins; tie → human (clockwise nearest)
   let aCount=0, bCount=0;
   for(const pid in state.eventVotes){
     if(state.eventVotes[pid]==='A') aCount++; else bCount++;
   }
-  let pick;
-  if(aCount > bCount) pick = state.currentEvents[0];
-  else if(bCount > aCount) pick = state.currentEvents[1];
-  else pick = state.eventVotes[state.myId]==='B' ? state.currentEvents[1] : state.currentEvents[0]; // tie → 플레이어 선택 우선
-  state.currentEventChosen = pick;
-  logRow(`[섹터 이벤트] 채택: <b>${pick.name}</b> (${pick.main} ${pick.mainEff>=0?'+':''}${pick.mainEff}/10)`, 'ev');
-  // (v1.1) 자동 전환(0.8초) 제거 — 결과를 충분히 읽고 클릭으로 넘어가도록 변경
-  renderAction();
+  if(aCount !== bCount){
+    // 다수결
+    state.currentEventChosen = aCount > bCount ? state.currentEvents[0] : state.currentEvents[1];
+    logRow(`[섹터 이벤트] 채택: <b>${state.currentEventChosen.name}</b> (${state.currentEventChosen.main} ${state.currentEventChosen.mainEff>=0?'+':''}${state.currentEventChosen.mainEff}/10)`, 'ev');
+    renderAction();
+  } else {
+    // 2:2 동률 → 동전 던지기 애니메이션 후 랜덤 결정
+    showTiebreakerFlip(() => {
+      state.currentEventChosen = Math.random() < 0.5 ? state.currentEvents[0] : state.currentEvents[1];
+      logRow(`[섹터 이벤트] 🪙 동률 → 동전: <b>${state.currentEventChosen.name}</b> 채택`, 'ev');
+      renderAction();
+    });
+  }
+}
+
+function showTiebreakerFlip(cb){
+  const a = document.getElementById('actionArea');
+  if(!a) { cb(); return; }
+  const labels = ['A','B'];
+  let i = 0, speed = 80, steps = 0, maxSteps = 18;
+  const el = document.createElement('div');
+  el.style.cssText = 'margin-top:10px;text-align:center;font-size:22px;font-weight:700;color:var(--gold);letter-spacing:2px';
+  el.textContent = '🪙 동률! 동전을 던집니다...';
+  a.appendChild(el);
+  const tick = () => {
+    el.textContent = `🪙 ${labels[i % 2]}`;
+    i++; steps++;
+    if(steps < maxSteps){
+      speed = 80 + steps * 12;
+      setTimeout(tick, speed);
+    } else {
+      setTimeout(() => { el.remove(); cb(); }, 400);
+    }
+  };
+  setTimeout(tick, 300);
 }
 function goSettle(){
   if(!state.currentEventChosen) return;
