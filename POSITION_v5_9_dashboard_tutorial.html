@@ -3370,6 +3370,45 @@ function factorChips(card){
   return html;
 }
 
+/* (v5.10) 리포트 해설 — 카드 데이터(macroBias/eventBias/trap)에서 직접 추출해
+   '의미 · 유리/불리 섹터 · 근거 · 신뢰도'를 500자 내로 생성한다. 교육 목적. */
+function reportInsight(r){
+  if(!r) return '';
+  const deckNames = {depression:'불황', downturn:'경기침체', recovery:'회복', boom:'호황'};
+  const mb = Object.entries(r.macroBias||{}).sort((a,b)=>b[1]-a[1]);
+  const mbUp = mb.filter(([,v])=>v>1).map(([d,v])=>`${deckNames[d]} 덱 ×${v}`).join(', ');
+  const eb = Object.entries(r.eventBias||{}).sort((a,b)=>b[1]-a[1]);
+  const fav = eb.filter(([,v])=>v>1).slice(0,5)
+    .map(([s,v])=>`<b>${s}</b> ×${v}`).join(' · ');
+  // 불리한 쪽: 가장 강하게 가중된 매크로 덱의 반대편 그룹
+  const topDeck = mb.length && mb[0][1] > 1 ? mb[0][0] : null;
+  let hurt = '';
+  if(topDeck === 'boom' || topDeck === 'recovery'){
+    hurt = '상승 국면 가중 → <b>BOND·UTIL</b> 등 방어 자산은 상대적으로 소외되기 쉽습니다.';
+  } else if(topDeck === 'downturn' || topDeck === 'depression'){
+    hurt = '하강 국면 가중 → <b>TECH·SEMI·AUTO</b> 등 성장·경기민감 섹터가 압박받기 쉽습니다.';
+  }
+  // 신뢰도/함정
+  const t = r.trap || {};
+  let trust;
+  if(t.reverseProb){
+    const cond = t.fgAbove != null ? `F&G ${t.fgAbove} 이상(과열)` : `F&G ${t.fgBelow} 이하(공포)`;
+    trust = `⚠️ <b>함정 리포트 가능성</b>: 지금 ${cond}이면 <b>${Math.round(t.reverseProb*100)}%</b> 확률로 추세가 <b>역전</b>된 카드가 우대됩니다. 현재 F&G ${state.fearGreed}.`;
+  } else {
+    trust = `이 리포트에는 함정 조건이 없습니다. 다만 가중치는 <b>확률</b>일 뿐 — 반대 방향 카드도 여전히 추첨될 수 있습니다.`;
+  }
+  return `<div class="card" style="margin-top:8px;border-left:3px solid var(--acc)">
+    <div class="ttl">📚 리포트 해설 <span style="font-size:10px;color:var(--mut);font-weight:400">— 무엇이, 왜 유리해지나</span></div>
+    <div class="desc" style="line-height:1.6">
+      <b>의미</b>: 리포트는 예언이 아니라 <b>카드 추첨 확률 가중치</b>입니다. 이 리포트는 ${mbUp || '특정 매크로 덱 가중 없음'}으로 매크로 추첨을 기울입니다.<br>
+      ${fav ? `<b>유리</b>: 섹터 이벤트 출현 확률 — ${fav}<br>` : ''}
+      ${hurt ? `<b>불리</b>: ${hurt}<br>` : ''}
+      <b>근거</b>: 위 배수만큼 해당 카드가 추첨 풀에서 더 자주 뽑힙니다 (×1.5 = 1.5배). 보장이 아니므로 Omen·사이클과 교차 확인하세요.<br>
+      ${trust}
+    </div>
+  </div>`;
+}
+
 function renderAction(){
   const a = document.getElementById('actionArea');
   const me = state.players[state.myId];
@@ -3392,6 +3431,7 @@ function renderAction(){
       <div class="ttl">📰 ${typeLabel}</div>
       <div class="desc">${r.text}</div>
     </div>
+    ${reportInsight(r)}
     <div style="margin-top:8px"><button class="btn" onclick="advanceToBetting()">→ 베팅 단계로</button></div>`;
   } else if(state.phase === 1){
     // Phase 2: betting (input grid is in right panel)
@@ -3694,7 +3734,7 @@ const TUT_STEPS = [
     text:'페르소나마다 4가지 원칙이 있습니다.<br>🔷 <b>상시</b>: 30점+ 베팅 섹터에 호재가 뜨면 +5점<br>🚫 <b>금지</b>: 동시에 4개 이상 섹터 베팅 → -10점<br>⭐ <b>이익</b>: 40점+ 베팅 + 호재 발현 → +3점<br>🎯 <b>도전</b>: 40점+ 섹터에서 호재 3턴 적중 → 종료 시 +20점<br><br>좁고 굵게 베팅하는 스타일이죠. 원칙 위반은 점수와 함께 <b>리스크 토큰</b>(개당 -5점)도 쌓습니다.',
     next:true },
   { sel:'#panelPhase', title:'1단계 — 🎲 주사위와 리포트',
-    text:'매 턴은 감성 주사위로 시작합니다. 결과(긍정/부정/중립)가 이번 턴 매크로 카드를 뽑을 <b>덱 2개</b>를 정하고, 📰리포트는 카드 추첨 확률에 <b>실제로 가중치</b>를 줍니다. 리포트를 읽고 어느 섹터가 유리할지 추리해보세요.',
+    text:'매 턴은 감성 주사위로 시작합니다. 결과(긍정/부정/중립)가 이번 턴 매크로 카드를 뽑을 <b>덱 2개</b>를 정하고, 📰리포트는 카드 추첨 확률에 <b>실제로 가중치</b>를 줍니다.<br><br>⚠️ 단, <b>리포트는 틀릴 수 있습니다</b>:<br>① 가중치는 확률일 뿐 — ×1.5 가중이라도 <b>반대 방향 카드가 그대로 뽑힐 수</b> 있습니다<br>② 일부 리포트는 <b>함정</b> — 시장이 극단(F&G 80+ 과열 / 25- 공포)일 때 <b>15~25% 확률로 추세가 역전</b>됩니다 (아래 📚해설에 함정 확률이 표시됩니다)<br>③ 실제 투자처럼, 리포트를 맹신하지 말고 Omen·사이클과 <b>교차 검증</b>하세요.',
     mission:'👆 "→ 베팅 단계로" 버튼을 누르세요',
     until: () => state.phase >= 1 || state.turn >= 2 },
   { sel:'#myBetsPanel', title:'2단계 — 💰 베팅',
