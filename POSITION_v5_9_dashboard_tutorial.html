@@ -1566,12 +1566,14 @@ const SLOTS = {
 };
 
 /* (v5.7) 같은 slot이 있으면 dur만 +1(최대 5), 없으면 새로 추가. */
-function addOrExtendSlot(slotId){
+/* (v5.9c fix) tagMemory 기반 슬롯은 이미 활성 중이면 재진입/연장하지 않는다.
+   Omen3 기반 슬롯(addOrExtendSlot 직접 호출)만 연장 허용. */
+function addOrExtendSlot(slotId, allowExtend=true){
   const base = SLOTS[slotId];
   if(!base) return;
   const existing = state.slots.find(s => s.id === slotId);
   if(existing){
-    existing.dur = Math.min(5, existing.dur + 1);
+    if(allowExtend) existing.dur = Math.min(5, existing.dur + 1);
   } else {
     state.slots.push({id:slotId, ...base});
     logRow(`레짐 진입: ${base.name} (${base.dur}턴)`, 'ev');
@@ -2177,7 +2179,7 @@ function evaluatePrinciple(p, ctx){
     }
     // (v5.6) ① 매크로 방향 정렬 — 확장 카드(+)에 위험선호, 수축 카드(-)에 방어 정렬
     // (v5.9) 장기(16턴)는 +10 → +6: 매 턴 발동 가능한 보너스라 16턴 누적 시 우승률 44%까지 상승
-    const mkAlign = state.maxTurn >= 16 ? 4 : 7; // (v5.9c) 장기 5→4: MACRO_KING 16턴 과강 보정
+    const mkAlign = state.maxTurn >= 16 ? 5 : 7; // (v5.9c) 슬롯 버그 수정 후 16턴 MK 보정 복원
     if(macroMove > 0 && riskOn/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 확장 맞춤(성장·경기 비중확대) +${mkAlign}`); }
     else if(macroMove < 0 && riskOff/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 수축 맞춤(방어·안전자산 비중확대) +${mkAlign}`); }
     // (v5.7) 인플레 맞춤 — 인플레 상승 카드에 가치/에너지/소재 비중
@@ -2763,10 +2765,10 @@ function phase3_macro(){
   for(const t of state.currentMacro.tags || []){
     state.tagMemory[t] = (state.tagMemory[t] || 0) + 1;
   }
-  if((state.tagMemory.ai || 0) >= 2) addOrExtendSlot('AI_INFRA');
-  if(((state.tagMemory.policy || 0) + (state.tagMemory.liquidity || 0)) >= 2) addOrExtendSlot('POLICY_PUT');
-  if(((state.tagMemory.goldilocks || 0) + (state.tagMemory.productivity || 0)) >= 1 && state.cycle >= 45 && state.cycle <= 70) addOrExtendSlot('GOLDILOCKS');
-  if((state.tagMemory.bubble || 0) >= 2 || state.fearGreed >= 85) addOrExtendSlot('BUBBLE_LATE');
+  if((state.tagMemory.ai || 0) >= 2) addOrExtendSlot('AI_INFRA', false);
+  if(((state.tagMemory.policy || 0) + (state.tagMemory.liquidity || 0)) >= 2) addOrExtendSlot('POLICY_PUT', false);
+  if(((state.tagMemory.goldilocks || 0) + (state.tagMemory.productivity || 0)) >= 1 && state.cycle >= 45 && state.cycle <= 70) addOrExtendSlot('GOLDILOCKS', false);
+  if((state.tagMemory.bubble || 0) >= 2 || state.fearGreed >= 85) addOrExtendSlot('BUBBLE_LATE', false);
   // Bot MACRO_KING uses its signature cycle-shift ability (previously human-only → bot was crippled)
   botMacroKingShift();
   // Track season seen (after any cycle shift)
