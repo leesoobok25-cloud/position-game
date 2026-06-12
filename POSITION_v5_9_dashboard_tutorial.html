@@ -1547,10 +1547,10 @@ const PERSONAS = {
   },
   MACRO_KING: {
     id:'MACRO_KING', name:'MACRO KING', sub:'거시·사이클', color:'p1',
-    always:'매크로 직후 사이클 ±5 이동(1회/턴). 매크로 방향 정렬 +10 · 임계점 회피/진입 조정 +10 · 인플레 정렬 +8 · 금리 급등 회피 +8 · 직전 금리↑ → FIN/UTIL +2, TECH/BIO -1. 첫 리스크 토큰 1개 면제',
-    ban:'중간구간 역행 베팅 (사이클50~74 방어+가치≥40% / 25~49 성장+경기≥50%) → -7점',
-    boon:'사이클 극단(≥75/≤25) 역포지션 정렬 → +10, 그 턴 수익까지 내면 +15',
-    quest:'사이클 극단에서 정렬 2회 이상 성공 → 종료 시 +20점',
+    always:'매크로 직후 사이클 ±5 이동(1회/턴). 매크로 방향 맞춤 +10 · 임계점 회피/진입 조정 +10 · 인플레 맞춤 +8 · 금리 급등 회피 +8 · 직전 금리↑ → FIN/UTIL +2, TECH/BIO -1. 첫 리스크 토큰 1개 면제',
+    ban:'국면과 반대 방향 베팅 (사이클50~74인데 방어+가치≥40% / 25~49인데 성장+경기≥50%) → -7점',
+    boon:'사이클 극단(≥75 과열 / ≤25 침체)에서 반대 방향 베팅 → +10. 그 턴 실제 수익까지 내면 +15',
+    quest:'사이클 극단에서 반대 방향 베팅 성공 2회 이상 → 종료 시 +20점',
     bot:{strategy:'macro'},
   },
   HUNTER: {
@@ -2128,25 +2128,25 @@ function evaluatePrinciple(p, ctx){
     // (v5.6) ① 매크로 방향 정렬 — 확장 카드(+)에 위험선호, 수축 카드(-)에 방어 정렬
     // (v5.9) 장기(16턴)는 +10 → +6: 매 턴 발동 가능한 보너스라 16턴 누적 시 우승률 44%까지 상승
     const mkAlign = state.maxTurn >= 16 ? 5 : 10; // (v5.9b) 6→5: 리스크 면제 제거 후에도 29.8% 잔존
-    if(macroMove > 0 && riskOn/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 확장정렬 +${mkAlign}`); }
-    else if(macroMove < 0 && riskOff/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 수축정렬 +${mkAlign}`); }
-    // (v5.7) 인플레 정렬 — 인플레 상승 카드에 가치/에너지/소재 비중
+    if(macroMove > 0 && riskOn/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 확장 맞춤(성장·경기 비중확대) +${mkAlign}`); }
+    else if(macroMove < 0 && riskOff/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 수축 맞춤(방어·안전자산 비중확대) +${mkAlign}`); }
+    // (v5.7) 인플레 맞춤 — 인플레 상승 카드에 가치/에너지/소재 비중
     const macroInflMove = state.currentMacro?.inflMove || 0;
     if(macroInflMove >= 0.4 && (valBet + (p.bets.ENG||0) + (p.bets.MATE||0))/totalB >= 0.35){
-      total += 8; msgs.push('인플레 정렬 +8');
+      total += 8; msgs.push('인플레 상승 맞춤(ENG·MATE·가치군 비중확대) +8');
     }
     // (v5.7) 금리 급등 회피 — 금리 오를 때 BOND/TECH/BIO 노출을 줄였으면 보상
     if((state.rate - (state.prevRate || state.rate)) >= 0.3 && bondBet <= 10 && (p.bets.TECH||0)+(p.bets.BIO||0) <= 25){
       total += 8; msgs.push('금리위험 회피 +8');
     }
-    // (v5.6) ② 극단 사이클 역포지션 — 정렬 시 +10, 실제로 수익까지 내면 +15
+    // (v5.6) ② 극단 사이클 역포지션 — 반대 방향 베팅 시 +10, 실제로 수익까지 내면 +15
     let extremeAligned = false;
     if(state.cycle >= 75 && (valBet+defBet)/totalB >= 0.5) extremeAligned = true;
     if(state.cycle <= 25 && (growBet+cycBet)/totalB >= 0.5) extremeAligned = true;
     if(extremeAligned){
       p.mkExtremeAligns = (p.mkExtremeAligns||0) + 1;   // MK 퀘스트 카운터
-      if(ctx && ctx.turnPL > 0){ total += 15; msgs.push('극단 역포지션 성공 +15'); }
-      else { total += 10; msgs.push('극단 역포지션 +10'); }
+      if(ctx && ctx.turnPL > 0){ total += 15; msgs.push('과열/침체 반대 방향 베팅 + 수익 달성 +15'); }
+      else { total += 10; msgs.push('과열/침체 반대 방향 베팅 +10'); }
     }
     // (v5.6) ③ 사이클 조정으로 임계점 회피/진입을 만들면 +10
     if(p.mkThresholdPlay){ total += 10; msgs.push('임계점 조정 +10'); p.mkThresholdPlay = false; }
@@ -2594,7 +2594,7 @@ function questText(persona){
   // 게임 중에는 실제 모드, 시작 전 모달에서는 선택 중인 모드 기준으로 표시
   const long = state.players.length ? state.maxTurn >= 16 : PENDING_MODE === 'long';
   const r = long ? {hunter:5, quant:10, oracle:8, mk:3} : {hunter:3, quant:6, oracle:6, mk:2};
-  if(persona.id === 'MACRO_KING') return `사이클 극단에서 정렬 ${r.mk}회 이상 성공 → 종료 시 +20점`;
+  if(persona.id === 'MACRO_KING') return `사이클 극단(과열≥75 / 침체≤25)에서 반대 방향 베팅 성공 ${r.mk}회 이상 → 종료 시 +20점`;
   if(persona.id === 'ORACLE') return `한 섹터를 ${r.oracle}턴 이상 연속 보유 + 그 섹터 누적 손익 양수 → 종료 시 +20점`;
   if(persona.id === 'HUNTER') return `40점+ 베팅 섹터에서 호재 ${r.hunter}턴 이상 적중 → 종료 시 +20점`;
   if(persona.id === 'QUANT')  return `${r.quant}턴 이상에서 5섹터 동시 베팅 유지 → 종료 시 +20점`;
@@ -2605,7 +2605,7 @@ function alwaysText(persona){
   if(persona.id === 'ORACLE' && long)
     return '6턴+ 보유 섹터: 20점당 +1/턴, 호재 발현 시 +5(최대 +12). 14턴+ 보유 = 🚀텐배거 후보 +10/턴. 10턴+ 보유 섹터 악재 흡수 +5(최대 +10)';
   if(persona.id === 'MACRO_KING' && long)
-    return '매크로 직후 사이클 ±5 이동(1회/턴). 매크로 방향 정렬 +5 · 임계점 회피/진입 조정 +10 · 인플레 정렬 +8 · 금리 급등 회피 +8 · 직전 금리↑ → FIN/UTIL +2, TECH/BIO -1. 장기 모드는 리스크 면제 없음';
+    return '매크로 직후 사이클 ±5 이동(1회/턴). 매크로 방향 맞춤 +5 · 임계점 회피/진입 조정 +10 · 인플레 맞춤 +8 · 금리 급등 회피 +8 · 직전 금리↑ → FIN/UTIL +2, TECH/BIO -1. 장기 모드는 리스크 면제 없음';
   if(persona.id === 'HUNTER' && long)
     return '한 섹터 30점+ 시, 그 섹터 호재마다 +5점 (악재 -5). 턴 최대 -9~+10. 🏁 테마 완주: 마지막 4턴 중 2턴+ 40점+ 섹터 호재 적중 → 종료 시 +5';
   if(persona.id === 'QUANT' && long)
@@ -3179,7 +3179,7 @@ function buildTurnReview(p, pl, sectorDelta, dampingMul){
   // 등급: 턴 손익 기준
   const grade = pl >= 25 ? 'S' : pl >= 12 ? 'A' : pl >= 1 ? 'B' : pl > -10 ? 'C' : 'D';
 
-  // 방향 정렬률 — 베팅 중 상승 섹터에 들어간 비율
+  // 방향 일치율 — 베팅 중 실제 상승 섹터에 들어간 비율
   const totalBets = Object.values(p.bets).reduce((a,v)=>a+v,0);
   let alignBets = 0;
   for(const sid in p.bets){
@@ -3205,10 +3205,10 @@ function buildTurnReview(p, pl, sectorDelta, dampingMul){
     }
   }
 
-  // 방향 정렬 평가
+  // 방향 일치율 평가
   if(totalBets >= 20){
-    if(alignPct >= 60) goods.push(`베팅의 <b>${alignPct}%</b>가 상승 섹터에 — 시장 방향을 잘 읽었어요`);
-    else if(alignPct <= 35) bads.push(`베팅의 <b>${100-alignPct}%</b>가 하락 섹터에 — 리포트·Omen 신호를 다시 보세요`);
+    if(alignPct >= 60) goods.push(`베팅의 <b>${alignPct}%</b>가 실제 상승 섹터에 일치 — 시장 방향을 잘 읽었어요`);
+    else if(alignPct <= 35) bads.push(`베팅의 <b>${100-alignPct}%</b>가 하락 섹터에 집중 — 리포트·Omen 신호를 다시 보세요`);
   }
 
   // 페르소나 원칙
@@ -3252,7 +3252,7 @@ function buildTurnReview(p, pl, sectorDelta, dampingMul){
   } else if(state.inflation >= 4){
     tip = `인플레 <b>${state.inflation.toFixed(1)}%(고인플레)</b> — ENG·MATE 유리, 성장주 부담`;
   } else {
-    tip = `리포트는 카드 추첨 확률을 실제로 바꿉니다 — 다음 리포트와 베팅을 정렬해보세요`;
+    tip = `리포트는 카드 추첨 확률을 실제로 바꿉니다 — 다음 리포트가 가리키는 방향에 베팅을 맞춰보세요`;
   }
 
   p.lastReview = {
