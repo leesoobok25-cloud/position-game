@@ -123,9 +123,23 @@
   .sec.g-safe    .sec-bar i{background:var(--purple)}
   .sec.crowded   .sec-bar i{background:var(--gold)}
   .sec.jammed    .sec-bar i{background:var(--red)}
-  /* ── 베팅 패널 — 2열 그리드, 스크롤 없이 전체 노출 ──────────── */
-  .bet-grid{display:grid!important;grid-template-columns:1fr 1fr;gap:0;max-height:none!important;overflow:visible!important}
-  .bet-row{padding:4px 6px;border-bottom:1px dotted #222;border-right:1px dotted #222}
+  /* ── 베팅 패널 — 카드형 2열 그리드 ──────────────────────────── */
+  .bet-grid{display:grid!important;grid-template-columns:1fr 1fr;gap:6px;max-height:none!important;overflow:visible!important;padding:2px}
+  .bet-row{background:#0d1117;border:1px solid var(--line);border-radius:8px;padding:8px 10px;transition:border-color .15s}
+  .bet-row:has(.betval.on){border-color:#2a4a35}
+  .bet-row-head .lbl{font-size:13px;font-weight:700;color:var(--txt)}
+  .bet-row-head .pre{font-size:11px;color:#555}
+  .bet-row-head .betval{font-size:20px;font-weight:800;min-width:36px;text-align:right;color:#444}
+  .bet-row-head .betval.on{color:var(--green)}
+  .bet-tokens{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-top:7px}
+  .bet-tokens .tok{padding:5px 0;border-radius:5px;border:1px solid var(--line);
+    background:#111519;color:var(--txt);font-size:12px;font-weight:700;
+    cursor:pointer;line-height:1;transition:background .1s;text-align:center}
+  .bet-tokens .tok.plus{border-color:#1e4530;color:#5db87e}
+  .bet-tokens .tok.plus:hover{background:#162e20}
+  .bet-tokens .tok.minus{border-color:#4a1e1e;color:#c07070}
+  .bet-tokens .tok.minus:hover{background:#2a1010}
+  .bet-tokens .tok:disabled{opacity:.25;cursor:not-allowed}
 
   /* players */
   .players{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -213,24 +227,9 @@
   .btn.danger{background:var(--red);color:#fff}
   .btn.gold{background:var(--gold);color:#000}
 
-  /* (v5.8) 토큰형 베팅 UI */
-  .bet-grid{display:block;max-height:340px;overflow-y:auto}
-  .bet-row{padding:6px 2px;border-bottom:1px dotted #222}
+  /* (v5.8) 토큰형 베팅 UI — 기본 구조 */
   .bet-row-head{display:flex;align-items:center;gap:8px;font-size:13px}
-  .bet-row-head .lbl{flex:1;color:var(--txt);font-weight:600}
-  .bet-row-head .pre{color:var(--mut);font-size:12px}
-  .bet-row-head .betval{min-width:32px;text-align:right;font-weight:700;
-    font-size:17px;color:var(--mut)}
-  .bet-row-head .betval.on{color:var(--green)}
-  .bet-tokens{display:flex;gap:3px;margin-top:5px}
-  .bet-tokens .tok{flex:1;padding:6px 0;border-radius:5px;border:1px solid var(--line);
-    background:var(--panel2);color:var(--txt);font-size:13px;font-weight:700;
-    cursor:pointer;line-height:1;transition:background .1s}
-  .bet-tokens .tok.plus{border-color:#2e6b3e;color:#7fd49a}
-  .bet-tokens .tok.plus:hover{background:#1c3a25}
-  .bet-tokens .tok.minus{border-color:#6b2e2e;color:#e09a9a}
-  .bet-tokens .tok.minus:hover{background:#3a1c1c}
-  .bet-tokens .tok:disabled{opacity:.35;cursor:not-allowed}
+  .bet-row-head .lbl{flex:1}
 
   .log{background:var(--panel2);border:1px solid var(--line);border-radius:6px;
     padding:8px;font-size:13px;max-height:280px;overflow-y:auto;
