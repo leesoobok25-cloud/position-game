@@ -304,26 +304,29 @@
     color:var(--txt)}
   .rv-tip b{color:var(--acc)}
 
-  /* === (v5.9) tutorial entry banner === */
+  /* === (v5.9) mode select === */
   @keyframes tutPulse{
     0%,100%{box-shadow:0 0 0 0 rgba(210,153,34,.7),0 4px 18px #d2992240}
     50%{box-shadow:0 0 0 8px rgba(210,153,34,0),0 4px 24px #d2992266}
   }
-  .tut-banner{
-    margin-top:14px;border-radius:10px;background:#241c08;
-    border:2px solid var(--gold);padding:14px 16px;cursor:pointer;
-    animation:tutPulse 1.8s ease-in-out infinite;
-    display:flex;align-items:center;gap:12px;
-    transition:filter .15s}
-  .tut-banner:hover{filter:brightness(1.15)}
-  .tut-banner .tut-ico{font-size:32px;line-height:1;flex-shrink:0}
-  .tut-banner .tut-body{flex:1}
-  .tut-banner .tut-title{font-weight:700;font-size:14px;color:var(--gold);margin-bottom:3px}
-  .tut-banner .tut-sub{font-size:11px;color:#b89040;line-height:1.4}
-  .tut-banner .tut-arr{font-size:22px;color:var(--gold);flex-shrink:0}
+  .mode-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
+  .mode-card{border:2px solid var(--line);border-radius:10px;background:var(--panel2);
+    padding:12px 10px;text-align:center;cursor:pointer;transition:filter .15s,border-color .15s}
+  .mode-card:hover{filter:brightness(1.15)}
+  .mode-card .mode-ico{font-size:30px;line-height:1;display:block;margin-bottom:6px}
+  .mode-card .mode-name{font-weight:700;font-size:13px;margin-bottom:4px}
+  .mode-card .mode-sub{font-size:10px;color:var(--mut);line-height:1.45}
+  .mode-card.tut{border-color:var(--gold);background:#241c08;
+    animation:tutPulse 1.8s ease-in-out infinite}
+  .mode-card.tut .mode-name{color:var(--gold)}
+  .mode-card.tut .mode-sub{color:#b89040}
+  .mode-card.on{border-color:var(--acc);background:#0b1a2c;
+    box-shadow:0 0 0 2px var(--acc) inset}
+  .mode-card.on .mode-name{color:var(--acc)}
   .tut-sep{display:flex;align-items:center;gap:8px;margin:14px 0 0;
     font-size:11px;color:var(--mut)}
   .tut-sep::before,.tut-sep::after{content:'';flex:1;height:1px;background:var(--line)}
+  .tut-sep #modeLabel{color:var(--acc);font-weight:700}
 
   /* === (v5.9) tutorial mode === */
   #tutHL{position:fixed;z-index:60;pointer-events:none;display:none;
@@ -350,7 +353,7 @@
 <header>
   <h1>POSITION <span class="ver">v5.9 · Tutorial Build</span></h1>
   <button class="btn alt" style="font-size:11px;padding:4px 10px" onclick="startTutorial()">🎓 튜토리얼</button>
-  <div class="turn">턴 <span id="turnNo">1</span>/8 · <span id="phaseName">시작</span> · 사이클 <span id="cycleN">50</span> (<span id="seasonN">봄</span>)</div>
+  <div class="turn">턴 <span id="turnNo">1</span>/<span id="maxTurnNo">8</span> · <span id="phaseName">시작</span> · 사이클 <span id="cycleN">50</span> (<span id="seasonN">봄</span>)</div>
 </header>
 
 <div class="grid">
@@ -437,17 +440,26 @@
 <!-- persona select modal -->
 <div class="modal-bg on" id="personaModal">
   <div class="modal">
-    <h2 style="margin:0">페르소나 선택</h2>
-    <div style="color:var(--mut);font-size:12px">각 페르소나는 상시능력 · 금지 · 이익 · 도전 구획을 갖는다.</div>
-    <div class="tut-banner" onclick="startTutorial()">
-      <span class="tut-ico">🎓</span>
-      <div class="tut-body">
-        <div class="tut-title">처음이신가요? — 튜토리얼로 시작하기</div>
-        <div class="tut-sub">HUNTER 페르소나로 첫 1턴을 함께 플레이하며 게임 방법을 배웁니다</div>
+    <h2 style="margin:0">게임 모드 선택</h2>
+    <div style="color:var(--mut);font-size:12px">모드를 고른 뒤 페르소나를 선택하면 게임이 시작됩니다.</div>
+    <div class="mode-row">
+      <div class="mode-card tut" onclick="startTutorial()">
+        <span class="mode-ico">🎓</span>
+        <div class="mode-name">튜토리얼</div>
+        <div class="mode-sub">첫 1턴을 안내와 함께<br>HUNTER로 바로 시작</div>
       </div>
-      <span class="tut-arr">→</span>
+      <div class="mode-card on" id="modeNormal" onclick="setGameMode('normal')">
+        <span class="mode-ico">⚔️</span>
+        <div class="mode-name">일반 게임</div>
+        <div class="mode-sub">8턴 · 표준 플레이<br>빠른 한 판</div>
+      </div>
+      <div class="mode-card" id="modeLong" onclick="setGameMode('long')">
+        <span class="mode-ico">🏔️</span>
+        <div class="mode-name">장기 게임</div>
+        <div class="mode-sub">16턴 · 긴 호흡<br>사이클을 두 배로</div>
+      </div>
     </div>
-    <div class="tut-sep">또는 페르소나를 직접 선택해 바로 시작</div>
+    <div class="tut-sep">페르소나 선택 — <span id="modeLabel">일반 게임 (8턴)</span>으로 시작</div>
     <div class="personas" id="personaPick"></div>
   </div>
 </div>
@@ -455,7 +467,7 @@
 <!-- event-end modal -->
 <div class="modal-bg" id="endModal">
   <div class="modal" style="max-width:600px">
-    <h2 style="margin:0">8턴 종료 — 최종 결과</h2>
+    <h2 style="margin:0" id="endTitle">게임 종료 — 최종 결과</h2>
     <div id="endBody"></div>
     <button class="btn" onclick="location.reload()">새 게임</button>
   </div>
@@ -1304,6 +1316,7 @@ const PHASES = [
 /* === STATE === */
 const state = {
   turn:1, phase:0,
+  maxTurn:8, gameMode:'normal', // (v5.9) 'normal' 8턴 | 'long' 16턴
   cycle:50, fearGreed:50,
   inflation:2.0, rate:2.0, prevRate:2.0, // infl/rate derived from cycle (Stage A)
   omen:{geo:0,cred:0,infl:0,rec:0},
@@ -1988,8 +2001,44 @@ function setPhase(idx){
   renderAction();
 }
 
+/* === (v5.9) GAME MODES ===
+   튜토리얼(=일반 8턴 + 안내) / 일반 8턴 / 장기 16턴. 덱·규칙은 동일하며 턴 수와
+   장기전에서 너무 쉬워지는 퀘스트 기준만 달라진다. */
+const MODE_DEF = {
+  normal:{maxTurn:8,  label:'일반 게임 (8턴)'},
+  long:  {maxTurn:16, label:'장기 게임 (16턴)'},
+};
+let PENDING_MODE = 'normal'; // 모달에서 고른 모드 — startGame에서 state에 반영
+
+function setGameMode(m){
+  if(!MODE_DEF[m]) return;
+  PENDING_MODE = m;
+  document.getElementById('modeNormal').classList.toggle('on', m==='normal');
+  document.getElementById('modeLong').classList.toggle('on', m==='long');
+  document.getElementById('modeLabel').textContent = MODE_DEF[m].label;
+  bootstrap(); // 페르소나 카드의 퀘스트 문구(모드별 기준) 갱신
+}
+
+/* (v5.9) 장기전 퀘스트 기준 — 16턴에서 그대로면 너무 쉬워지는 항목만 상향 */
+function questReq(){
+  return state.maxTurn >= 16
+    ? {hunter:5, quant:10, oracle:8}
+    : {hunter:3, quant:6,  oracle:6};
+}
+function questText(persona){
+  // 게임 중에는 실제 모드, 시작 전 모달에서는 선택 중인 모드 기준으로 표시
+  const long = state.players.length ? state.maxTurn >= 16 : PENDING_MODE === 'long';
+  const r = long ? {hunter:5, quant:10, oracle:8} : {hunter:3, quant:6, oracle:6};
+  if(persona.id === 'ORACLE') return `한 섹터를 ${r.oracle}턴 이상 연속 보유 + 그 섹터 누적 손익 양수 → 종료 시 +20점`;
+  if(persona.id === 'HUNTER') return `40점+ 베팅 섹터에서 호재 ${r.hunter}턴 이상 적중 → 종료 시 +20점`;
+  if(persona.id === 'QUANT')  return `${r.quant}턴 이상에서 5섹터 동시 베팅 유지 → 종료 시 +20점`;
+  return persona.quest;
+}
+
 function startGame(humanPersonaId){
   initState();
+  state.gameMode = PENDING_MODE;
+  state.maxTurn = MODE_DEF[PENDING_MODE].maxTurn;
   const personaIds = Object.keys(PERSONAS);
   // human is P0
   state.players.push(initPlayer(0, humanPersonaId, true));
@@ -2001,7 +2050,7 @@ function startGame(humanPersonaId){
   state.myId = 0;
   state.phase = 0;
   document.getElementById('personaModal').classList.remove('on');
-  logRow(`게임 시작 — 페르소나 ${humanPersonaId} 선택. 충격카드 4장 각 사이클 덱에 무작위 배정됨 (일반턴에 함께 추첨).`, 'ev');
+  logRow(`게임 시작 [${MODE_DEF[state.gameMode].label}] — 페르소나 ${humanPersonaId} 선택. 충격카드 4장 각 사이클 덱에 무작위 배정됨 (일반턴에 함께 추첨).`, 'ev');
   phase1_report();
   setPhase(0); // Phase 1 = index 0
 }
@@ -2619,7 +2668,7 @@ function phase7_next(){
   // (B안) 인플레/금리는 매크로 적용시 cycle 에서 자동 파생됨 — 별도 누적/갱신 로직 불필요
   // Next turn
   state.turn++;
-  if(state.turn > 8){
+  if(state.turn > state.maxTurn){
     endGame();
     return;
   }
@@ -2639,7 +2688,7 @@ function endGame(){
     if(persona.id === 'ORACLE'){
       // (v5.8) A안: 한 섹터 6턴 이상 연속 보유 + 해당 섹터 누적 손익 양수
       //         — '오래 들고 있되 실제로 수익을 낸 확신' 을 보상 (단순 보유 자동달성 방지)
-      questOK = SECTORS.some(s => (p.maxStreak[s.id]||0) >= 6 && (p.cumSectorPL[s.id]||0) > 0);
+      questOK = SECTORS.some(s => (p.maxStreak[s.id]||0) >= questReq().oracle && (p.cumSectorPL[s.id]||0) > 0);
     } else if(persona.id === 'MACRO_KING'){
       // (v5.6) 기존 '4계절 모두 경험'은 8턴에서 너무 어려워 거의 작동 안 함.
       //         '사이클 극단(≥75/≤25)에서 정렬 2회 이상'으로 변경 — 플레이어가 통제 가능.
@@ -2647,9 +2696,9 @@ function endGame(){
     } else if(persona.id === 'HUNTER'){
       // (v5.8) 재설계: 40점 이상 베팅한 섹터에서 호재(상승) 3턴 이상 적중
       //         — 봇 단일 섹터 캡(45) 환경에서도 작동하되, 너무 쉽게 달성되지 않도록 3회
-      questOK = (p.catalystHits||0) >= 3;
+      questOK = (p.catalystHits||0) >= questReq().hunter;
     } else if(persona.id === 'QUANT'){
-      questOK = p.quintBetTurns >= 6;
+      questOK = p.quintBetTurns >= questReq().quant;
     }
     p.questBonus = questOK ? 20 : 0;
     // (v5.7) MACRO_KING은 국면을 적극 읽다가 리스크를 쉽게 얻으므로 첫 리스크 토큰 1개 면제
@@ -2666,6 +2715,8 @@ function endGame(){
     html += '</div>';
   });
   html += '</div>';
+  document.getElementById('endTitle').textContent =
+    `${state.maxTurn}턴 종료 (${state.maxTurn>=16?'장기':'일반'} 게임) — 최종 결과`;
   document.getElementById('endBody').innerHTML = html;
   document.getElementById('endModal').classList.add('on');
 }
@@ -2673,6 +2724,7 @@ function endGame(){
 /* === RENDER === */
 function render(){
   document.getElementById('turnNo').textContent = state.turn;
+  document.getElementById('maxTurnNo').textContent = state.maxTurn;
   document.getElementById('phaseName').textContent = PHASES[state.phase]?.name || '-';
   document.getElementById('cycleN').textContent = state.cycle;
   document.getElementById('seasonN').textContent = season(state.cycle);
@@ -2776,7 +2828,7 @@ function render(){
       `<div style="color:var(--acc)">🔷 ${persona.always}</div>
        <div style="color:var(--red)">🚫 ${persona.ban}</div>
        <div style="color:var(--green)">⭐ ${persona.boon}</div>
-       <div style="color:var(--gold)">🎯 ${persona.quest}</div>`;
+       <div style="color:var(--gold)">🎯 ${questText(persona)}</div>`;
     const editable = state.phase === 1; // Phase 2 betting
     const betsDiv = document.getElementById('myBets');
     // (v5.8) 예산 인지 토큰 UI — perMax(EXPAND 70 / 기본 50), 남은 예산 초과 +불가
@@ -3243,6 +3295,7 @@ function startTutorial(){
   if(TUT.active) return;
   if(state.players.length && !confirm('튜토리얼을 시작하면 새 게임이 시작됩니다. 진행할까요?')) return;
   document.getElementById('endModal').classList.remove('on');
+  PENDING_MODE = 'normal'; // 튜토리얼은 일반(8턴) 모드로 진행
   TUT.active = true;
   TUT.step = 0;
   tutLayerEnsure();
@@ -3342,7 +3395,7 @@ function bootstrap(){
       <div class="pp always">🔷 ${p.always}</div>
       <div class="pp ban">🚫 ${p.ban}</div>
       <div class="pp boon">⭐ ${p.boon}</div>
-      <div class="pp quest">🎯 ${p.quest}</div>
+      <div class="pp quest">🎯 ${questText(p)}</div>
     </div>
   `).join('');
 }
