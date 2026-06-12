@@ -1517,43 +1517,51 @@ const SLOTS = {
   HIGH_INFL: {
     name:'고인플레 레짐', dur:4,
     eff:{ENG:+1.5, MATE:+1.5, FIN:+0.5, TECH:-1.5, BIO:-1.5, BOND:-2, CONS:-1},
-    trigger:'infl3'
+    trigger:'infl3',
+    tip:'물가가 장기 고공행진 중. 실물자산(에너지·소재)이 유리하고 채권·성장주는 불리. 인플레 헤지 포지션이 유효한 구간이다.'
   },
   RECESSION: {
     name:'경기침체 레짐', dur:4,
     eff:{UTIL:+1.5, BOND:+1.5, BIO:+0.5, FIN:-1.5, CONS:-1.5, AUTO:-1.5, INDU:-1},
-    trigger:'rec3'
+    trigger:'rec3',
+    tip:'경기가 뚜렷하게 꺾이고 있다. 경기방어(유틸·채권·바이오)가 피신처가 되고, 금융·소비·자동차는 실적 타격을 받는다.'
   },
   GEO_TENSE: {
     name:'지정학 긴장 레짐', dur:4,
     eff:{ENG:+2, MATE:+1.5, UTIL:+1, AUTO:-1.5, SEMI:-1.5, TECH:-1},
-    trigger:'geo3'
+    trigger:'geo3',
+    tip:'국제 분쟁·공급망 불안이 지속되는 구간. 에너지·원자재가 급등하고 반도체·기술주는 수출통제·공급 차질 우려로 하락 압력을 받는다.'
   },
   CREDIT_CR: {
     name:'신용경색 레짐', dur:4,
     eff:{FIN:-2.5, CONS:-1.5, AUTO:-1.5, BOND:+1, UTIL:+1, TECH:-0.5},
-    trigger:'cred3'
+    trigger:'cred3',
+    tip:'신용시장이 얼어붙어 자금 조달이 어려워진 상태. 금융·소비·자동차에 강한 하락 압력. 안전자산(국채·유틸)으로 자금이 이동한다.'
   },
   GOLDILOCKS: {
     name:'골디락스 레짐', dur:3,
     eff:{TECH:+1.5, SEMI:+1.5, BIO:+1, CONS:+1, BOND:+0.5, ENG:-0.5},
-    trigger:'softlanding'
+    trigger:'softlanding',
+    tip:'경기는 탄탄한데 인플레는 잡힌 "적당히 좋은" 환경. 성장주·반도체·소비재가 고르게 강세. 에너지는 수요 둔화 우려로 소폭 약세.'
   },
   AI_INFRA: {
     name:'AI 인프라 레짐', dur:3,
     eff:{SEMI:+2, TECH:+1.5, UTIL:+1.5, MATE:+1, BOND:-1},
-    trigger:'ai'
+    trigger:'ai',
+    tip:'AI 데이터센터 투자 붐이 진행 중. 반도체·기술주가 핵심 수혜, 전력 수요 급증으로 유틸리티도 동반 강세. 채권은 금리 상승 압박으로 약세.'
   },
   POLICY_PUT: {
     name:'정책 풋 레짐', dur:3,
     eff:{TECH:+1, BIO:+1, FIN:+1, BOND:+1, ENG:-0.5},
-    trigger:'policy'
+    trigger:'policy',
+    tip:'중앙은행·정부가 시장을 떠받치는 완화 정책을 펼치고 있다. 금리 인하 기대로 성장주·채권이 강세. 에너지는 경기 자극보다 수요 회복이 느려 소폭 약세.'
   },
   BUBBLE_LATE: {
     name:'과열 말기 레짐', dur:3,
     eff:{TECH:+1, SEMI:+1, BIO:+0.5, BOND:-1.5, FIN:+0.5},
     crashRisk:true,
-    trigger:'bubble'
+    trigger:'bubble',
+    tip:'⚠️ 시장이 과열 말기에 진입했다. 단기적으로는 기술·반도체가 추가 상승할 수 있지만, 언제 급격한 조정이 올지 모르는 위험 구간. 채권은 금리 급등으로 약세.'
   },
 };
 
@@ -3631,7 +3639,11 @@ function render(){
   // slots
   const slotList = document.getElementById('slotList');
   slotList.innerHTML = state.slots.length===0 ? '없음' :
-    state.slots.map(s => `<span class="pill slot">${s.name} (${s.dur}턴)</span>`).join(' ');
+    state.slots.map(s => {
+      const base = Object.values(SLOTS).find(sl => sl.name === s.name) || {};
+      const tip = base.tip ? base.tip + '\n\n유리: ' + Object.entries(base.eff||{}).filter(([,v])=>v>0).map(([k,v])=>`${k} +${v}`).join(' / ') + '\n불리: ' + Object.entries(base.eff||{}).filter(([,v])=>v<0).map(([k,v])=>`${k} ${v}`).join(' / ') : s.name;
+      return `<span class="pill slot" title="${tip.replace(/"/g,'&quot;')}" style="cursor:help">${s.name} (${s.dur}턴)</span>`;
+    }).join(' ');
 
   // (v1.2) 섹터 테이블 — 성장/경기 2행 + 가치·방어·안전 1행(구획 구분)
   const TOP_ROWS = [
