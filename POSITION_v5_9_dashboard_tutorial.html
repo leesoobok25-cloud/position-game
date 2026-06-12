@@ -354,6 +354,44 @@
   .tier-row .t-prog{font-size:10px;color:var(--acc);font-weight:700;white-space:nowrap}
   .tier-row.active-tier{background:#0b1622;border-radius:6px;padding:4px 6px;
     border-bottom:1px solid var(--acc) !important;margin:2px -2px}
+  /* === (v1.0) splash === */
+  #splash{position:fixed;inset:0;z-index:90;background:
+    radial-gradient(1200px 600px at 50% -10%, #14233f 0%, #0b0d12 60%);
+    display:flex;align-items:center;justify-content:center;overflow:auto}
+  .sp-inner{max-width:680px;padding:30px 24px;text-align:center}
+  .sp-art{position:relative;width:150px;height:150px;margin:0 auto 6px}
+  @keyframes spSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  .sp-ring{position:absolute;inset:0;border-radius:50%;
+    border:2px dashed #2c3a55;animation:spSpin 40s linear infinite}
+  .sp-season{position:absolute;font-size:24px;filter:drop-shadow(0 0 6px #0008)}
+  .s-winter{top:-4px;left:50%;transform:translateX(-50%)}
+  .s-fall{top:50%;right:-6px;transform:translateY(-50%)}
+  .s-spring{bottom:-4px;left:50%;transform:translateX(-50%)}
+  .s-summer{top:50%;left:-6px;transform:translateY(-50%)}
+  .sp-core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-size:42px}
+  .sp-title{margin:4px 0 0;font-size:44px;letter-spacing:14px;font-weight:800;
+    background:linear-gradient(180deg,#e8ecf4,#7da2d8);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .sp-sub{color:var(--mut);font-size:13px;margin-top:2px}
+  .sp-seasons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:20px;text-align:left}
+  .sp-sea{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;font-size:11px;display:flex;gap:9px;align-items:flex-start}
+  .sp-sea span{font-size:20px}
+  .sp-sea b{display:block;margin-bottom:2px}
+  .sp-sea i{color:var(--mut);font-style:normal;line-height:1.5}
+  .sp-goal{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;text-align:left}
+  .sp-goal-col{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;font-size:11px}
+  .sp-goal-col b{color:var(--acc)}
+  .sp-goal-col p{margin:5px 0 0;color:var(--mut);line-height:1.6}
+  .sp-btns{margin-top:18px;display:flex;gap:8px;justify-content:center}
+  .sp-start{font-size:15px;padding:11px 34px;animation:tutPulse 1.8s ease-in-out infinite}
+  .sp-footer{margin-top:16px;font-size:11px;color:var(--mut)}
+  .sp-footer b{color:var(--txt)}
+  .sp-badge{display:inline-block;margin-left:4px;padding:1px 7px;border-radius:10px;
+    border:1px solid var(--gold);color:var(--gold);font-size:9px;font-weight:700}
+  @media(max-width:560px){.sp-seasons,.sp-goal{grid-template-columns:1fr}}
   /* === nickname select === */
   .nick-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:24px}
   .nick-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;
@@ -401,6 +439,42 @@
 </style>
 </head>
 <body>
+<!-- (v1.0) 시작 화면 -->
+<div id="splash">
+  <div class="sp-inner">
+    <div class="sp-art">
+      <div class="sp-ring"></div>
+      <div class="sp-season s-winter">❄️</div>
+      <div class="sp-season s-fall">🍂</div>
+      <div class="sp-season s-spring">🌱</div>
+      <div class="sp-season s-summer">🔥</div>
+      <div class="sp-core">📈</div>
+    </div>
+    <h1 class="sp-title">POSITION</h1>
+    <div class="sp-sub">시장의 사계절을 읽는 투자 전략 보드게임</div>
+    <div class="sp-seasons">
+      <div class="sp-sea"><span>❄️</span><b>겨울 · 불황</b><i>방어와 채권의 시간. 공포 속에 기회의 씨앗이 묻혀 있다.</i></div>
+      <div class="sp-sea"><span>🍂</span><b>가을 · 침체</b><i>둔화의 신호를 먼저 읽는 자가 겨울을 준비한다.</i></div>
+      <div class="sp-sea"><span>🌱</span><b>봄 · 회복</b><i>유동성이 돌아오고 성장주가 깨어난다. 가장 달콤한 구간.</i></div>
+      <div class="sp-sea"><span>🔥</span><b>여름 · 호황</b><i>모두가 탐욕에 취할 때, 평균회귀의 그림자가 다가온다.</i></div>
+    </div>
+    <div class="sp-goal">
+      <div class="sp-goal-col">
+        <b>🎯 게임의 목표</b>
+        <p>8턴(또는 16턴) 동안 매크로 경제와 섹터 이벤트를 읽고 베팅하여, 4명의 투자자 중 <b>최고 자산</b>으로 우승하는 것. 자신의 페르소나 원칙을 지키고 도전 과제를 달성하면 보너스를 얻습니다.</p>
+      </div>
+      <div class="sp-goal-col">
+        <b>📚 기대 효과</b>
+        <p>경기 사이클·인플레이션·금리의 연결 고리, 리포트를 맹신하지 않는 <b>확률적 사고</b>, 분산·집중·장기보유·거시읽기 네 가지 투자 철학을 게임으로 체득합니다.</p>
+      </div>
+    </div>
+    <div class="sp-btns">
+      <button class="btn sp-start" onclick="closeSplash()">게임 시작 →</button>
+      <button class="btn alt sp-continue" id="spContinue" style="display:none" onclick="loadSavedGame()"></button>
+    </div>
+    <div class="sp-footer">제작 <b>이수복</b> · Version 1.0 <span class="sp-badge">설계모드</span></div>
+  </div>
+</div>
 <header>
   <h1>POSITION <span class="ver">v5.9 · Tutorial Build</span></h1>
   <button class="btn alt" style="font-size:11px;padding:4px 10px" onclick="startTutorial()">🎓 튜토리얼</button>
@@ -1735,6 +1809,7 @@ function drawMacro(){
     else if(trap.fgBelow != null && state.fearGreed <= trap.fgBelow) trapReverse = -1;
   }
   if(trapReverse !== 0) logRow(`[리포트 함정] F&G ${state.fearGreed} 극단 → 추세 역전 경계 (${trapReverse>0?'하방':'상방'})`, 'ev');
+  state._trapFired = trapReverse; // (v1.0) 리포트 복기용
   const card = weightedPick(pool, c => {
     let w = 1;
     // report deck bias
@@ -2207,6 +2282,56 @@ function setPhase(idx){
   state.phase = idx;
   render();
   renderAction();
+  saveGame(); // (v1.0) 단계마다 자동 저장 — 브라우저를 꺼도 이어하기 가능
+}
+
+/* === (v1.0) SAVE / CONTINUE === */
+const SAVE_KEY = 'position_save_v1';
+
+function saveGame(){
+  // 사람 플레이어가 있는 진행 중 게임만 저장 (자동테스트·종료 게임 제외)
+  if(!state.players.some(p => p.isHuman)) return;
+  if(state.turn > state.maxTurn) return;
+  if(typeof TUT !== 'undefined' && TUT.active) return; // 튜토리얼은 저장하지 않음
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({state, nick:CURRENT_NICK, ts:Date.now()}));
+  }catch(e){}
+}
+
+function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+
+function getSave(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return null;
+}
+
+function loadSavedGame(){
+  const sv = getSave();
+  if(!sv || !sv.state){ alert('저장된 게임이 없습니다.'); return; }
+  if(sv.nick) CURRENT_NICK = sv.nick;
+  Object.assign(state, sv.state);
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('personaModal').classList.remove('on');
+  logRow('💾 저장된 게임을 이어서 시작합니다.', 'ev');
+  render();
+  renderAction();
+}
+
+function closeSplash(){
+  document.getElementById('splash').style.display = 'none';
+}
+
+function initSplash(){
+  const sv = getSave();
+  const btn = document.getElementById('spContinue');
+  if(sv && sv.state && btn){
+    const me = (sv.state.players||[]).find(p=>p.isHuman);
+    btn.style.display = '';
+    btn.textContent = `💾 이어하기 — ${sv.nick||'?'} · ${sv.state.turn}/${sv.state.maxTurn}턴 (${me?me.personaId:'?'})`;
+  }
 }
 
 /* === (v5.9) GAME MODES ===
@@ -2416,6 +2541,7 @@ function alwaysText(persona){
 }
 
 function startGame(humanPersonaId){
+  clearSave(); // (v1.0) 새 게임 시작 시 기존 저장 제거
   // (v5.10) 닉네임 미선택 시 게스트로 자동 등록 (튜토리얼·자동테스트 호환)
   if(!CURRENT_NICK){
     const ps = loadProfiles();
@@ -2503,6 +2629,19 @@ function phase3_macro(){
   state.currentMacro = result.card;
   state.currentMacro.isShock = result.shock || false;
   state.currentMacro.isForced = result.forced || false;
+
+  // (v1.0) 리포트 복기 — 리포트가 가중한 덱에서 실제 카드가 나왔는지 기록
+  {
+    const mb = (state.currentReport && state.currentReport.macroBias) || {};
+    const deck = state.currentMacro.deck;
+    state.reportCheck = {
+      deck,
+      isShock: !!state.currentMacro.isShock,
+      hit: !!(deck && (mb[deck]||1) > 1),
+      hadBias: Object.keys(mb).some(k => mb[k] > 1),
+      trap: state._trapFired || 0,
+    };
+  }
 
   // Unified application — shock cards use the same cycleMove/effects pipeline as normal cards.
   // (Stage C) prevRate는 phase1에서 턴 시작 시 스냅샷됨 — 여기서 다시 잡지 않는다.
@@ -3012,6 +3151,14 @@ function buildTurnReview(p, pl, sectorDelta, dampingMul){
     bads: bads.slice(0,3),
     tip,
   };
+  // (v1.0) 최종 투자 결과 리포트용 턴별 기록
+  if(!p.reviewHistory) p.reviewHistory = [];
+  p.reviewHistory.push({
+    turn: state.turn, grade, pl,
+    assets: p.cash + totalBets,
+    trap: (state.reportCheck && state.reportCheck.trap) ? 1 : 0,
+    reportHit: !!(state.reportCheck && state.reportCheck.hit),
+  });
 }
 
 /* PHASE 6 — F&G UPDATE (v5.7) */
@@ -3073,7 +3220,78 @@ function phase7_next(){
 }
 
 /* === END GAME === */
+/* (v1.0) 최종 투자 결과 리포트 — 인간 플레이어의 한 판 전체를 분석 */
+function buildFinalReport(p){
+  if(!p) return '';
+  const hist = p.reviewHistory || [];
+  const finalAssets = p.totalScore;
+  const ret = ((finalAssets - 100) / 100 * 100).toFixed(0);
+  const retColor = finalAssets >= 100 ? 'var(--green)' : 'var(--red)';
+
+  // 등급 분포
+  const gCount = {S:0,A:0,B:0,C:0,D:0};
+  hist.forEach(h => { if(gCount[h.grade]!=null) gCount[h.grade]++; });
+  const gradeRow = ['S','A','B','C','D'].map(g =>
+    `<span class="rv-grade g${g}" style="width:30px;height:30px;font-size:14px;display:inline-flex">${g}</span><b style="margin:0 10px 0 4px">${gCount[g]}</b>`).join('');
+
+  // 턴별 손익 미니 차트
+  const maxAbs = Math.max(10, ...hist.map(h=>Math.abs(h.pl)));
+  const bars = hist.map(h => {
+    const hgt = Math.round(Math.abs(h.pl)/maxAbs*36);
+    const c = h.pl >= 0 ? 'var(--green)' : 'var(--red)';
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1">
+      <div style="height:38px;display:flex;align-items:flex-end"><div style="width:70%;min-width:8px;height:${Math.max(2,hgt)}px;background:${c};border-radius:2px" title="T${h.turn}: ${h.pl>=0?'+':''}${h.pl}"></div></div>
+      <span style="font-size:8px;color:var(--mut)">${h.turn}${h.trap?'🪤':''}</span>
+    </div>`;
+  }).join('');
+
+  // 베스트/워스트 턴
+  const sorted = [...hist].sort((a,b)=>b.pl-a.pl);
+  const bestT = sorted[0], worstT = sorted[sorted.length-1];
+
+  // 섹터 누적 손익 top/bottom
+  const secs = Object.entries(p.cumSectorPL||{}).filter(([,v])=>v!==0).sort((a,b)=>b[1]-a[1]);
+  const top3 = secs.slice(0,3).map(([s,v])=>`<b>${s}</b> <span style="color:var(--green)">+${Math.round(v)}</span>`).join(' · ') || '—';
+  const bot3 = secs.slice(-3).filter(([,v])=>v<0).reverse().map(([s,v])=>`<b>${s}</b> <span style="color:var(--red)">${Math.round(v)}</span>`).join(' · ') || '—';
+
+  // 리포트 적중률 (참고 지표)
+  const hits = hist.filter(h=>h.reportHit).length;
+  const hitRate = hist.length ? Math.round(hits/hist.length*100) : 0;
+  const trapCount = hist.filter(h=>h.trap).length;
+
+  // 종합 코멘트 (rule-based)
+  const comments = [];
+  const goodTurns = gCount.S + gCount.A;
+  if(goodTurns >= hist.length*0.5) comments.push('절반 이상의 턴에서 A등급 이상 — 일관된 의사결정이 강점입니다.');
+  else if(gCount.D >= 3) comments.push(`D등급이 ${gCount.D}턴 — 큰 손실 턴의 공통점(역행 베팅·과집중)을 복기해보세요.`);
+  if(worstT && bestT && Math.abs(worstT.pl) > bestT.pl) comments.push('최악 턴의 손실이 최고 턴의 이익보다 컸습니다. 손실 관리가 수익 추구보다 먼저입니다.');
+  if(p.risk >= 3) comments.push(`리스크 토큰 ${p.risk}개 — 원칙 위반·과열 추격의 비용이 컸습니다.`);
+  else if(p.risk === 0) comments.push('리스크 토큰 0개 — 원칙을 지키는 깨끗한 운용이었습니다.');
+  if(p.questBonus > 0) comments.push('🎯 도전 과제 달성 — 페르소나 정체성을 점수로 연결했습니다.');
+  else comments.push('도전 과제 미달성 — 다음 판엔 페르소나 퀘스트를 의식하며 베팅해보세요.');
+  if(secs.length >= 7) comments.push('많은 섹터를 거쳤습니다. 확신 있는 소수에 집중하면 거래비용이 줄어듭니다.');
+
+  return `<details style="margin-top:10px">
+    <summary style="cursor:pointer;font-weight:700;color:var(--acc);font-size:13px">📊 투자 결과 리포트 — 상세 분석 보기</summary>
+    <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:8px;font-size:11px;line-height:1.7;text-align:left">
+      <div style="font-size:13px;margin-bottom:6px">최종 자산 <b>${finalAssets}점</b> · 수익률 <b style="color:${retColor}">${ret>=0?'+':''}${ret}%</b> <span style="color:var(--mut)">(시작 100점)</span></div>
+      <div style="margin:8px 0"><b>턴별 손익</b> <span style="color:var(--mut)">(🪤=함정 발동 턴)</span>
+        <div style="display:flex;gap:2px;margin-top:4px;background:#0b0d12;border-radius:6px;padding:6px">${bars}</div></div>
+      <div style="margin:8px 0"><b>턴 등급 분포</b><br><div style="margin-top:4px;display:flex;align-items:center">${gradeRow}</div></div>
+      ${bestT?`<b>최고의 턴</b>: T${bestT.turn} <span style="color:var(--green)">+${bestT.pl}</span>${worstT&&worstT.pl<0?` · <b>최악의 턴</b>: T${worstT.turn} <span style="color:var(--red)">${worstT.pl}</span>`:''}<br>`:''}
+      <b>효자 섹터</b>: ${top3}<br>
+      <b>아픈 섹터</b>: ${bot3}<br>
+      <b>리포트 적중률</b>: ${hitRate}% (${hits}/${hist.length}턴)${trapCount?` · 함정 발동 ${trapCount}회`:''} <span style="color:var(--mut)">— 리포트는 확률 가중일 뿐임을 기억하세요</span><br>
+      <b>리스크 토큰</b>: ${p.risk}개${(p.riskReasons||[]).length?` <span style="color:var(--mut)">(${p.riskReasons.slice(0,3).join(', ')})</span>`:''}<br>
+      <div style="margin-top:8px;padding:8px 10px;border-left:3px solid var(--acc);background:#0b1622;border-radius:0 4px 4px 0">
+        <b style="color:var(--acc)">💡 종합 평가</b><br>${comments.map(c=>`· ${c}`).join('<br>')}
+      </div>
+    </div>
+  </details>`;
+}
+
 function endGame(){
+  clearSave(); // (v1.0) 종료된 게임은 이어하기 대상에서 제거
   // Apply quest bonuses + risk penalties
   for(const p of state.players){
     const persona = PERSONAS[p.personaId];
@@ -3143,6 +3361,7 @@ function endGame(){
     html += '</div>';
   });
   html += '</div>';
+  html += buildFinalReport(humanP); // (v1.0) 상세 투자 결과 리포트
   document.getElementById('endTitle').textContent =
     `${state.maxTurn}턴 종료 (${state.maxTurn>=16?'장기':'일반'} 게임) — 최종 결과`;
   document.getElementById('endBody').innerHTML = html;
@@ -3372,8 +3591,48 @@ function factorChips(card){
 
 /* (v5.10) 리포트 해설 — 카드 데이터(macroBias/eventBias/trap)에서 직접 추출해
    '의미 · 유리/불리 섹터 · 근거 · 신뢰도'를 500자 내로 생성한다. 교육 목적. */
+/* (v1.0) 해설 표시 설정 — 명시적 설정이 없으면 5판+ 플레이한 닉네임은 자동 축소 */
+function insightHidden(){
+  try{
+    const v = localStorage.getItem('position_insight_hidden');
+    if(v === '1') return true;
+    if(v === '0') return false;
+  }catch(e){}
+  return CURRENT_NICK ? getProfile(CURRENT_NICK).games >= 5 : false;
+}
+function toggleInsight(){
+  try{ localStorage.setItem('position_insight_hidden', insightHidden() ? '0' : '1'); }catch(e){}
+  renderAction();
+}
+
+/* (v1.0) 16턴 모드 중간 체크포인트 — 9턴 시작(전반전 종료) 시 1회 표시 */
+function midCheckpoint(){
+  if(state.maxTurn < 16 || state.turn !== 9) return '';
+  const assetOf = p => p.cash + Object.values(p.bets).reduce((a,b)=>a+b,0);
+  const ranked = [...state.players].sort((a,b)=>assetOf(b)-assetOf(a));
+  const me = state.players[state.myId];
+  if(!me) return '';
+  const myRank = ranked.findIndex(p=>p.id===me.id)+1;
+  const ents = Object.entries(me.cumSectorPL||{}).sort((a,b)=>b[1]-a[1]);
+  const best = ents.find(([,v])=>v>0);
+  const worst = [...ents].reverse().find(([,v])=>v<0);
+  return `<div class="card" style="margin-bottom:8px;border-color:var(--gold)">
+    <div class="ttl" style="color:var(--gold)">🚩 중간 체크포인트 — 전반전 종료 (8/16턴)</div>
+    <div class="desc" style="line-height:1.7">
+      <b>순위</b>: ${ranked.map((p,i)=>`${i+1}위 ${p.name} ${assetOf(p)}`).join(' · ')}<br>
+      <b>나는 ${myRank}위</b> — 자산 ${assetOf(me)}점 · 리스크 토큰 ${me.risk}개<br>
+      <b>시장 레짐</b>: 사이클 ${state.cycle} (${season(state.cycle)}) · F&G ${state.fearGreed} · 인플레 ${state.inflation.toFixed(1)}% / 금리 ${state.rate.toFixed(2)}%<br>
+      ${best?`<b>내 강점</b>: ${best[0]} 누적 <span style="color:var(--green)">+${Math.round(best[1])}</span>`:''}${worst?` · <b>약점</b>: ${worst[0]} 누적 <span style="color:var(--red)">${Math.round(worst[1])}</span>`:''}
+    </div></div>`;
+}
+
 function reportInsight(r){
   if(!r) return '';
+  if(insightHidden()){
+    return `<div style="margin-top:8px;text-align:right">
+      <button class="btn alt" style="font-size:10px;padding:4px 10px" onclick="toggleInsight()">📚 리포트 해설 보기</button>
+    </div>`;
+  }
   const deckNames = {depression:'불황', downturn:'경기침체', recovery:'회복', boom:'호황'};
   const mb = Object.entries(r.macroBias||{}).sort((a,b)=>b[1]-a[1]);
   const mbUp = mb.filter(([,v])=>v>1).map(([d,v])=>`${deckNames[d]} 덱 ×${v}`).join(', ');
@@ -3398,7 +3657,8 @@ function reportInsight(r){
     trust = `이 리포트에는 함정 조건이 없습니다. 다만 가중치는 <b>확률</b>일 뿐 — 반대 방향 카드도 여전히 추첨될 수 있습니다.`;
   }
   return `<div class="card" style="margin-top:8px;border-left:3px solid var(--acc)">
-    <div class="ttl">📚 리포트 해설 <span style="font-size:10px;color:var(--mut);font-weight:400">— 무엇이, 왜 유리해지나</span></div>
+    <div class="ttl" style="display:flex;justify-content:space-between;align-items:center">📚 리포트 해설 <span style="font-size:10px;color:var(--mut);font-weight:400">— 무엇이, 왜 유리해지나</span>
+      <button class="btn alt" style="font-size:9px;padding:2px 8px" onclick="toggleInsight()">숨기기</button></div>
     <div class="desc" style="line-height:1.6">
       <b>의미</b>: 리포트는 예언이 아니라 <b>카드 추첨 확률 가중치</b>입니다. 이 리포트는 ${mbUp || '특정 매크로 덱 가중 없음'}으로 매크로 추첨을 기울입니다.<br>
       ${fav ? `<b>유리</b>: 섹터 이벤트 출현 확률 — ${fav}<br>` : ''}
@@ -3423,7 +3683,7 @@ function renderAction(){
     const sentColor = s==='positive' ? 'var(--green)' : s==='negative' ? 'var(--red)' : 'var(--mut)';
     const typeLabel = r.type==='contra' ? '역발상' : r.type==='analysis' ? '분석' : '컨센서스';
     let cls = r.type==='contra' ? 'report-contra' : 'report-info';
-    a.innerHTML = `<div class="card" style="border-color:${sentColor}">
+    a.innerHTML = `${midCheckpoint()}<div class="card" style="border-color:${sentColor}">
       <div class="ttl" style="color:${sentColor}">🎲 주사위 ${state.diceRoll} → ${sLabel}</div>
       <div class="desc">매크로 추첨 풀: <b>${decks}</b> 덱 + 배정 쇼크 카드</div>
     </div>
@@ -3572,7 +3832,29 @@ function renderAction(){
         <div class="rv-tip">💡 ${rv.tip}</div>
       </div>`;
     }
-    a.innerHTML = `${rvHtml}<div class="card" style="margin-top:8px"><div class="ttl">🧮 정산 명세 (이번 턴)</div>
+    // (v1.0) 리포트 적중 복기 + 함정 배지
+    let recapHtml = '';
+    const rc = state.reportCheck;
+    if(rc){
+      const deckNames = {depression:'불황', downturn:'경기침체', recovery:'회복', boom:'호황'};
+      let line;
+      if(rc.isShock){
+        line = `⚡ 이번 턴은 <b>충격 카드</b> — 리포트와 무관한 와일드카드였습니다.`;
+      } else if(!rc.hadBias){
+        line = `이번 리포트는 특정 덱을 가중하지 않았습니다 (중립 리포트).`;
+      } else if(rc.hit){
+        line = `📰 리포트 복기: 리포트가 가중한 <b>${deckNames[rc.deck]||rc.deck}</b> 덱에서 카드가 나왔습니다 → <b style="color:var(--green)">적중 ✅</b>`;
+      } else {
+        line = `📰 리포트 복기: 카드는 <b>${deckNames[rc.deck]||rc.deck}</b> 덱 — 리포트가 가중한 덱이 아니었습니다 → <b style="color:var(--red)">빗나감 ❌</b> (가중치는 확률일 뿐!)`;
+      }
+      const trapBadge = rc.trap
+        ? `<div style="margin-top:4px"><span style="background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px">🪤 함정 리포트 발동!</span> <span style="font-size:10px;color:var(--mut)">F&G 극단에서 추세 역전(${rc.trap>0?'하방':'상방'}) 가중이 실제로 적용된 턴입니다.</span></div>`
+        : '';
+      recapHtml = `<div class="card" style="margin-bottom:8px;border-left:3px solid ${rc.trap?'var(--red)':'var(--line)'}">
+        <div style="font-size:11px;line-height:1.5">${line}</div>${trapBadge}
+      </div>`;
+    }
+    a.innerHTML = `${recapHtml}${rvHtml}<div class="card" style="margin-top:8px"><div class="ttl">🧮 정산 명세 (이번 턴)</div>
       <table style="width:100%;font-size:11px;border-collapse:collapse;margin-top:6px;text-align:center">
         <thead><tr style="color:var(--mut);border-bottom:1px solid var(--line)">
           <th style="text-align:left">플레이어</th>
@@ -3896,6 +4178,7 @@ function bootstrap(){
 
 window.addEventListener('DOMContentLoaded', () => {
   bootstrap();
+  initSplash();       // (v1.0) splash + continue button
   renderNickArea();   // (v5.10) nickname profiles
   renderStatsBar();   // (v5.9) cumulative stats
   renderTierGuide();  // (v5.10) tier guide panel
