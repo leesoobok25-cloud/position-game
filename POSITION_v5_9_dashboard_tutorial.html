@@ -275,6 +275,35 @@
     background:linear-gradient(90deg,var(--green),var(--gold) 70%,var(--red));
     transition:width .35s ease}
 
+  /* === (v5.9) turn review card === */
+  .card.review{border-color:var(--acc);padding:10px 12px}
+  .rv-head{display:flex;align-items:center;gap:12px}
+  .rv-grade{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;
+    justify-content:center;font-size:24px;font-weight:800;flex-shrink:0;
+    border:2px solid;background:#0b0d12}
+  .rv-grade.gS{color:var(--gold);border-color:var(--gold);box-shadow:0 0 14px #d2992266}
+  .rv-grade.gA{color:var(--green);border-color:var(--green)}
+  .rv-grade.gB{color:var(--acc);border-color:var(--acc)}
+  .rv-grade.gC{color:var(--mut);border-color:var(--mut)}
+  .rv-grade.gD{color:var(--red);border-color:var(--red);box-shadow:0 0 12px #f8514955}
+  .rv-sum .rv-pl{font-size:16px;font-weight:800}
+  .rv-sum .rv-pl.pos{color:var(--green)}
+  .rv-sum .rv-pl.neg{color:var(--red)}
+  .rv-sum .rv-asset{font-size:11px;color:var(--mut)}
+  .rv-sum .rv-asset b{color:var(--txt)}
+  .rv-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:9px}
+  .rv-col-t{font-size:11px;font-weight:700;margin-bottom:3px}
+  .rv-col-t.good{color:var(--green)}
+  .rv-col-t.bad{color:var(--red)}
+  .rv-col ul{margin:0;padding-left:16px;font-size:11px;line-height:1.55;color:var(--txt)}
+  .rv-col li{margin:2px 0}
+  .rv-col li.none{color:var(--mut);list-style:none;margin-left:-16px}
+  .rv-col li b{color:var(--gold)}
+  .rv-tip{margin-top:9px;padding:6px 9px;font-size:11px;line-height:1.5;
+    border-left:3px solid var(--acc);background:#0b1622;border-radius:0 4px 4px 0;
+    color:var(--txt)}
+  .rv-tip b{color:var(--acc)}
+
   /* === (v5.9) tutorial entry banner === */
   @keyframes tutPulse{
     0%,100%{box-shadow:0 0 0 0 rgba(210,153,34,.7),0 4px 18px #d2992240}
@@ -2379,6 +2408,8 @@ function phase5_settle(){
       if(worst[1].total < 0) logRow(`[최악] ${worst[0]} ${Math.round(worst[1].total)} (베팅 ${worst[1].bet})`, 'ev');
     }
   }
+  // (v5.9) 턴 리뷰 — 손익 적용 전(prevBets·cash 원본 유지 시점)에 평가 데이터 수집
+  if(meP) buildTurnReview(meP, turnPL[meP.id], sectorDelta, dampingMul);
 
   // 9) Apply turn PL to cash
   for(const p of state.players){
@@ -2444,6 +2475,101 @@ function phase5_settle(){
 
   // 13) Reset per-turn strategy
   for(const p of state.players) p.activeStrategy = null;
+}
+
+/* === (v5.9) 턴 리뷰 — 인간 플레이어의 이번 턴 베팅을 자동 평가 ===
+   phase5_settle 중 손익 적용 직전에 호출 (cash·prevBets가 아직 원본인 시점).
+   결과는 p.lastReview에 저장되어 정산 화면(phase 4) 최상단에 카드로 표시된다. */
+function buildTurnReview(p, pl, sectorDelta, dampingMul){
+  const b = p.lastBreakdown || {macro:0,event:0,slot:0,bondInt:0,persona:0,strategy:0,tx:0};
+  const goods = [], bads = [];
+
+  // 등급: 턴 손익 기준
+  const grade = pl >= 25 ? 'S' : pl >= 12 ? 'A' : pl >= 1 ? 'B' : pl > -10 ? 'C' : 'D';
+
+  // 방향 정렬률 — 베팅 중 상승 섹터에 들어간 비율
+  const totalBets = Object.values(p.bets).reduce((a,v)=>a+v,0);
+  let alignBets = 0;
+  for(const sid in p.bets){
+    if((p.bets[sid]||0) > 0 && (sectorDelta[sid]||0) > 0) alignBets += p.bets[sid];
+  }
+  const alignPct = totalBets > 0 ? Math.round(alignBets/totalBets*100) : 0;
+
+  // 베스트 / 워스트 섹터
+  const ents = Object.entries(p.lastSectorPL||{}).sort((a,x)=>x[1].total - a[1].total);
+  const causeName = {macro:'매크로', event:'이벤트', slot:'레짐', bond:'BOND'};
+  if(ents.length){
+    const [bSid, bD] = ents[0];
+    if(bD.total >= 3){
+      const src = Object.entries({macro:bD.macro,event:bD.event,slot:bD.slot,bond:bD.bond})
+        .sort((a,x)=>x[1]-a[1])[0];
+      goods.push(`<b>${bSid} +${Math.round(bD.total)}</b> — ${causeName[src[0]]} 순풍을 잘 탔어요 (베팅 ${bD.bet})`);
+    }
+    const [wSid, wD] = ents[ents.length-1];
+    if(wD.total <= -3){
+      const src = Object.entries({macro:wD.macro,event:wD.event,slot:wD.slot,bond:wD.bond})
+        .sort((a,x)=>a[1]-x[1])[0];
+      bads.push(`<b>${wSid} ${Math.round(wD.total)}</b> — ${causeName[src[0]]} 역풍 직격 (베팅 ${wD.bet})`);
+    }
+  }
+
+  // 방향 정렬 평가
+  if(totalBets >= 20){
+    if(alignPct >= 60) goods.push(`베팅의 <b>${alignPct}%</b>가 상승 섹터에 — 시장 방향을 잘 읽었어요`);
+    else if(alignPct <= 35) bads.push(`베팅의 <b>${100-alignPct}%</b>가 하락 섹터에 — 리포트·Omen 신호를 다시 보세요`);
+  }
+
+  // 페르소나 원칙
+  if(b.persona >= 3) goods.push(`페르소나 원칙 보너스 <b>+${b.persona}</b> — 스타일대로 플레이했어요`);
+  if(b.persona <= -5) bads.push(`원칙 위반 <b>${b.persona}</b> — 내 패널의 🚫 금지 조항을 확인하세요`);
+
+  // 전략 카드
+  if(b.strategy >= 3) goods.push(`전략 카드 효과 <b>+${b.strategy}</b> — 타이밍이 좋았어요`);
+
+  // 혼잡(쏠림) — 내 베팅 섹터가 감쇠를 맞았는지 / 잘 피했는지
+  const myJammed = SECTORS.filter(s => (p.bets[s.id]||0) > 0 && (dampingMul[s.id]||1) < 1);
+  const anyJam = SECTORS.some(s => (dampingMul[s.id]||1) < 1);
+  if(myJammed.length){
+    const worstM = Math.min(...myJammed.map(s=>dampingMul[s.id]));
+    bads.push(`<b>${myJammed.map(s=>s.id).join('·')}</b> 쏠림 — 손익이 ${worstM<=0.25?'75%':'50%'} 감쇠됐어요. 남들과 다른 길도 보세요`);
+  } else if(anyJam && totalBets > 0){
+    goods.push(`혼잡 섹터를 피했어요 — 쏠림은 수익을 깎습니다`);
+  }
+
+  // 거래비용
+  if(b.tx <= -3) bads.push(`거래비용 <b>${b.tx}</b> — 변경 10점당 1점, 잦은 갈아타기는 비쌉니다`);
+
+  // 노는 현금 (이 시점 cash는 베팅 후·손익 적용 전 원본)
+  if(p.cash >= 40) bads.push(`현금 <b>${p.cash}점</b>이 놀고 있어요 — 베팅하지 않은 돈은 일하지 않습니다`);
+
+  // 다음 턴 팁 (우선순위: Omen ≥2 > F&G 극단 > 사이클 극단 > 임계점 > 기본)
+  let tip;
+  const hot = OMENS.map(o=>({o, v:state.omen[o.id]||0})).filter(x=>x.v>=2).sort((a,x)=>x.v-a.v)[0];
+  if(hot){
+    tip = `Omen <b>${hot.o.name} ${hot.v}/3</b> — 3 도달 시 위기 매크로 강제 발동! 대피처: ${OMEN_HEDGE[hot.o.id].join('·')}`;
+  } else if(state.fearGreed >= 75){
+    tip = `F&G <b>${state.fearGreed}(과열)</b> — 극탐욕에선 하방 매크로 확률이 커집니다. 차익 실현·방어 전환을 고려하세요`;
+  } else if(state.fearGreed <= 25){
+    tip = `F&G <b>${state.fearGreed}(공포)</b> — 극공포는 반등의 신호일 수 있어요. 상방 후보를 노려보세요`;
+  } else if(state.cycle >= 75){
+    tip = `사이클 <b>${state.cycle}(여름·과열)</b> — 평균회귀 하방 압력에 대비하세요`;
+  } else if(state.cycle <= 25){
+    tip = `사이클 <b>${state.cycle}(겨울·바닥권)</b> — 회복 국면 베팅 기회를 살펴보세요`;
+  } else if(state.rate >= 4){
+    tip = `금리 <b>${state.rate.toFixed(1)}%(긴축)</b> — 성장주·BOND 부담, FIN 상대 유리`;
+  } else if(state.inflation >= 4){
+    tip = `인플레 <b>${state.inflation.toFixed(1)}%(고인플레)</b> — ENG·MATE 유리, 성장주 부담`;
+  } else {
+    tip = `리포트는 카드 추첨 확률을 실제로 바꿉니다 — 다음 리포트와 베팅을 정렬해보세요`;
+  }
+
+  p.lastReview = {
+    grade, pl,
+    assetsBefore: p.cash + totalBets,
+    goods: goods.slice(0,3),
+    bads: bads.slice(0,3),
+    tip,
+  };
 }
 
 /* PHASE 6 — F&G UPDATE (v5.7) */
@@ -2882,7 +3008,28 @@ function renderAction(){
         <td style="font-weight:700;color:${totalColor}">${p.lastTurnPL>=0?'+':''}${p.lastTurnPL}</td>
       </tr>`;
     }).join('');
-    a.innerHTML = `<div class="card"><div class="ttl">🧮 정산 명세 (이번 턴)</div>
+    // (v5.9) 턴 리뷰 카드 — 등급 + 잘한 점/아쉬운 점 + 다음 턴 팁
+    let rvHtml = '';
+    const rv = me.lastReview;
+    if(rv){
+      const assetsNow = me.cash + Object.values(me.bets).reduce((x,y)=>x+y,0);
+      const li = arr => arr.length ? arr.map(t=>`<li>${t}</li>`).join('') : '<li class="none">—</li>';
+      rvHtml = `<div class="card review reveal">
+        <div class="rv-head">
+          <span class="rv-grade g${rv.grade}">${rv.grade}</span>
+          <div class="rv-sum">
+            <div class="rv-pl ${rv.pl>=0?'pos':'neg'}">이번 턴 ${rv.pl>=0?'+':''}${rv.pl}점</div>
+            <div class="rv-asset">자산 ${rv.assetsBefore} → <b>${assetsNow}</b></div>
+          </div>
+        </div>
+        <div class="rv-cols">
+          <div class="rv-col"><div class="rv-col-t good">✅ 잘한 점</div><ul>${li(rv.goods)}</ul></div>
+          <div class="rv-col"><div class="rv-col-t bad">⚠️ 아쉬운 점</div><ul>${li(rv.bads)}</ul></div>
+        </div>
+        <div class="rv-tip">💡 ${rv.tip}</div>
+      </div>`;
+    }
+    a.innerHTML = `${rvHtml}<div class="card" style="margin-top:8px"><div class="ttl">🧮 정산 명세 (이번 턴)</div>
       <table style="width:100%;font-size:11px;border-collapse:collapse;margin-top:6px;text-align:center">
         <thead><tr style="color:var(--mut);border-bottom:1px solid var(--line)">
           <th style="text-align:left">플레이어</th>
@@ -3068,8 +3215,8 @@ const TUT_STEPS = [
     text:'2장 중 1장을 <b>다수결</b>로 채택합니다. 봇들은 이미 투표했고(아래 집계), 동률이면 당신이 캐스팅보트! 내 베팅 섹터에 유리한 카드에 투표하세요. 다른 플레이어들의 포지션을 보면 봇들의 표도 예측할 수 있습니다.',
     mission:'👆 둘 중 원하는 카드를 클릭해 투표하세요',
     until: () => state.phase >= 4 || state.turn >= 2 },
-  { sel:'#panelPhase', title:'5단계 — 🧮 정산',
-    text:'이번 턴 손익의 명세서입니다. <b>손익 = 매크로 + 이벤트 + 슬롯(레짐) + BOND 이자 + 페르소나 원칙 + 전략 − 거래비용</b>. 아래 "내 섹터별 인과" 표에서 어떤 섹터가 왜 벌고 잃었는지 꼭 확인하는 습관을 들이세요.',
+  { sel:'#panelPhase', title:'5단계 — 🧮 정산과 턴 리뷰',
+    text:'맨 위 <b>턴 리뷰 카드</b>가 이번 턴을 S~D 등급으로 평가하고 ✅잘한 점 / ⚠️아쉬운 점 / 💡다음 턴 팁을 알려줍니다. 그 아래 정산 명세는 <b>손익 = 매크로 + 이벤트 + 슬롯 + BOND + 페르소나 + 전략 − 거래비용</b>의 분해표예요. 매 턴 리뷰를 읽는 습관이 실력을 만듭니다.',
     mission:'👆 "→ F&G 갱신" 버튼을 누르세요',
     until: () => state.phase >= 5 || state.turn >= 2 },
   { sel:'#panelPhase', title:'6단계 — 😨 F&G 갱신',
