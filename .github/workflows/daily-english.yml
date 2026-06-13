@@ -3,10 +3,10 @@ name: Daily English (Telegram)
 # 매일 여행 영어 회화 스크립트를 텔레그램으로 보냅니다.
 on:
   schedule:
-    # cron은 UTC 기준입니다. '0 23 * * *' = 매일 23:00 UTC = 08:00 KST(한국).
+    # cron은 UTC 기준입니다. '0 0 * * *' = 매일 00:00 UTC = 09:00 KST(한국).
     # 보내는 시간을 바꾸려면 아래 숫자를 조정하세요. (KST = UTC + 9시간)
-    #   예) 아침 7시 KST -> '0 22 * * *'  /  저녁 9시 KST -> '0 12 * * *'
-    - cron: '0 23 * * *'
+    #   예) 아침 7시 KST -> '0 22 * * *'  /  아침 8시 KST -> '0 23 * * *'
+    - cron: '0 0 * * *'
   # Actions 탭에서 'Run workflow' 버튼으로 직접 테스트할 수 있습니다.
   workflow_dispatch:
 
