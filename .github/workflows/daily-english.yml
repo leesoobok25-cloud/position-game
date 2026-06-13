@@ -27,6 +27,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Install dependencies (text-to-speech)
+        run: pip install gtts requests
+
       - name: Send today's English script
         working-directory: english-telegram
         env:
