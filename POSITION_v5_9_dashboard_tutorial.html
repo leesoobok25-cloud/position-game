@@ -2204,7 +2204,8 @@ function evaluatePrinciple(p, ctx){
     // (v5.7) 인플레 맞춤 — 인플레 상승 카드에 가치/에너지/소재 비중
     const macroInflMove = state.currentMacro?.inflMove || 0;
     if(macroInflMove >= 0.4 && (valBet + (p.bets.ENG||0) + (p.bets.MATE||0))/totalB >= 0.35){
-      total += 6; msgs.push('인플레 상승 맞춤(ENG·MATE·가치군 비중확대) +6');
+      const inflBonus = state.maxTurn >= 16 ? 5 : 6;
+      total += inflBonus; msgs.push(`인플레 상승 맞춤(ENG·MATE·가치군 비중확대) +${inflBonus}`);
     }
     // (v5.7) 금리 급등 회피 — 금리 오를 때 BOND/TECH/BIO 노출을 줄였으면 보상
     if((state.rate - (state.prevRate || state.rate)) >= 0.3 && bondBet <= 10 && (p.bets.TECH||0)+(p.bets.BIO||0) <= 25){
@@ -2409,7 +2410,7 @@ function botVoteEvent(p, evA, evB){
   // (v1.1) 버그 수정 — 기존엔 효과 부호를 무시하고 '메인 섹터 베팅이 많은 카드'에 투표해
   //         자기 베팅 섹터의 악재 카드를 스스로 뽑았음. 내 베팅 기준 기대 손익(main+related)으로 판단.
   // 50%는 기대 손익(main+related)으로 합리 투표,
-  // 50%는 기존 '관심 섹터' 휴리스틱 유지 (완전 합리화 시 MACRO_KING 31%+ — 밸런스 이슈)
+  // 50%는 개선된 휴리스틱 — 메인 효과 방향(+/-)을 반영해 자기 포지션에 유리한 카드 선택
   if(Math.random() < 0.5){
     const expPL = ev => {
       let pl = (ev.mainEff||0) * (p.bets[ev.main]||0) / 10;
@@ -2418,7 +2419,10 @@ function botVoteEvent(p, evA, evB){
     };
     return expPL(evA) >= expPL(evB) ? 'A' : 'B';
   }
-  return (p.bets[evA.main]||0) >= (p.bets[evB.main]||0) ? 'A' : 'B';
+  // 휴리스틱: 효과 부호(+/-) × 보유 베팅량으로 유불리 판단
+  const hA = Math.sign(evA.mainEff||0) * (p.bets[evA.main]||0);
+  const hB = Math.sign(evB.mainEff||0) * (p.bets[evB.main]||0);
+  return hA >= hB ? 'A' : 'B';
 }
 
 /* === PHASE MACHINE === */
