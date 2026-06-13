@@ -3482,14 +3482,15 @@ function phase6_fg(){
     else if(cm >= 4) cardFg = +4;
     else if(cm >= 1) cardFg = +2;
     if(mc.shock) cardFg = Math.round(cardFg * 1.5); // 쇼크 카드 증폭
-    if(state.maxTurn >= 16) cardFg = Math.round(cardFg * 0.5); // 16턴 누적 완화
-    move += cardFg;
+    // 16턴에서는 누적 드리프트를 막기 위해 카드 충격 비활성화
+    if(state.maxTurn < 16) move += cardFg;
   }
 
-  // (v5.9b) 사이클 겨울·봄 구간 — 시장 분위기 자연 하락 바이어스 (16턴은 절반)
-  const cycleBias = state.maxTurn >= 16 ? 1 : 2;
-  if(state.cycle <= 20) move -= cycleBias + 1;
-  else if(state.cycle <= 35) move -= cycleBias - 1;
+  // (v5.9b) 사이클 겨울·봄 구간 하락 바이어스 — 8턴 전용 (16턴은 누적 효과로 비활성화)
+  if(state.maxTurn < 16){
+    if(state.cycle <= 20) move -= 3;
+    else if(state.cycle <= 35) move -= 1;
+  }
 
   state.fearGreed = clamp(state.fearGreed + move, 0, 100);
 
