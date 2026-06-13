@@ -3444,25 +3444,49 @@ function buildTurnReview(p, pl, sectorDelta, dampingMul){
 
 /* PHASE 6 — F&G UPDATE (v5.7) */
 function phase6_fg(){
-  // 1인당 평균 손익 기반으로 더 세분화된 산식 + 극단 평균회귀 강화.
+  // 1인당 평균 손익 기반. 실제 시장처럼 하락(공포)은 빠르고 크게, 상승(탐욕)은 느리고 점진적으로.
   const avgPL = state.players.reduce((a,p)=>a+(p.lastTurnPL||0),0) / Math.max(1, state.players.length);
 
   let move = 0;
-  if(avgPL >= 20) move = +10;
-  else if(avgPL >= 10) move = +6;
-  else if(avgPL >= 3) move = +3;
+  // 상승 속도를 하락보다 느리게 (약 70% 수준)
+  if(avgPL >= 20) move = +7;
+  else if(avgPL >= 10) move = +4;
+  else if(avgPL >= 3) move = +2;
   else if(avgPL > -3) move = 0;
-  else if(avgPL > -10) move = -4;
-  else if(avgPL > -20) move = -7;
-  else move = -10;
+  // 하락 속도는 원래보다 빠르게 (약 130% 수준)
+  else if(avgPL > -10) move = -5;
+  else if(avgPL > -20) move = -9;
+  else move = -13;
 
-  // 극단에서는 같은 방향 이동 약화
-  if(state.fearGreed >= 80 && move > 0) move = Math.ceil(move * 0.4);
-  if(state.fearGreed <= 20 && move < 0) move = Math.floor(move * 0.4);
+  // 극탐욕 구간에서 상승 억제 (35%), 극공포 구간에서 하락 덜 억제 (55%) — 공황 시 추가 낙폭 허용
+  if(state.fearGreed >= 80 && move > 0) move = Math.ceil(move * 0.35);
+  if(state.fearGreed <= 20 && move < 0) move = Math.floor(move * 0.55);
 
   // 사이클 극단에서는 심리 평균회귀
   if(state.cycle >= 85) move -= 3;
   if(state.cycle <= 15) move += 3;
+
+  // (v5.9b) 매크로 카드 직접 심리 충격 — 하락 카드는 급격히, 상승 카드는 완만하게
+  const mc = state.currentMacro;
+  if(mc){
+    const cm = mc.cycleMove || 0;
+    let cardFg = 0;
+    // 하락 충격: 크고 빠르게
+    if(cm <= -9) cardFg = -13;
+    else if(cm <= -6) cardFg = -9;
+    else if(cm <= -3) cardFg = -5;
+    else if(cm <= -1) cardFg = -3;
+    // 상승 효과: 하락보다 느리게 (약 60% 수준)
+    else if(cm >= 7) cardFg = +6;
+    else if(cm >= 4) cardFg = +4;
+    else if(cm >= 1) cardFg = +2;
+    if(mc.shock) cardFg = Math.round(cardFg * 1.5); // 쇼크 카드 증폭
+    move += cardFg;
+  }
+
+  // (v5.9b) 사이클 겨울·봄 구간 — 시장 분위기 자연 하락 바이어스
+  if(state.cycle <= 20) move -= 3;
+  else if(state.cycle <= 35) move -= 1;
 
   state.fearGreed = clamp(state.fearGreed + move, 0, 100);
 
