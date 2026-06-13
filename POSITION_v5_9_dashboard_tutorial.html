@@ -2242,7 +2242,7 @@ function evaluatePrinciple(p, ctx){
     }
     // (v5.9) 장기(16턴)에선 상방 한도 +6 → +9 — 이벤트 적중이 늘어나는 만큼
     //        집중형의 보상 천장도 함께 올려 우승률 15% → 25%선 회복
-    hunterDelta = clamp(hunterDelta, -9, state.maxTurn >= 16 ? 9 : 6); // (v5.9c) 원복
+    hunterDelta = clamp(hunterDelta, -9, state.maxTurn >= 16 ? 9 : 8); // (v5.9d) fearGreed 비대칭 보정
     if(hunterDelta){ total += hunterDelta; msgs.push(`헌터 상시 ${hunterDelta>=0?'+':''}${hunterDelta}`); }
     // ban: 4+ sectors
     const active = SECTORS.filter(s => (p.bets[s.id]||0) > 0).length;
