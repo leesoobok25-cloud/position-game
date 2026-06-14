@@ -1641,7 +1641,7 @@ const PERSONAS = {
   },
   HUNTER: {
     id:'HUNTER', name:'HUNTER', sub:'집중', color:'p2',
-    always:'베팅을 30점 이상 집중한 섹터에 호재가 터지면 매번 +5점 (악재면 -5점). 많이 집중할수록 수익도 크고 손실도 커진다',
+    always:'30점 이상 집중한 섹터에 호재가 터지면 매번 +5점 (악재면 -5점). 많이 집중할수록 수익도 크고 손실도 커진다',
     ban:'동시에 4개 이상 섹터에 베팅하면 -10점. 집중 투자가 핵심 — 최대 3개 섹터에만 베팅하라',
     boon:'단일 섹터에 40점 이상 집중 베팅하고 호재가 터지면 추가로 +2점',
     quest:'40점 이상 집중한 섹터에서 호재가 3턴 이상 적중하면 게임 종료 시 +20점',
@@ -2355,7 +2355,7 @@ function botPlanBets(p){
   favored = [...new Set(favored)].slice(0,6);
 
   if(persona.id === 'HUNTER'){
-    // concentrate into top 1-2 favored
+    // concentrate into top 1-2 favored; caps scale with total budget (%)
     const pick = favored.slice(0,2);
     if(pick.length===0) pick.push('TECH');
     target[pick[0]] = Math.min(45, Math.floor(totalBudget*0.55));
@@ -2386,10 +2386,14 @@ function botPlanBets(p){
     pick.forEach((sid,i) => target[sid] = Math.floor(totalBudget*pcts[i]));
   }
 
-  // Cap sums to ≤ totalBudget*0.9 to keep some cash; single ≤ 50
+  // Cap sums to ≤ totalBudget*0.9 to keep some cash
+  // HUNTER: per-sector cap scales with budget (50%); others: fixed 50
+  const singleCap = persona.id === 'HUNTER'
+    ? Math.max(50, Math.floor(totalBudget * 0.50))
+    : 50;
   let sum = 0;
   for(const sid of Object.keys(target)){
-    target[sid] = Math.min(50, Math.max(0, target[sid]));
+    target[sid] = Math.min(singleCap, Math.max(0, target[sid]));
     sum += target[sid];
   }
   const cap = Math.floor(totalBudget*0.9);
@@ -2704,7 +2708,7 @@ function alwaysText(persona){
   if(persona.id === 'MACRO_KING' && long)
     return '매크로 카드가 뽑힌 직후 사이클 게이지를 ±5 직접 조정할 수 있다 (턴당 1회). 카드 방향에 맞게 베팅하면 +5점, 인플레 상승 국면에 에너지·소재 비중을 늘리면 +8점, 금리가 오를 때 채권·성장주 노출을 줄이면 +8점. 장기 모드는 리스크 면제 없음';
   if(persona.id === 'HUNTER' && long)
-    return '베팅을 30점 이상 집중한 섹터에 호재가 터지면 매번 +5점 (악재면 -5점). 장기 모드에서는 상방 보너스가 더 크다. 마지막 4턴 중 2턴 이상 40점+ 섹터에서 호재 적중 시 게임 종료 보너스 +8점';
+    return '30점 이상 집중한 섹터에 호재가 터지면 매번 +5점 (악재면 -5점). 장기 모드에서는 상방 보너스가 더 크다. 마지막 4턴 중 2턴 이상 40점+ 섹터에서 호재 적중 시 게임 종료 보너스 +8점';
   if(persona.id === 'QUANT' && long)
     return '10점 이상 베팅한 섹터가 많을수록 매 턴 보너스가 쌓인다 (4섹터 +1, 5섹터 +2, 6섹터 +3/턴). 5섹터+ 흑자 턴마다 +14점. 매크로·이벤트로 손실이 날 때 20% 흡수. 단, 7섹터+ 이상이거나 탐욕 극단·주력 이벤트 미보유 시 페널티';
   return persona.always;
@@ -3130,7 +3134,7 @@ function phase5_settle(){
     for(const sid in sectorPL){
       p.cumSectorPL[sid] = (p.cumSectorPL[sid]||0) + sectorPL[sid].total;
     }
-    // (v5.8) HUNTER quest: 40점+ 베팅 섹터에서 호재(sectorDelta>0) 적중 시 이번 턴 1회 적립
+    // (v5.8) HUNTER quest: 총자산의 40%+ 베팅 섹터에서 호재(sectorDelta>0) 적중 시 이번 턴 1회 적립
     if(SECTORS.some(s => (sectorPL[s.id]?.bet||0) >= 40 && (sectorDelta[s.id]||0) > 0)){
       p.catalystHits = (p.catalystHits||0) + 1;
       // (v5.10) HUNTER 16턴 '테마 완주' — 마지막 4턴 구간의 호재 적중을 따로 적립
@@ -4789,7 +4793,7 @@ const TUT_STEPS = [
     mission:'👆 "→ 베팅 단계로" 버튼을 누르세요',
     until: () => state.phase >= 1 || state.turn >= 2 },
   { sel:'#myBetsPanel', title:'2단계 — 💰 베팅',
-    text:'+/− 토큰 버튼으로 섹터에 점수를 배치합니다. 예산은 <b>cash 100점</b>, 단일 섹터 한도는 50점. 리포트가 가리키는 섹터에 집중해보세요.',
+    text:'+/− 토큰 버튼으로 섹터에 점수를 배치합니다. 예산은 <b>cash 100점</b>, 단일 섹터 한도는 총자산의 50%. 리포트가 가리키는 섹터에 집중해보세요.',
     mission:'📌 미션: 한 섹터에 30점 이상 베팅하기 (HUNTER 상시능력 발동 조건!) — 단, 4개 섹터 이상은 금지 위반',
     until: () => state.phase >= 2 || state.turn >= 2 ||
                  (tutMe() && Math.max(0, ...Object.values(tutMe().bets)) >= 30) },
