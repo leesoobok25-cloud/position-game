@@ -4701,7 +4701,10 @@ function bumpBet(sid, delta, evt){
 }
 function setBet(sid, val){
   const me = state.players[state.myId];
-  const v = clamp(parseInt(val)||0, 0, me.activeStrategy==='EXPAND'?70:50);
+  // (v5.9e) 단일 섹터 한도 = 자본의 50%(최소 50, 한도확장 시 70) — bumpBet과 동일 규칙
+  const budget = me.cash + Object.values(me.prevBets).reduce((a,b)=>a+b,0);
+  const cap = Math.max(me.activeStrategy==='EXPAND'?70:50, Math.floor(budget*0.5));
+  const v = clamp(parseInt(val)||0, 0, cap);
   me.bets[sid] = v;
   // recompute cash dynamically (preview)
   const initial = me.cash + Object.values(me.prevBets).reduce((a,b)=>a+b,0);
