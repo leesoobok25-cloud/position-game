@@ -295,6 +295,16 @@
     0%,100%{box-shadow:0 0 0 0 #f8514900}
     50%{box-shadow:0 0 14px 2px #f8514988}
   }
+  @keyframes fgPanicPulse{
+    0%,100%{box-shadow:0 0 0 0 #f8514900;border-color:var(--line)}
+    50%{box-shadow:0 0 18px 4px #f8514966,inset 0 0 12px #f851490f;border-color:#f85149aa}
+  }
+  @keyframes fgManiaPulse{
+    0%,100%{box-shadow:0 0 0 0 #d2992200;border-color:var(--line)}
+    50%{box-shadow:0 0 16px 3px #d2992255,inset 0 0 10px #d299220a;border-color:#d29922aa}
+  }
+  .fg-panic-mode{animation:fgPanicPulse 1.4s ease-in-out infinite}
+  .fg-mania-mode{animation:fgManiaPulse 2s ease-in-out infinite}
   @keyframes crowdPulse{
     0%,100%{box-shadow:0 0 0 0 #d2992200}
     50%{box-shadow:0 0 11px 1px #d2992277}
@@ -2407,22 +2417,35 @@ function botPickStrategy(p){
 }
 
 function botVoteEvent(p, evA, evB){
-  // (v1.1) 버그 수정 — 기존엔 효과 부호를 무시하고 '메인 섹터 베팅이 많은 카드'에 투표해
-  //         자기 베팅 섹터의 악재 카드를 스스로 뽑았음. 내 베팅 기준 기대 손익(main+related)으로 판단.
   // 50%는 기대 손익(main+related)으로 합리 투표,
   // 50%는 개선된 휴리스틱 — 메인 효과 방향(+/-)을 반영해 자기 포지션에 유리한 카드 선택
+  let pick, reason;
   if(Math.random() < 0.5){
     const expPL = ev => {
       let pl = (ev.mainEff||0) * (p.bets[ev.main]||0) / 10;
       for(const sid in (ev.related||{})) pl += ev.related[sid] * (p.bets[sid]||0) / 10;
       return pl;
     };
-    return expPL(evA) >= expPL(evB) ? 'A' : 'B';
+    const plA = expPL(evA), plB = expPL(evB);
+    pick = plA >= plB ? 'A' : 'B';
+    const chosen = pick === 'A' ? evA : evB;
+    // (v5.9c) 내러티브 로그 — 봇 의사결정 이유 표시
+    const topSector = Object.entries(p.bets||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1])[0];
+    if(topSector){
+      const mainEff = chosen.mainEff||0;
+      if(mainEff > 0) reason = `${p.name}: <b>${chosen.name}</b> 선택 — ${topSector[0]} 보유 포지션에 유리한 호재 카드 (기대손익 +${Math.round(Math.max(plA,plB)*10)/10})`;
+      else reason = `${p.name}: <b>${chosen.name}</b> 선택 — 포트폴리오 헷지, 현 포지션 손실 최소화 전략`;
+    }
+  } else {
+    // 휴리스틱: 효과 부호(+/-) × 보유 베팅량으로 유불리 판단
+    const hA = Math.sign(evA.mainEff||0) * (p.bets[evA.main]||0);
+    const hB = Math.sign(evB.mainEff||0) * (p.bets[evB.main]||0);
+    pick = hA >= hB ? 'A' : 'B';
+    const chosen = pick === 'A' ? evA : evB;
+    reason = `${p.name}: <b>${chosen.name}</b> 선택 — ${chosen.main} 섹터 ${(chosen.mainEff||0)>0?'강세':'약세'} 카드로 포지션 유불리 판단`;
   }
-  // 휴리스틱: 효과 부호(+/-) × 보유 베팅량으로 유불리 판단
-  const hA = Math.sign(evA.mainEff||0) * (p.bets[evA.main]||0);
-  const hB = Math.sign(evB.mainEff||0) * (p.bets[evB.main]||0);
-  return hA >= hB ? 'A' : 'B';
+  if(reason) logRow(reason, 'ev');
+  return pick;
 }
 
 /* === PHASE MACHINE === */
@@ -3466,6 +3489,13 @@ function phase6_fg(){
   if(state.cycle >= 85) move -= 3;
   if(state.cycle <= 15) move += 3;
 
+  // (v5.9c) 16턴 장기 모드 — 탐욕권 누적 상승 억제 (평균 종료값 71 → 60대로 조정)
+  if(state.maxTurn >= 16){
+    if(state.fearGreed >= 70 && move > 0) move = Math.ceil(move * 0.6);
+    if(state.fearGreed >= 80) move -= 2;
+    if(state.fearGreed <= 25 && move < 0) move = Math.floor(move * 0.7);
+  }
+
   // (v5.9b) 매크로 카드 직접 심리 충격 — 하락 카드는 급격히, 상승 카드는 완만하게
   // 16턴에서는 누적 효과를 막기 위해 절반 스케일 적용
   const mc = state.currentMacro;
@@ -3868,6 +3898,10 @@ function render(){
   document.getElementById('cycleMk').style.left = state.cycle + '%';
   document.getElementById('fgN').textContent = state.fearGreed;
   document.getElementById('fgMk').style.left = state.fearGreed + '%';
+  // (v5.9c) F&G 극단 패널 펄스 연출
+  const fgPanel = document.getElementById('panelFG');
+  fgPanel.classList.toggle('fg-panic-mode', state.fearGreed <= 20);
+  fgPanel.classList.toggle('fg-mania-mode', state.fearGreed >= 80);
   document.getElementById('inflN').textContent = state.inflation.toFixed(1) + '%';
   document.getElementById('rateN').textContent = state.rate.toFixed(2) + '%';
   // Threshold badges
