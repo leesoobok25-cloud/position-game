@@ -308,6 +308,12 @@
   /* 용어 툴팁 */
   .term{border-bottom:1px dashed var(--gold);color:var(--gold);cursor:help;font-style:normal}
   .term::after{content:'ⓘ';font-size:9px;vertical-align:super;margin-left:1px;opacity:0.7}
+  /* 금리/인플레 증감 표시 */
+  .delta-up{color:#f87171;font-size:11px;font-weight:700;margin-left:3px}
+  .delta-dn{color:#60a5fa;font-size:11px;font-weight:700;margin-left:3px}
+  .delta-zero{color:var(--mut);font-size:11px;margin-left:3px}
+  @keyframes deltaFlash{0%{opacity:0;transform:translateY(-4px)}30%{opacity:1}80%{opacity:1}100%{opacity:0.5;transform:translateY(0)}}
+  .delta-flash{animation:deltaFlash 1.8s ease-out forwards}
   @keyframes crowdPulse{
     0%,100%{box-shadow:0 0 0 0 #d2992200}
     50%{box-shadow:0 0 11px 1px #d2992277}
@@ -613,9 +619,9 @@
       </div>
       <div class="panel" style="margin-top:10px" id="panelInflRate">
         <h3>인플레이션 / 기준금리 <span style="font-size:14px;color:var(--mut);font-weight:400">(사이클 파생)</span></h3>
-        <div style="font-size:14px;color:var(--mut)">인플레: <span id="inflN" style="color:var(--gold);font-weight:700">2.0%</span> <span id="inflBadge" style="font-size:14px"></span></div>
+        <div style="font-size:14px;color:var(--mut)">인플레: <span id="inflN" style="color:var(--gold);font-weight:700">2.0%</span><span id="inflDelta"></span> <span id="inflBadge" style="font-size:14px"></span></div>
         <div class="track" style="margin-top:4px"><div id="inflMk" class="mk" style="background:var(--gold)"></div></div>
-        <div style="font-size:14px;color:var(--mut);margin-top:6px">금리: <span id="rateN" style="color:var(--purple);font-weight:700">2.0%</span> <span id="rateBadge" style="font-size:14px"></span></div>
+        <div style="font-size:14px;color:var(--mut);margin-top:6px">금리: <span id="rateN" style="color:var(--purple);font-weight:700">2.0%</span><span id="rateDelta"></span> <span id="rateBadge" style="font-size:14px"></span></div>
         <div class="track" style="margin-top:4px"><div id="rateMk" class="mk" style="background:var(--purple)"></div></div>
       </div>
       <div class="panel" style="margin-top:10px" id="panelOmen">
@@ -1890,8 +1896,13 @@ function applyMacroFactorMoves(card){
   state.cycle = clamp(state.cycle + cMove, 0, 100);
   const baseInfl = macroBaselineInfl(state.cycle);
   const baseRate = macroBaselineRate(state.cycle);
+  const prevInfl = state.inflation;
+  const prevRate = state.rate;
   state.inflation = clamp(state.inflation * 0.75 + baseInfl * 0.25 + iMove, -1.0, 7.0);
   state.rate      = clamp(state.rate      * 0.80 + baseRate * 0.20 + rMove, 0.25, 6.0);
+  // (v5.9d) 턴별 증감 저장 — 렌더에서 화살표/애니메이션 표시용
+  state.inflDelta = state.inflation - prevInfl;
+  state.rateDelta = state.rate - prevRate;
 }
 
 function applyOmen(deltas){
@@ -3990,6 +4001,19 @@ function render(){
   fgPanel.classList.toggle('fg-mania-mode', state.fearGreed >= 80);
   document.getElementById('inflN').textContent = state.inflation.toFixed(1) + '%';
   document.getElementById('rateN').textContent = state.rate.toFixed(2) + '%';
+  // (v5.9d) 증감 화살표 표시
+  function renderDelta(elId, delta){
+    const el = document.getElementById(elId);
+    if(!el) return;
+    el.innerHTML = '';
+    if(Math.abs(delta) < 0.05) return;
+    const span = document.createElement('span');
+    span.className = (delta > 0 ? 'delta-up' : 'delta-dn') + ' delta-flash';
+    span.textContent = delta > 0 ? `▲${delta.toFixed(2)}` : `▼${Math.abs(delta).toFixed(2)}`;
+    el.appendChild(span);
+  }
+  renderDelta('inflDelta', state.inflDelta || 0);
+  renderDelta('rateDelta', state.rateDelta || 0);
   // Threshold badges
   const inflBadge = document.getElementById('inflBadge');
   if(state.inflation >= 3) inflBadge.innerHTML = '<span style="color:#ef4444">⚠️ 고인플레</span>';
