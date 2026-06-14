@@ -2684,8 +2684,8 @@ function setGameMode(m){
 /* (v5.9) 장기전 퀘스트 기준 — 16턴에서 그대로면 너무 쉬워지는 항목만 상향 */
 function questReq(){
   return state.maxTurn >= 16
-    ? {hunter:5, quant:10, oracle:9, mk:3}
-    : {hunter:3, quant:6,  oracle:6, mk:2};
+    ? {hunter:5, quant:10, oracle:10, mk:3}
+    : {hunter:3, quant:6,  oracle:6,  mk:2};
 }
 function questText(persona){
   // 게임 중에는 실제 모드, 시작 전 모달에서는 선택 중인 모드 기준으로 표시
@@ -2704,9 +2704,9 @@ function alwaysText(persona){
   if(persona.id === 'MACRO_KING' && long)
     return '매크로 카드가 뽑힌 직후 사이클 게이지를 ±5 직접 조정할 수 있다 (턴당 1회). 카드 방향에 맞게 베팅하면 +5점, 인플레 상승 국면에 에너지·소재 비중을 늘리면 +8점, 금리가 오를 때 채권·성장주 노출을 줄이면 +8점. 장기 모드는 리스크 면제 없음';
   if(persona.id === 'HUNTER' && long)
-    return '베팅을 30점 이상 집중한 섹터에 호재가 터지면 매번 +5점 (악재면 -5점). 장기 모드에서는 상방 보너스가 더 크다. 마지막 4턴 중 2턴 이상 40점+ 섹터에서 호재 적중 시 게임 종료 보너스 +6점';
+    return '베팅을 30점 이상 집중한 섹터에 호재가 터지면 매번 +5점 (악재면 -5점). 장기 모드에서는 상방 보너스가 더 크다. 마지막 4턴 중 2턴 이상 40점+ 섹터에서 호재 적중 시 게임 종료 보너스 +8점';
   if(persona.id === 'QUANT' && long)
-    return '10점 이상 베팅한 섹터가 많을수록 매 턴 보너스가 쌓인다 (4섹터 +1, 5섹터 +2, 6섹터 +3/턴). 5섹터+ 흑자 턴마다 +13점. 매크로·이벤트로 손실이 날 때 20% 흡수. 단, 7섹터+ 이상이거나 탐욕 극단·주력 이벤트 미보유 시 페널티';
+    return '10점 이상 베팅한 섹터가 많을수록 매 턴 보너스가 쌓인다 (4섹터 +1, 5섹터 +2, 6섹터 +3/턴). 5섹터+ 흑자 턴마다 +14점. 매크로·이벤트로 손실이 날 때 20% 흡수. 단, 7섹터+ 이상이거나 탐욕 극단·주력 이벤트 미보유 시 페널티';
   return persona.always;
 }
 
@@ -3977,6 +3977,7 @@ function termify(html){
   }
   return result;
 }
+// PC hover
 document.addEventListener('mouseover', e => {
   const t = e.target.closest('.term');
   if(t) showGlossTip(t, t.dataset.tip);
@@ -3984,6 +3985,19 @@ document.addEventListener('mouseover', e => {
 document.addEventListener('mouseout', e => {
   if(e.target.closest('.term')) hideGlossTip();
 });
+// 모바일 tap: 탭하면 열고, 바깥 탭하면 닫힘
+let _activeTerm = null;
+document.addEventListener('touchstart', e => {
+  const t = e.target.closest('.term');
+  if(t){
+    e.preventDefault();
+    if(_activeTerm === t){ hideGlossTip(); _activeTerm = null; return; }
+    showGlossTip(t, t.dataset.tip);
+    _activeTerm = t;
+  } else {
+    hideGlossTip(); _activeTerm = null;
+  }
+}, {passive:false});
 
 /* === RENDER === */
 function render(){
@@ -4001,16 +4015,19 @@ function render(){
   fgPanel.classList.toggle('fg-mania-mode', state.fearGreed >= 80);
   document.getElementById('inflN').textContent = state.inflation.toFixed(1) + '%';
   document.getElementById('rateN').textContent = state.rate.toFixed(2) + '%';
-  // (v5.9d) 증감 화살표 표시
+  // (v5.9d) 증감 화살표 — DOM 제거 후 재삽입으로 animation 재트리거
   function renderDelta(elId, delta){
     const el = document.getElementById(elId);
     if(!el) return;
     el.innerHTML = '';
     if(Math.abs(delta) < 0.05) return;
     const span = document.createElement('span');
-    span.className = (delta > 0 ? 'delta-up' : 'delta-dn') + ' delta-flash';
+    span.className = delta > 0 ? 'delta-up' : 'delta-dn';
     span.textContent = delta > 0 ? `▲${delta.toFixed(2)}` : `▼${Math.abs(delta).toFixed(2)}`;
     el.appendChild(span);
+    // animation 재트리거: void reflow trick
+    void span.offsetWidth;
+    span.classList.add('delta-flash');
   }
   renderDelta('inflDelta', state.inflDelta || 0);
   renderDelta('rateDelta', state.rateDelta || 0);
@@ -4624,12 +4641,10 @@ function totalAbsChange(p){
 function bumpBet(sid, delta, evt){
   const me = state.players[state.myId];
   if(state.phase !== 1) return;
-  // (v5.9d) 자본 비례 섹터 한도 — 초기(100) 기준 50점, 자본이 늘수록 비례해 증가
-  const totalAssets = (me.cash||0) + Object.values(me.bets||{}).reduce((a,b)=>a+b,0);
-  const baseMax = me.activeStrategy === 'EXPAND' ? 70 : 50;
-  const scaledMax = Math.max(baseMax, Math.floor(totalAssets * 0.5));
-  const perMax = scaledMax;
+  // (v5.9d) 자본 비례 섹터 한도 — budget(전턴 총자산)의 50% 기준으로 동적 확장
   const budget = me.cash + Object.values(me.prevBets).reduce((a,b)=>a+b,0);
+  const baseMax = me.activeStrategy === 'EXPAND' ? 70 : 50;
+  const perMax = Math.max(baseMax, Math.floor(budget * 0.5));
   const others = Object.values(me.bets).reduce((a,b)=>a+b,0) - (me.bets[sid]||0);
   const sectorMax = Math.min(perMax, Math.max(0, budget - others));
   const before = me.bets[sid]||0;
