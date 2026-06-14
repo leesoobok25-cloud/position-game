@@ -305,6 +305,9 @@
   }
   .fg-panic-mode{animation:fgPanicPulse 1.4s ease-in-out infinite}
   .fg-mania-mode{animation:fgManiaPulse 2s ease-in-out infinite}
+  /* 용어 툴팁 */
+  .term{border-bottom:1px dashed var(--gold);color:var(--gold);cursor:help;font-style:normal}
+  .term::after{content:'ⓘ';font-size:9px;vertical-align:super;margin-left:1px;opacity:0.7}
   @keyframes crowdPulse{
     0%,100%{box-shadow:0 0 0 0 #d2992200}
     50%{box-shadow:0 0 11px 1px #d2992277}
@@ -1633,7 +1636,7 @@ const PERSONAS = {
   HUNTER: {
     id:'HUNTER', name:'HUNTER', sub:'집중', color:'p2',
     always:'베팅을 30점 이상 집중한 섹터에 호재가 터지면 매번 +5점 (악재면 -5점). 많이 집중할수록 수익도 크고 손실도 커진다',
-    ban:'동시에 4개 이상 섹터에 베팅하면 -10점. 분산 투자는 이 페르소나의 스타일이 아니다',
+    ban:'동시에 4개 이상 섹터에 베팅하면 -10점. 집중 투자가 핵심 — 최대 3개 섹터에만 베팅하라',
     boon:'단일 섹터에 40점 이상 집중 베팅하고 호재가 터지면 추가로 +2점',
     quest:'40점 이상 집중한 섹터에서 호재가 3턴 이상 적중하면 게임 종료 시 +20점',
     bot:{strategy:'concentrate'},
@@ -3888,6 +3891,89 @@ function endGame(){
   document.getElementById('endModal').classList.add('on');
 }
 
+/* === GLOSSARY TOOLTIP SYSTEM (v5.9d) ===
+   금융·경제 용어에 커서를 올리면 설명이 팝업됩니다.
+   .term 클래스: 밑줄 점선 + 골드 색 → 툴팁 있음을 시각 표시 */
+const GLOSSARY = {
+  'CAPEX':      '자본적 지출(Capital Expenditure) — 기업이 미래 수익을 위해 설비·장비·인프라 등에 투자하는 비용. 높으면 성장 기대, 낮으면 투자 위축 신호.',
+  '헤지':       '손실 위험을 줄이기 위해 반대 방향 포지션을 취하는 전략. 예: 주식을 보유하면서 하락에 대비해 풋옵션 매수.',
+  '헷지':       '손실 위험을 줄이기 위해 반대 방향 포지션을 취하는 전략. 예: 주식을 보유하면서 하락에 대비해 풋옵션 매수.',
+  'PMI':        '구매관리자지수(Purchasing Managers Index) — 제조업·서비스업 경기를 나타내는 선행지표. 50 이상이면 경기 확장, 미만이면 수축.',
+  '멜트업':     '펀더멘털(실적·가치)과 무관하게 심리적 과열로 주가가 급등하는 현상. 과열 뒤에는 급락이 따르는 경우가 많다.',
+  '숏커버':     '공매도(Short) 포지션을 청산하기 위해 주식을 다시 매수하는 것. 하락을 예상하고 팔았다가 다시 사는 과정.',
+  '스프레드':   '두 금융상품 간의 금리 또는 가격 차이. 신용 스프레드가 넓어지면 위험 자산 회피 심리가 커진 것.',
+  '듀레이션':   '채권의 금리 민감도. 듀레이션이 길수록 금리 변화에 더 크게 반응 — 금리 오르면 장기채 가격이 더 많이 하락.',
+  '리플레이션': '경기 침체 후 물가와 경기가 동반 회복되는 국면. 원자재·경기민감주·에너지주에 유리한 환경.',
+  'M&A':        '기업의 합병(Merger)과 인수(Acquisition). 인수 프리미엄 기대로 관련 주가가 급등하는 경우가 많다.',
+  '밸류에이션': '기업 또는 자산의 적정 가치를 평가하는 것. 밸류에이션 부담 = 주가가 실적 대비 너무 비싸다는 의미.',
+  '골드락스':   '인플레도 침체도 아닌 적당한 성장이 지속되는 이상적인 경제 상태. 성장주와 채권 모두 강세.',
+  '리세션':     '경기침체 — 보통 GDP가 2분기 연속 감소하는 상태. 기업 실적 악화, 실업 증가, 주가 하락을 유발.',
+  '디플레':     '전반적인 물가가 하락하는 현상. 겉으로는 좋아 보이지만 소비 위축·기업 수익 감소로 경기를 악화시킨다.',
+  '스태그플레이션': '경기침체(Stagnation)와 인플레이션(Inflation)이 동시에 발생하는 최악의 조합. 금리 올리면 경기 악화, 내리면 물가 상승.',
+  '순환매':     '특정 섹터에서 다른 섹터로 자금이 이동하는 현상. 경기 국면에 따라 주도 섹터가 바뀐다.',
+  '매파':       '금리 인상·긴축을 선호하는 중앙은행 스탠스. 물가 안정을 최우선으로 삼는다.',
+  '비둘기':     '금리 인하·완화를 선호하는 중앙은행 스탠스. 성장과 고용을 최우선으로 삼는다.',
+  '청산':       '보유 포지션을 전부 매도해 현금화하는 것. 강제 청산은 레버리지 과다 시 발생.',
+  '리밸런싱':   '목표 비중에 맞게 포트폴리오를 다시 조정하는 것. 오른 자산을 팔고 내린 자산을 사는 방식.',
+  'IPO':        '기업공개(Initial Public Offering) — 비상장 기업이 처음으로 주식을 공개 상장. 시장 과열기에 IPO가 쏟아지면 수급 부담 신호.',
+  '크레딧':     '신용(Credit) — 돈을 빌릴 수 있는 능력 또는 채권 시장. 크레딧 경색 = 대출이 어려워지는 상황.',
+  '유동성':     '자산을 빠르게 현금화할 수 있는 정도, 또는 시장에 흐르는 돈의 양. 유동성 공급 = 시중에 돈을 푸는 것.',
+  'F&G':        '공포(Fear)·탐욕(Greed) 지수 — 시장 심리를 0(극공포)~100(극탐욕)으로 수치화. 극단에서는 평균회귀 가능성이 높다.',
+  '오멘':       '위기 징조 지표. 쌓일수록 충격 매크로 카드가 강제 발동될 가능성이 높아진다.',
+  '골드':       '안전자산의 대표 격. 경기 불안·인플레 시 수요가 높아지는 경향.',
+  'BOND':       '채권 — 정부·기업이 발행하는 채무 증권. 금리 오르면 가격 하락, 내리면 가격 상승.',
+  '알파':       '시장 평균 대비 초과 수익률. 알파를 낸다 = 시장보다 더 많이 벌었다는 의미.',
+  '베타':       '시장 대비 개별 자산의 변동 민감도. 베타 2.0이면 시장이 1% 움직일 때 2% 움직임.',
+  'VIX':        '변동성 지수 — 시장의 공포 수준을 나타낸다. 높을수록 투자자들이 불확실성을 더 크게 느낀다는 뜻.',
+  '쇼트':       '공매도 — 가격이 내릴 것을 예상하고 없는 주식을 빌려서 파는 전략.',
+  '롱':         '매수 포지션 — 가격 상승을 기대하고 자산을 보유하는 것.',
+};
+
+let _tipEl = null;
+function getTooltipEl(){
+  if(!_tipEl){
+    _tipEl = document.createElement('div');
+    _tipEl.id = 'glossTip';
+    _tipEl.style.cssText = 'position:fixed;z-index:9999;max-width:280px;background:#1f2a3a;border:1px solid #58a6ff88;border-radius:8px;padding:10px 13px;font-size:13px;color:#e6edf3;line-height:1.6;pointer-events:none;display:none;box-shadow:0 4px 20px #00000088';
+    document.body.appendChild(_tipEl);
+  }
+  return _tipEl;
+}
+function showGlossTip(el, text){
+  const tip = getTooltipEl();
+  tip.innerHTML = text;
+  tip.style.display = 'block';
+  const rect = el.getBoundingClientRect();
+  let top = rect.bottom + 6, left = rect.left;
+  if(top + 100 > window.innerHeight) top = rect.top - 110;
+  if(left + 290 > window.innerWidth) left = window.innerWidth - 295;
+  tip.style.top = top + 'px';
+  tip.style.left = Math.max(4, left) + 'px';
+}
+function hideGlossTip(){ getTooltipEl().style.display = 'none'; }
+
+// HTML 내 용어를 .term 스팬으로 래핑 (이미 래핑된 경우 스킵)
+function termify(html){
+  if(!html) return html;
+  // 이미 term 클래스 있으면 중복 방지
+  if(html.includes('class="term"')) return html;
+  let result = html;
+  for(const [word, tip] of Object.entries(GLOSSARY)){
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const re = new RegExp(`(?<![\\w가-힣"'])${escaped}(?![\\w가-힣"'])`, 'g');
+    const safe = tip.replace(/"/g,'&quot;');
+    result = result.replace(re, `<span class="term" data-tip="${safe}">${word}</span>`);
+  }
+  return result;
+}
+document.addEventListener('mouseover', e => {
+  const t = e.target.closest('.term');
+  if(t) showGlossTip(t, t.dataset.tip);
+});
+document.addEventListener('mouseout', e => {
+  if(e.target.closest('.term')) hideGlossTip();
+});
+
 /* === RENDER === */
 function render(){
   document.getElementById('turnNo').textContent = state.turn;
@@ -4067,7 +4153,7 @@ function render(){
 
   // narrative
   document.getElementById('narrative').innerHTML = state.narrative
-    ? `<div class="narrative">${state.narrative}</div>` : '';
+    ? `<div class="narrative">${termify(state.narrative)}</div>` : '';
 
   // log
   const lg = document.getElementById('log');
@@ -4299,7 +4385,7 @@ function renderAction(){
     // Phase 2: betting (input grid is in right panel)
     a.innerHTML = `<div class="card">
       <div class="ttl">💰 베팅 조정 <span style="font-size:14px;color:var(--mut);font-weight:400">— 🔒 동시 비공개 베팅</span></div>
-      <div class="desc">우측 입력칸에 섹터별 토큰을 배치한 뒤 확정하세요. 단일 한도 50점 (HUNTER 한도확장 시 70).<br>
+      <div class="desc">우측 입력칸에 섹터별 토큰을 배치한 뒤 확정하세요. 단일 섹터 한도는 자본의 50% (기본 최소 50점, EXPAND 전략 시 70점).<br>
       <span style="color:var(--mut);font-size:14px">보드에 보이는 다른 플레이어의 베팅은 <b>직전 턴</b> 포지션입니다. 이번 턴 베팅은 모두가 확정한 뒤 동시에 공개됩니다.</span></div>
     </div>
     <div style="margin-top:8px;display:flex;gap:6px">
@@ -4317,7 +4403,7 @@ function renderAction(){
             ${cardArt(c)}
             <div class="ttl">${c.name}</div>
             <div class="badge-row">${cycBadge(c.cycleMove)}</div>
-            <div class="desc">${c.narrative}</div>
+            <div class="desc">${termify(c.narrative)}</div>
             <div class="eff-row">${effChips(c.effects, 4)}</div>
           </div>`).join('')}
         </div>`;
@@ -4342,7 +4428,7 @@ function renderAction(){
           <span class="meta-chip">인플레 ${state.inflation.toFixed(1)}%</span>
           <span class="meta-chip">금리 ${state.rate.toFixed(2)}%</span>
         </div>
-        <div class="desc">${c.narrative}</div>
+        <div class="desc">${termify(c.narrative)}</div>
         <div class="eff-row">${effChips(c.effects, 4)}</div>
         <div class="badge-row">${tagChips(c.tags, 3)}</div>
       </div>
@@ -4514,7 +4600,11 @@ function totalAbsChange(p){
 function bumpBet(sid, delta, evt){
   const me = state.players[state.myId];
   if(state.phase !== 1) return;
-  const perMax = me.activeStrategy === 'EXPAND' ? 70 : 50;
+  // (v5.9d) 자본 비례 섹터 한도 — 초기(100) 기준 50점, 자본이 늘수록 비례해 증가
+  const totalAssets = (me.cash||0) + Object.values(me.bets||{}).reduce((a,b)=>a+b,0);
+  const baseMax = me.activeStrategy === 'EXPAND' ? 70 : 50;
+  const scaledMax = Math.max(baseMax, Math.floor(totalAssets * 0.5));
+  const perMax = scaledMax;
   const budget = me.cash + Object.values(me.prevBets).reduce((a,b)=>a+b,0);
   const others = Object.values(me.bets).reduce((a,b)=>a+b,0) - (me.bets[sid]||0);
   const sectorMax = Math.min(perMax, Math.max(0, budget - others));
