@@ -1,0 +1,4 @@
+# Regenerable build artifact — single self-contained HTML produced on demand by
+# tools/build_single_file.py (inlines assets/cards/*.jpg back into the page).
+# Kept out of git so the repo doesn't re-bloat to ~3.6MB.
+POSITION_v5_9_single.html
