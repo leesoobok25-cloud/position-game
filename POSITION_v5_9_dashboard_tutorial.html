@@ -571,7 +571,7 @@
   <h1>POSITION <span class="ver">v5.9 · Tutorial Build</span></h1>
   <button class="btn alt" style="font-size:14px;padding:4px 10px" onclick="startTutorial()">🎓 튜토리얼</button>
   <div id="headerTierGuide" class="header-tier-guide"></div>
-  <div class="turn">턴 <span id="turnNo">1</span>/<span id="maxTurnNo">8</span> · <span id="phaseName">시작</span> · 사이클 <span id="cycleN">50</span> (<span id="seasonN">봄</span>)</div>
+  <div class="turn">턴 <span id="turnNo">1</span>/<span id="maxTurnNo">8</span> · <span id="phaseName">시작</span> · 사이클 <span id="cycleN">50</span><span id="cycleDelta"></span> (<span id="seasonN">봄</span>)</div>
 </header>
 
 <div class="grid">
@@ -604,7 +604,7 @@
         </div>
       </div>
       <div class="panel" style="margin-top:10px" id="panelFG">
-        <h3>Fear &amp; Greed (<span id="fgN">50</span>)</h3>
+        <h3>Fear &amp; Greed (<span id="fgN">50</span>)<span id="fgDelta"></span></h3>
         <div class="track">
           <div class="fgseg fg-panic"></div>
           <div class="fgseg fg-fear"></div>
@@ -1893,6 +1893,7 @@ function applyMacroFactorMoves(card){
   const cMove = card.cycleMove || 0;
   const iMove = card.inflMove || 0;
   const rMove = card.rateMove || 0;
+  const prevCycle = state.cycle;
   state.cycle = clamp(state.cycle + cMove, 0, 100);
   const baseInfl = macroBaselineInfl(state.cycle);
   const baseRate = macroBaselineRate(state.cycle);
@@ -1903,6 +1904,7 @@ function applyMacroFactorMoves(card){
   // (v5.9d) 턴별 증감 저장 — 렌더에서 화살표/애니메이션 표시용
   state.inflDelta = state.inflation - prevInfl;
   state.rateDelta = state.rate - prevRate;
+  state.cycleDelta = state.cycle - prevCycle;
 }
 
 function applyOmen(deltas){
@@ -3540,7 +3542,9 @@ function phase6_fg(){
     else if(state.cycle <= 35) move -= 1;
   }
 
+  const prevFG = state.fearGreed;
   state.fearGreed = clamp(state.fearGreed + move, 0, 100);
+  state.fgDelta = state.fearGreed - prevFG;
 
   // 다음 턴 극단 선택권
   if(state.fearGreed >= 80){
@@ -3942,6 +3946,24 @@ const GLOSSARY = {
   'VIX':        '변동성 지수 — 시장의 공포 수준을 나타낸다. 높을수록 투자자들이 불확실성을 더 크게 느낀다는 뜻.',
   '쇼트':       '공매도 — 가격이 내릴 것을 예상하고 없는 주식을 빌려서 파는 전략.',
   '롱':         '매수 포지션 — 가격 상승을 기대하고 자산을 보유하는 것.',
+  '인플레이션': '물가가 지속적으로 오르는 현상. 1~3%는 건강한 신호지만, 과도하면 금리 인상 → 성장주·채권 부담으로 이어진다.',
+  '인플레':     '인플레이션의 줄임말. 물가 상승 압력 — 적정은 1~3%, 그 이상은 긴축 위험이 커진다.',
+  '디플레이션': '물가가 지속적으로 하락하는 현상. 소비·투자를 미루게 만들고 기업 수익을 갉아먹어 경기를 가라앉힌다.',
+  '기준금리':   '중앙은행이 정하는 정책금리. 오르면 차입비용↑·성장주/채권 부담, 내리면 유동성↑·위험자산 강세.',
+  '금리':       '돈을 빌리는 비용(이자율). 상승은 성장주·장기채에 역풍, 금융주(FIN)엔 호재인 경향.',
+  '사이클':     '경기의 순환 국면(❄️겨울 불황 → 🌱봄 회복 → 🔥여름 호황 → 🍂가을 둔화). 국면마다 유리한 섹터가 바뀐다.',
+  '레짐':       '한동안 지속되는 시장 국면/체제(예: AI 인프라 붐, 골디락스). 특정 섹터에 꾸준한 유·불리를 준다.',
+  '연착륙':     '경기가 침체에 빠지지 않고 완만히 둔화하는 것(soft landing). 증시엔 안도 랠리 재료.',
+  '경착륙':     '경기가 급격히 침체로 빠지는 것(hard landing). 위험자산 급락을 부른다.',
+  '긴축':       '중앙은행이 금리 인상·유동성 회수로 시중의 돈을 죄는 것. 성장주·고밸류 자산에 역풍.',
+  '양적완화':   '중앙은행이 자산을 사들여 시중에 돈을 푸는 완화책(QE). 위험자산·성장주에 유리.',
+  '컨센서스':   '시장 참여자들의 전망 평균(기대치). 한쪽으로 쏠리면 가격에 이미 반영돼 역발상 기회가 생긴다.',
+  '펀더멘털':   '기업·경제의 기초체력(실적·재무·성장성). 단기 심리와 달리 장기 주가의 바탕이 된다.',
+  '모멘텀':     '가격이 한 방향으로 움직이는 추세의 힘. 모멘텀 투자 = 오르는 자산을 따라 사는 전략.',
+  '변동성':     '가격이 출렁이는 정도. 커지면 위험이 커졌다는 신호(VIX와 연결된다).',
+  '연준':       '미국 중앙은행(Fed). 기준금리와 유동성을 조절해 전 세계 자산시장에 가장 큰 영향을 준다.',
+  '리스크온':   '위험선호 심리 — 주식·성장주 등 위험자산으로 자금이 몰리는 국면.',
+  '리스크오프': '위험회피 심리 — 채권·현금·안전자산으로 자금이 피신하는 국면.',
 };
 
 let _tipEl = null;
@@ -3968,18 +3990,24 @@ function showGlossTip(el, text){
 function hideGlossTip(){ getTooltipEl().style.display = 'none'; }
 
 // HTML 내 용어를 .term 스팬으로 래핑 (이미 래핑된 경우 스킵)
+// 단일 패스 치환 — 삽입된 span 속성(data-tip) 안을 다시 매칭하지 않아 HTML 깨짐을 방지한다.
+// 한 블록에서 같은 용어는 첫 등장만 표시(노이즈 최소화). 긴 용어 우선(예: 인플레이션 > 인플레).
+const _GLOSS_KEYS = Object.keys(GLOSSARY).sort((a,b)=>b.length-a.length);
+const _GLOSS_RE = new RegExp(
+  // 앞: 한글/영숫자에 붙으면 제외(복합어 중간 매칭 방지). 뒤: 한글 조사(도/가/는/이…)는 허용해야 실제로 잡힌다 → \w(영숫자)만 차단.
+  `(?<![\\w가-힣"'])(${_GLOSS_KEYS.map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')})(?![\\w])`,
+  'g'
+);
 function termify(html){
   if(!html) return html;
-  // 이미 term 클래스 있으면 중복 방지
-  if(html.includes('class="term"')) return html;
-  let result = html;
-  for(const [word, tip] of Object.entries(GLOSSARY)){
-    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    const re = new RegExp(`(?<![\\w가-힣"'])${escaped}(?![\\w가-힣"'])`, 'g');
-    const safe = tip.replace(/"/g,'&quot;');
-    result = result.replace(re, `<span class="term" data-tip="${safe}">${word}</span>`);
-  }
-  return result;
+  if(html.includes('class="term"')) return html;   // 이미 래핑됐으면 스킵
+  const seen = new Set();
+  return html.replace(_GLOSS_RE, (m, w) => {
+    if(seen.has(w)) return m;                        // 블록 내 첫 등장만 래핑
+    seen.add(w);
+    const tip = GLOSSARY[w].replace(/"/g,'&quot;');
+    return `<span class="term" data-tip="${tip}">${w}</span>`;
+  });
 }
 // PC hover
 document.addEventListener('mouseover', e => {
@@ -4020,14 +4048,14 @@ function render(){
   document.getElementById('inflN').textContent = state.inflation.toFixed(1) + '%';
   document.getElementById('rateN').textContent = state.rate.toFixed(2) + '%';
   // (v5.9d) 증감 화살표 — DOM 제거 후 재삽입으로 animation 재트리거
-  function renderDelta(elId, delta){
+  function renderDelta(elId, delta, decimals=2){
     const el = document.getElementById(elId);
     if(!el) return;
     el.innerHTML = '';
-    if(Math.abs(delta) < 0.05) return;
+    if(Math.abs(delta) < (decimals === 0 ? 0.5 : 0.05)) return;
     const span = document.createElement('span');
     span.className = delta > 0 ? 'delta-up' : 'delta-dn';
-    span.textContent = delta > 0 ? `▲${delta.toFixed(2)}` : `▼${Math.abs(delta).toFixed(2)}`;
+    span.textContent = delta > 0 ? `▲${delta.toFixed(decimals)}` : `▼${Math.abs(delta).toFixed(decimals)}`;
     el.appendChild(span);
     // animation 재트리거: void reflow trick
     void span.offsetWidth;
@@ -4035,6 +4063,8 @@ function render(){
   }
   renderDelta('inflDelta', state.inflDelta || 0);
   renderDelta('rateDelta', state.rateDelta || 0);
+  renderDelta('cycleDelta', state.cycleDelta || 0, 0);
+  renderDelta('fgDelta', state.fgDelta || 0, 0);
   // Threshold badges
   const inflBadge = document.getElementById('inflBadge');
   if(state.inflation >= 3) inflBadge.innerHTML = '<span style="color:#ef4444">⚠️ 고인플레</span>';
