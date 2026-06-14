@@ -2684,7 +2684,7 @@ function setGameMode(m){
 /* (v5.9) 장기전 퀘스트 기준 — 16턴에서 그대로면 너무 쉬워지는 항목만 상향 */
 function questReq(){
   return state.maxTurn >= 16
-    ? {hunter:5, quant:10, oracle:8, mk:3}
+    ? {hunter:5, quant:10, oracle:9, mk:3}
     : {hunter:3, quant:6,  oracle:6, mk:2};
 }
 function questText(persona){
