@@ -317,6 +317,7 @@
   .delta-flash{animation:deltaFlash 1.8s ease-out forwards}
   @keyframes liqFlash{0%{background:#5a0f14;transform:translateX(0)}12%{transform:translateX(-5px)}24%{transform:translateX(5px)}36%{transform:translateX(-3px)}48%{transform:translateX(2px)}60%{transform:translateX(0)}100%{background:var(--panel)}}
   .liq-alert{animation:liqFlash 1.6s ease-out}
+  .liq-warn{background:#3a2e0a;border:1px solid #d29922;border-radius:6px;padding:6px 9px;margin-bottom:6px;font-size:13px;color:#f0c040;line-height:1.45}
   @keyframes crowdPulse{
     0%,100%{box-shadow:0 0 0 0 #d2992200}
     50%{box-shadow:0 0 11px 1px #d2992277}
@@ -4275,7 +4276,16 @@ function render(){
     const perMax = Math.max(me.activeStrategy === 'EXPAND' ? 70 : 50, Math.floor(budget * 0.5));
     const spent  = Object.values(me.bets).reduce((a,b)=>a+b,0);
     const remain = budget - spent; // 추가로 더 베팅 가능한 점수
-    betsDiv.innerHTML = SECTORS.map(s => {
+    // (v5.9e) 집중 사전경고 — 단일 섹터가 자산의 45%+면 손실 시 강제청산 위험을 미리 알린다.
+    let concWarn = '';
+    if(editable && budget > 0){
+      let topSid = null, topRatio = 0;
+      for(const s of SECTORS){ const r = (me.bets[s.id]||0)/budget; if(r > topRatio){ topRatio = r; topSid = s.id; } }
+      if(topSid && topRatio >= 0.45 && (me.bets[topSid]||0) >= 25){
+        concWarn = `<div class="liq-warn">⚠️ <b>${topSid}</b>에 자산의 <b>${Math.round(topRatio*100)}%</b> 집중 — 손실로 자본이 줄면 한도(50%) 초과분이 <b>강제 청산</b>될 수 있어요. 분산을 고려하세요.</div>`;
+      }
+    }
+    betsDiv.innerHTML = concWarn + SECTORS.map(s => {
       const prev = me.prevBets[s.id] || 0;
       const cur = me.bets[s.id] || 0;
       const head = `<div class="bet-row-head">
