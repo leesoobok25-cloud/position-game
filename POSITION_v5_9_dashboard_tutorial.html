@@ -2711,7 +2711,7 @@ function questText(persona){
 function alwaysText(persona){
   const long = state.players.length ? state.maxTurn >= 16 : PENDING_MODE === 'long';
   if(persona.id === 'ORACLE' && long)
-    return '한 섹터를 오래 들고 있을수록 매 턴 보너스가 쌓인다 (6턴+ 보유 시 베팅 20점당 +1/턴, 호재 발현 시 최대 +12). 14턴 이상 보유하면 텐배거 후보로 +10/턴. 오래 보유한 섹터에 악재가 와도 손실을 일부 흡수해준다';
+    return '한 섹터를 오래 들고 있을수록 매 턴 보너스가 쌓인다 (6턴+ 보유 시 베팅 20점당 +1/턴, 호재 발현 시 최대 +12). 14턴 이상 보유하면 텐배거 후보로 +8/턴. 오래 보유한 섹터에 악재가 와도 손실을 일부 흡수해준다';
   if(persona.id === 'MACRO_KING' && long)
     return '매크로 카드가 뽑힌 직후 사이클 게이지를 ±5 직접 조정할 수 있다 (턴당 1회). 카드 방향에 맞게 베팅하면 +5점, 인플레 상승 국면에 에너지·소재 비중을 늘리면 +8점, 금리가 오를 때 채권·성장주 노출을 줄이면 +8점. 장기 모드는 리스크 면제 없음';
   if(persona.id === 'HUNTER' && long)
