@@ -3308,6 +3308,57 @@ function phase5_settle(){
 /* === (v5.9) 턴 리뷰 — 인간 플레이어의 이번 턴 베팅을 자동 평가 ===
    phase5_settle 중 손익 적용 직전에 호출 (cash·prevBets가 아직 원본인 시점).
    결과는 p.lastReview에 저장되어 정산 화면(phase 4) 최상단에 카드로 표시된다. */
+/* (v5.9e) 매 턴 매크로 환경과 닮은 "역사적 시기" — 교육용 매칭 DB.
+   fp(fingerprint): cycle/infl/rate/fg 는 [최소,최대] 범위, tags 는 매크로 카드 태그.
+   게임 전체가 아니라 "이번 턴 환경"에 가장 가까운 한 시기를 고른다. */
+const HISTORY = [
+  { label:'2008 글로벌 금융위기', fp:{cycle:[0,25], infl:[0,2.5], rate:[0,2], fg:[0,30], tags:['recession','credit']},
+    desc:'리먼 브라더스 파산으로 신용시장이 얼어붙고 주가가 반토막 났다. 연준은 금리를 0%로 내리고 양적완화(QE)를 시작했다 — 공포가 극에 달한 그 바닥이 이후 10년 강세장의 출발점이었다.' },
+  { label:'2020 코로나 팬데믹 쇼크', fp:{cycle:[10,35], infl:[0,2], rate:[0,1.5], fg:[5,40], tags:['recession','liquidity','policy']},
+    desc:'봉쇄로 증시가 한 달 만에 -30% 폭락했다. 그러나 연준의 무제한 양적완화와 재난지원금이 유동성을 폭발시켜 5개월 만에 신고가를 회복했다 — "유동성이 펀더멘털을 이긴" 대표 사례다.' },
+  { label:'2021 리오프닝·유동성 멜트업', fp:{cycle:[65,100], infl:[2,4.5], rate:[0,1.5], fg:[70,100], tags:['liquidity','bubble']},
+    desc:'백신과 경제 재개, 넘치는 유동성으로 거의 모든 자산이 동반 급등했다. 밈주식·코인·성장주가 멜트업했지만 물가가 들썩이며 이듬해 긴축의 씨앗이 뿌려졌다 — 탐욕이 극에 달한 국면.' },
+  { label:'2022 인플레 쇼크·긴축 약세장', fp:{cycle:[25,55], infl:[4,7], rate:[3,6], fg:[10,45], tags:['inflation','rate']},
+    desc:'40년 만의 고인플레에 연준이 금리를 0%→4%대로 급격히 올렸다. 할인율 급등으로 성장주(TECH)와 채권이 동반 폭락한 드문 해 — "금리 상승은 장기 성장주의 적"임을 각인시켰다.' },
+  { label:'2023 디스인플레·AI 랠리', fp:{cycle:[55,80], infl:[2,4], rate:[3,5.5], fg:[55,85], tags:['ai','semi']},
+    desc:'인플레가 정점을 찍고 둔화되는 가운데 챗GPT가 촉발한 AI 붐이 반도체(SEMI)와 빅테크를 끌어올렸다. 금리는 높았지만 소수 AI 수혜주가 지수를 견인한 "좁은 강세장"이었다.' },
+  { label:'1970년대 스태그플레이션', fp:{cycle:[15,45], infl:[4,7], rate:[3,6], fg:[15,45], tags:['inflation']},
+    desc:'오일쇼크로 물가가 두 자릿수로 치솟는데 경기는 침체에 빠진 최악의 조합. 주식·채권 모두 부진했고 에너지·원자재·금 같은 실물자산만이 인플레를 방어했다.' },
+  { label:'1980년대 초 볼커의 디스인플레', fp:{cycle:[30,55], infl:[3,6], rate:[4,6], fg:[25,55], tags:['rate','inflation']},
+    desc:'폴 볼커 연준 의장이 금리를 20% 가까이 올려 인플레를 꺾었다. 단기 침체의 고통 뒤 물가가 잡히자 1982년부터 역사적인 장기 강세장이 시작됐다.' },
+  { label:'1990년대 말 골디락스·닷컴 버블', fp:{cycle:[70,100], infl:[1,3], rate:[2,4.5], fg:[70,100], tags:['ai','liquidity','bubble']},
+    desc:'물가는 낮고 성장은 강한 "골디락스"에 인터넷 혁명 기대가 겹쳐 기술주가 폭등했다. 1999년 나스닥은 광기에 가까웠고, 2000년 거품 붕괴로 이어졌다.' },
+  { label:'2000 닷컴 버블 붕괴', fp:{cycle:[15,45], infl:[1,3.5], rate:[2,5], fg:[10,40], tags:['recession']},
+    desc:'실적 없이 기대만으로 오르던 닷컴 기업들이 무너졌다. 나스닥은 고점 대비 -78% 폭락 — "이익 없는 성장"의 위험을 각인시켰고, 이 시기엔 가치주가 성장주보다 강했다.' },
+  { label:'2013 테이퍼 탠트럼', fp:{cycle:[55,80], infl:[1,3], rate:[1.5,3.5], fg:[40,70], tags:['rate','policy']},
+    desc:'연준이 양적완화 축소(테이퍼링)를 시사하자 금리가 급등하며 채권·신흥국이 흔들렸다. 경기는 멀쩡했지만 "돈줄 회수" 신호만으로 시장이 발작한 사례.' },
+  { label:'2018 긴축+무역전쟁 조정', fp:{cycle:[45,70], infl:[2,3.5], rate:[2,4], fg:[25,55], tags:['rate','geo']},
+    desc:'연준의 금리 인상과 미·중 무역전쟁이 겹치며 4분기에 증시가 -20% 급락했다. 이듬해 연준이 다시 비둘기로 돌아서자 시장은 빠르게 회복했다.' },
+  { label:'2009 위기 직후 리플레이션 랠리', fp:{cycle:[30,60], infl:[1,3], rate:[0,1.5], fg:[40,72], tags:['recovery','liquidity','policy']},
+    desc:'금융위기 바닥 이후 연준의 제로금리와 부양책으로 경기가 회복됐다. 경기민감주와 원자재가 반등하는 "리플레이션 랠리" — 위기 직후가 가장 큰 기회였음을 보여준다.' },
+];
+function _within(v, lo, hi){
+  if(v>=lo && v<=hi) return 1;
+  const d = v<lo ? lo-v : v-hi;
+  return Math.max(0, 1 - d/Math.max(1, hi-lo));
+}
+function matchHistory(st){
+  if(!st) return null;
+  const mtags = (st.currentMacro && st.currentMacro.tags) || [];
+  let best=null, bestScore=-Infinity;
+  for(const h of HISTORY){
+    const f=h.fp; let s=0;
+    if(f.cycle) s += _within(st.cycle,      f.cycle[0], f.cycle[1]) * 2.0;
+    if(f.infl)  s += _within(st.inflation,  f.infl[0],  f.infl[1])  * 1.6;
+    if(f.rate)  s += _within(st.rate,       f.rate[0],  f.rate[1])  * 1.4;
+    if(f.fg)    s += _within(st.fearGreed,  f.fg[0],    f.fg[1])    * 1.4;
+    if(f.tags)  s += f.tags.filter(t=>mtags.includes(t)).length     * 1.5;
+    s += Math.random()*0.4;            // 동점 시 다양성
+    if(s>bestScore){ bestScore=s; best=h; }
+  }
+  return best;
+}
+
 function buildTurnReview(p, pl, sectorDelta, dampingMul){
   const b = p.lastBreakdown || {macro:0,event:0,slot:0,bondInt:0,persona:0,strategy:0,tx:0};
   const goods = [], bads = [];
@@ -3461,7 +3512,10 @@ function buildTurnReview(p, pl, sectorDelta, dampingMul){
       lines.push(`🌍 <b>현재 국면: ${cyclePhase.label}</b> — ${cyclePhase.desc}`);
     }
 
-    return lines.slice(0, 2); // 최대 2개 표시
+    const out = lines.slice(0, 2); // 교육 해설 최대 2개
+    const h = matchHistory(state);  // 📜 이번 턴 환경과 닮은 역사적 시기 (매 턴 표시)
+    if(h) out.push(`📜 <b>역사 속 비슷한 시기 — ${h.label}</b>: ${h.desc}`);
+    return out;
   })();
 
   p.lastReview = {
