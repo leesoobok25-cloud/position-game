@@ -1944,9 +1944,11 @@ function drawMacro(){
   }
   // Sentiment-pool draw: 2 cycle decks merged based on dice
   const decks = SENTIMENT_DECKS[state.currentSentiment] || ['recovery','downturn'];
-  // F&G extreme: pick 2 from the pool — human chooses
+  // (v5.9e) F&G 극단 → 평균회귀 매크로 1장 자동 발동 (선택 없음)
   if(state.fgExtremeDraws){
-    return {fgPick:state.fgExtremeDraws};
+    const c = state.fgExtremeDraws;
+    state.fgExtremeDraws = null;
+    return {card:c, shock: !!c.shock, fgExtreme:true};
   }
   // Pool = normal cards in those decks + the shock cards assigned to those decks.
   const pool = MACRO_CARDS.filter(c => decks.includes(c.deck));
@@ -3600,17 +3602,18 @@ function phase6_fg(){
   state.fearGreed = clamp(state.fearGreed + move, 0, 100);
   state.fgDelta = state.fearGreed - prevFG;
 
-  // 다음 턴 극단 선택권
+  // (v5.9e) F&G 극단 → 평균회귀 매크로 1장 자동 발동. 이전엔 "2장 중 1장 직접 선택"이었으나,
+  //         플레이어가 매크로 충격을 자기 유리하게 고르는 위화감이 있어 제거했다.
+  //         방향만 평균회귀로 고정(탐욕→하방 / 공포→상방)하고, 카드는 가중 랜덤으로 자동 선택된다.
+  state.fgExtremeDraws = null;
   if(state.fearGreed >= 80){
     const downs = MACRO_CARDS.filter(c => c.cycleMove < 0);
-    state.fgExtremeDraws = weightedPickN(downs, 2, c => 1 + Math.abs(c.cycleMove)/10);
-    logRow(`F&G 극탐욕 ${state.fearGreed} → 다음 턴 하방 매크로 후보 2장`, 'ev');
+    state.fgExtremeDraws = weightedPickN(downs, 1, c => 1 + Math.abs(c.cycleMove)/10)[0];
+    logRow(`F&G 극탐욕 ${state.fearGreed} → 다음 턴 하방 매크로 자동 발동 (평균회귀)`, 'ev');
   } else if(state.fearGreed <= 20){
     const ups = MACRO_CARDS.filter(c => c.cycleMove > 0);
-    state.fgExtremeDraws = weightedPickN(ups, 2, c => 1 + Math.abs(c.cycleMove)/10);
-    logRow(`F&G 극공포 ${state.fearGreed} → 다음 턴 상방 매크로 후보 2장`, 'ev');
-  } else {
-    state.fgExtremeDraws = null;
+    state.fgExtremeDraws = weightedPickN(ups, 1, c => 1 + Math.abs(c.cycleMove)/10)[0];
+    logRow(`F&G 극공포 ${state.fearGreed} → 다음 턴 상방 매크로 자동 발동 (평균회귀)`, 'ev');
   }
 
   logRow(`F&G ${move>=0?'+':''}${move} → ${state.fearGreed} (평균 손익 ${avgPL.toFixed(1)})`, move>=0?'pos':'neg');
@@ -4855,7 +4858,7 @@ const TUT_STEPS = [
     text:'사이클(0~100)은 계절로 표현됩니다: ❄️겨울(불황) → 🍂가을(둔화) → 🌱봄(회복) → 🔥여름(호황). 매크로 카드가 이 값을 움직이고, 사이클에서 인플레이션·금리가 파생됩니다. 지금은 <b>50(봄)</b>에서 시작해요.',
     next:true },
   { sel:'#panelFG', title:'😨 Fear & Greed (시장 심리)',
-    text:'플레이어들이 돈을 벌면 탐욕으로, 잃으면 공포로 움직입니다. <b>80 이상(극탐욕)</b>이면 다음 턴 하방 매크로 후보 2장 중 1장을 직접 선택하게 되고, <b>20 이하(극공포)</b>면 상방 후보가 나옵니다 — 극단은 평균회귀의 신호입니다!',
+    text:'플레이어들이 돈을 벌면 탐욕으로, 잃으면 공포로 움직입니다. <b>80 이상(극탐욕)</b>이면 다음 턴 <b>하방 매크로</b>가, <b>20 이하(극공포)</b>면 <b>상방 매크로</b>가 <b>자동 발동</b>됩니다 (1장 랜덤) — 극단은 평균회귀의 신호입니다!',
     next:true },
   { sel:'#panelInflRate', title:'🔥 인플레이션 / 기준금리',
     text:'두 지표는 사이클을 따라가되 매크로 카드의 충격이 더해집니다. <b>정상 범위는 1~3%</b> — 인플레·금리가 이 구간을 벗어나면 정산 때 섹터별 추가 효과가 붙습니다 (예: 긴축 → 성장주 부담, 고인플레 → 에너지·소재 유리).',
