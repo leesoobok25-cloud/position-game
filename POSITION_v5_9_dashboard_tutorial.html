@@ -2196,7 +2196,7 @@ function evaluatePrinciple(p, ctx){
         if((p.bets[sid]||0) <= 0) continue;
         const streak = p.betStreak[sid];
         const d = ctx.sectorDelta[sid] || 0;
-        if(streak >= (L===2 ? 14 : 6)) tenbagger += 10; // (v5.8) '텐배거 후보' 상시 가산 — 장기는 14턴+ (12턴 기준도 우승률 47%로 과함)
+        if(streak >= (L===2 ? 14 : 6)) tenbagger += (L===2 ? 8 : 10); // (v5.9e) 16턴 텐배거 +10→+8 (ORACLE 16턴 상단 ~29% 완화); 8턴은 +10 유지
         if(streak >= 3*L && (p.bets[sid]||0) >= 20 && d > 0) longGood += 5;  // 3턴+ 보유 섹터에 호재
         if(streak >= 5*L && (p.bets[sid]||0) >= 20 && d < 0) longAbsorb += 5; // 5턴+ 보유 손실 흡수
       }
