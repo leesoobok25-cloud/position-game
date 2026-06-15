@@ -1628,7 +1628,7 @@ function addOrExtendSlot(slotId, allowExtend=true){
 /* PERSONAS with ban/boon/quest */
 const PERSONAS = {
   ORACLE: {
-    id:'ORACLE', name:'ORACLE', sub:'현인 · 장기 성장 논리', color:'p0',
+    id:'ORACLE', name:'ORACLE', motif:'워런 버핏', sub:'현인 · 장기 성장 논리', color:'p0',
     always:'한 섹터를 오래 들고 있을수록 매 턴 보너스가 쌓인다 (3턴+ 보유 시 베팅 20점당 +1/턴, 호재 발현 시 최대 +12). 6턴 이상 보유하면 텐배거 후보로 +10/턴. 오래 보유한 섹터에 악재가 와도 손실을 일부 흡수해준다',
     ban:'한 턴에 같은 섹터를 20점 초과로 급격히 늘리거나 줄이면 -10점. 급격한 포트폴리오 변경은 패널티다',
     boon:'같은 섹터를 4턴 연속 유지하면 (게임당 1회) +15점 보너스',
@@ -1636,7 +1636,7 @@ const PERSONAS = {
     bot:{strategy:'patient'},
   },
   MACRO_KING: {
-    id:'MACRO_KING', name:'MACRO KING', sub:'거시·사이클', color:'p1',
+    id:'MACRO_KING', name:'MACRO KING', motif:'스탠리 드러켄밀러', sub:'거시·사이클', color:'p1',
     always:'매크로 카드가 뽑힌 직후 사이클 게이지를 ±5 직접 조정할 수 있다 (턴당 1회). 카드 방향에 맞게 베팅하면 +7점, 인플레 상승 국면에 에너지·소재 비중을 늘리면 +8점, 금리가 오를 때 채권·성장주 노출을 줄이면 +8점. 첫 번째 리스크 토큰은 면제된다',
     ban:'사이클이 회복·호황 구간(50~74)인데 방어주·가치주에 40% 이상 몰아넣거나, 침체 구간(25~49)인데 성장주·경기주에 50% 이상 넣으면 -7점. 시장 흐름을 역행하는 포지션이다',
     boon:'사이클이 극단(과열 ≥75 또는 침체 ≤25)에 도달했을 때 반대 방향으로 베팅하면 +6점. 그 턴에 실제로 수익까지 내면 +9점. 과열에서 방어주로, 침체에서 성장주로 역발상 포지션을 취하는 전략이다',
@@ -1644,7 +1644,7 @@ const PERSONAS = {
     bot:{strategy:'macro'},
   },
   HUNTER: {
-    id:'HUNTER', name:'HUNTER', sub:'집중', color:'p2',
+    id:'HUNTER', name:'HUNTER', motif:'제시 리버모어', sub:'집중', color:'p2',
     always:'30점 이상 집중한 섹터에 호재가 터지면 매번 +5점 (악재면 -5점). 많이 집중할수록 수익도 크고 손실도 커진다',
     ban:'동시에 4개 이상 섹터에 베팅하면 -10점. 집중 투자가 핵심 — 최대 3개 섹터에만 베팅하라',
     boon:'단일 섹터에 40점 이상 집중 베팅하고 호재가 터지면 추가로 +2점',
@@ -1652,7 +1652,7 @@ const PERSONAS = {
     bot:{strategy:'concentrate'},
   },
   QUANT: {
-    id:'QUANT', name:'QUANT', sub:'분산 · 안정형', color:'p3',
+    id:'QUANT', name:'QUANT', motif:'짐 시몬스', sub:'분산 · 안정형', color:'p3',
     always:'10점 이상 베팅한 섹터가 많을수록 매 턴 보너스가 쌓인다 (4섹터 +1, 5섹터 +2, 6섹터 +3/턴). 매크로·이벤트로 손실이 날 때 20%를 흡수해준다. 단, 7섹터 이상 너무 넓게 퍼뜨리거나 탐욕 지수가 극에 달했을 때, 또는 강한 이벤트 섹터를 보유하지 않으면 페널티가 있다',
     ban:'단일 섹터에 30점 이상 몰아넣으면 -10점. 분산이 이 페르소나의 핵심이다',
     boon:'5개 이상 섹터에 베팅하고 그 턴 평균 손익이 플러스면 +9점 추가 보상',
@@ -2232,7 +2232,7 @@ function evaluatePrinciple(p, ctx){
     }
     // (v5.6) ① 매크로 방향 정렬 — 확장 카드(+)에 위험선호, 수축 카드(-)에 방어 정렬
     // (v5.9) 장기(16턴)는 +10 → +6: 매 턴 발동 가능한 보너스라 16턴 누적 시 우승률 44%까지 상승
-    const mkAlign = state.maxTurn >= 16 ? 6 : 6; // (v5.9d) 임계점 효과 크기 축소로 시너지 감소 → 8턴 원복
+    const mkAlign = state.maxTurn >= 16 ? 7 : 6; // (v5.9d) 임계점 효과 크기 축소로 시너지 감소 → 8턴 원복
     if(macroMove > 0 && riskOn/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 확장 맞춤(성장·경기 비중확대) +${mkAlign}`); }
     else if(macroMove < 0 && riskOff/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 수축 맞춤(방어·안전자산 비중확대) +${mkAlign}`); }
     // (v5.7) 인플레 맞춤 — 인플레 상승 카드에 가치/에너지/소재 비중
@@ -5094,7 +5094,7 @@ function bootstrap(){
   const pick = document.getElementById('personaPick');
   pick.innerHTML = Object.values(PERSONAS).map(p => `
     <div class="pcard ${p.color}" onclick="startGame('${p.id}')">
-      <h4>${p.name}</h4>
+      <h4>${p.name} <span style="font-size:12px;color:var(--mut);font-weight:400">(${p.motif||''})</span></h4>
       <div class="sub">${p.sub}</div>
       <div class="pp always">🔷 ${alwaysText(p)}</div>
       <div class="pp ban">🚫 ${p.ban}</div>
