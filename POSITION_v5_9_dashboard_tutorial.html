@@ -2232,7 +2232,7 @@ function evaluatePrinciple(p, ctx){
     }
     // (v5.6) ① 매크로 방향 정렬 — 확장 카드(+)에 위험선호, 수축 카드(-)에 방어 정렬
     // (v5.9) 장기(16턴)는 +10 → +6: 매 턴 발동 가능한 보너스라 16턴 누적 시 우승률 44%까지 상승
-    const mkAlign = state.maxTurn >= 16 ? 7 : 7; // (v5.9d) 임계점 효과 크기 축소로 시너지 감소 → 8턴 원복
+    const mkAlign = state.maxTurn >= 16 ? 6 : 6; // (v5.9d) 임계점 효과 크기 축소로 시너지 감소 → 8턴 원복
     if(macroMove > 0 && riskOn/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 확장 맞춤(성장·경기 비중확대) +${mkAlign}`); }
     else if(macroMove < 0 && riskOff/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 수축 맞춤(방어·안전자산 비중확대) +${mkAlign}`); }
     // (v5.7) 인플레 맞춤 — 인플레 상승 카드에 가치/에너지/소재 비중
@@ -2276,7 +2276,7 @@ function evaluatePrinciple(p, ctx){
     }
     // (v5.9) 장기(16턴)에선 상방 한도 +6 → +9 — 이벤트 적중이 늘어나는 만큼
     //        집중형의 보상 천장도 함께 올려 우승률 15% → 25%선 회복
-    hunterDelta = clamp(hunterDelta, -9, state.maxTurn >= 16 ? 11 : 8); // (v5.9d) fearGreed 비대칭 보정
+    hunterDelta = clamp(hunterDelta, -9, state.maxTurn >= 16 ? 8 : 8); // (v5.9f) 16턴 상한 11→8: 리버모어는 장기로 갈수록 부침↑ → 8턴≥16턴 패턴
     if(hunterDelta){ total += hunterDelta; msgs.push(`헌터 상시 ${hunterDelta>=0?'+':''}${hunterDelta}`); }
     // ban: 4+ sectors
     const active = SECTORS.filter(s => (p.bets[s.id]||0) > 0).length;
@@ -2309,7 +2309,7 @@ function evaluatePrinciple(p, ctx){
       p.quintBetTurns = (p.quintBetTurns||0) + 1;
       if(ctx && ctx.turnPL >= 0){
         // (v5.9) 장기(16턴)는 +7 → +12 — 분산형의 낮은 천장을 긴 게임에서 보전 (우승률 7.8% 보정)
-        const qb = state.maxTurn >= 16 ? 6 : 6; // (v5.9f) QUANT 분산이익 보상 추가 하향(꾸준함 유지)
+        const qb = state.maxTurn >= 16 ? 7 : 7; // (v5.9f) QUANT 분산이익 — 과한 약화(20%) 복구해 ~24% 꾸준함
         total += qb; msgs.push(`퀀트분산이익 +${qb}`);
       }
     }
