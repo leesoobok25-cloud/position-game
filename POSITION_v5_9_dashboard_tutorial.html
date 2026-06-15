@@ -315,6 +315,8 @@
   .delta-zero{color:var(--mut);font-size:11px;margin-left:3px}
   @keyframes deltaFlash{0%{opacity:0;transform:translateY(-4px)}30%{opacity:1}80%{opacity:1}100%{opacity:0.5;transform:translateY(0)}}
   .delta-flash{animation:deltaFlash 1.8s ease-out forwards}
+  @keyframes liqFlash{0%{background:#5a0f14;transform:translateX(0)}12%{transform:translateX(-5px)}24%{transform:translateX(5px)}36%{transform:translateX(-3px)}48%{transform:translateX(2px)}60%{transform:translateX(0)}100%{background:var(--panel)}}
+  .liq-alert{animation:liqFlash 1.6s ease-out}
   @keyframes crowdPulse{
     0%,100%{box-shadow:0 0 0 0 #d2992200}
     50%{box-shadow:0 0 11px 1px #d2992277}
@@ -3272,6 +3274,22 @@ function phase5_settle(){
     logRow(`${p.name} 턴손익 <b>${turnPL[p.id]>=0?'+':''}${turnPL[p.id]}</b>`, turnPL[p.id]>=0?'pos':'neg');
   }
 
+  // 9-β) (v5.9e) 강제 청산(마진콜) — 손실로 자본이 줄어 단일 섹터 한도(자본 50%, 최소 50)를
+  //      초과한 베팅을 강제 청산하고 초과분을 투자가능자산(현금)으로 회수한다.
+  for(const p of state.players){
+    const bud = p.cash + Object.values(p.bets).reduce((a,b)=>a+b,0);
+    const cap = Math.max(50, Math.floor(bud * 0.5));
+    let liq = 0; const liqSec = [];
+    for(const sid of SECTORS.map(s=>s.id)){
+      if((p.bets[sid]||0) > cap){ liq += p.bets[sid]-cap; liqSec.push(sid); p.bets[sid] = cap; }
+    }
+    if(liq > 0){
+      p.cash += liq;
+      p.lastLiquidation = {amount: liq, sectors: liqSec};
+      logRow(`⚠️ <b>강제 청산</b> — ${liqSec.join('·')} 한도 초과분 <b>${liq}점</b>을 현금으로 회수 (자본 축소로 비중 50% 초과)`, 'neg');
+    } else { p.lastLiquidation = null; }
+  }
+
   // 10) Risk tokens
   for(const p of state.players){
     checkRiskTokens(p, {turnPL: turnPL[p.id]});
@@ -4697,7 +4715,16 @@ function renderAction(){
         <div style="font-size:14px;line-height:1.5">${line}</div>${secHitHtml}${trapBadge}
       </div>`;
     }
-    a.innerHTML = `${recapHtml}${rvHtml}<div class="card" style="margin-top:8px"><div class="ttl">🧮 정산 명세 (이번 턴)</div>
+    // (v5.9e) 강제 청산 배너 — 자본 축소로 한도 초과분이 청산된 경우
+    let liqHtml = '';
+    if(me.lastLiquidation){
+      const L = me.lastLiquidation;
+      liqHtml = `<div class="card liq-alert" style="margin-bottom:8px;border:1px solid var(--red)">
+        <div style="font-weight:800;color:var(--red)">⚠️ 강제 청산 (마진콜)</div>
+        <div style="font-size:14px;line-height:1.5;margin-top:3px">자본이 줄어 <b>${L.sectors.join('·')}</b> 베팅이 단일 섹터 한도(자본의 50%)를 초과했습니다. 초과분 <b style="color:var(--red)">${L.amount}점</b>을 강제 청산해 투자가능 현금으로 회수했습니다 — 손실이 쏠린 포지션을 정리하는 '디레버리징'입니다.</div>
+      </div>`;
+    }
+    a.innerHTML = `${liqHtml}${recapHtml}${rvHtml}<div class="card" style="margin-top:8px"><div class="ttl">🧮 정산 명세 (이번 턴)</div>
       <table style="width:100%;font-size:14px;border-collapse:collapse;margin-top:6px;text-align:center">
         <thead><tr style="color:var(--mut);border-bottom:1px solid var(--line)">
           <th style="text-align:left">플레이어</th>
