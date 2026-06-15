@@ -598,7 +598,7 @@
     <!-- MID-LEFT: 지표 + 플레이어 -->
     <div class="mob-active">
       <div class="panel" id="panelCycle">
-        <h3>사이클 (계절) <span id="cyclePanelDelta"></span></h3>
+        <h3>사이클 (<b id="cyclePanelN" style="color:var(--acc)">50</b>) <span id="cyclePanelDelta"></span></h3>
         <div class="track"><div id="cycleMk" class="mk"></div></div>
         <div class="seasons">
           <span>❄️ 겨울 0</span><span>🍂 가을 25</span><span>🌱 봄 50</span><span>🔥 여름 75</span><span>100</span>
@@ -1701,7 +1701,7 @@ const STRATEGIES = {
      desc:'이번 턴 5개 섹터 이상에 골고루 베팅한 상태로 정산에 진입하면 +8점을 즉시 추가 지급한다. QUANT의 분산 원칙과 맞닿아 있으며, 분산 보너스와 함께 이중으로 발동된다. 시장 방향이 불확실하고 리포트 신호가 약할 때 특히 유효하다.',
      phase:'phase2_locked'},
     {id:'REBAL',    name:'리밸런싱',
-     desc:'이번 턴 모든 섹터에 /10당 +1점을 추가로 부여한다. 베팅이 넓게 분산되어 있을수록 누적 효과가 커진다. 11개 섹터 전체에 10점씩 베팅했다면 최대 +11점의 추가 보너스를 얻는 셈이다. 분산 포트폴리오를 완전히 구성한 턴에 쓰는 것이 정석이다.',
+     desc:'이번 턴 총 베팅액의 10%를 보너스 점수로 추가한다(베팅 10점당 +1점). 자본이 커지면 베팅액도 커지므로 보너스도 비례해 증가한다. 베팅을 넓게 채운 분산 포트폴리오 턴에 쓰는 것이 정석이다.',
      phase:'phase2_locked'},
   ],
 };
@@ -2699,7 +2699,7 @@ function questReq(){
 function questText(persona){
   // 게임 중에는 실제 모드, 시작 전 모달에서는 선택 중인 모드 기준으로 표시
   const long = state.players.length ? state.maxTurn >= 16 : PENDING_MODE === 'long';
-  const r = long ? {hunter:5, quant:10, oracle:8, mk:3} : {hunter:3, quant:6, oracle:6, mk:2};
+  const r = long ? {hunter:5, quant:10, oracle:10, mk:3} : {hunter:3, quant:6, oracle:6, mk:2};
   if(persona.id === 'MACRO_KING') return `사이클 극단(과열≥75 / 침체≤25)에서 반대 방향 베팅 성공 ${r.mk}회 이상 → 종료 시 +20점`;
   if(persona.id === 'ORACLE') return `한 섹터를 ${r.oracle}턴 이상 연속 보유 + 그 섹터 누적 손익 양수 → 종료 시 +20점`;
   if(persona.id === 'HUNTER') return `40점+ 베팅 섹터에서 호재 ${r.hunter}턴 이상 적중 → 종료 시 +20점`;
@@ -3893,9 +3893,9 @@ function endGame(){
     }
     p.questBonus = questOK ? (persona.id === 'MACRO_KING' && state.maxTurn < 16 ? 17 : 20) : 0;
     // (v5.9c) QUANT 리스크 0개 종료 보너스 — '덜 잃는 운용'을 우승력으로 환산
-    p.zeroRiskBonus = (persona.id === 'QUANT' && p.risk === 0) ? (state.maxTurn >= 16 ? 5 : 3) : 0;
+    p.zeroRiskBonus = (persona.id === 'QUANT' && p.risk === 0) ? (state.maxTurn >= 16 ? 4 : 3) : 0;
     // (v5.10) HUNTER 16턴 한정 '테마 완주 보너스'
-    p.finishBonus = (persona.id === 'HUNTER' && state.maxTurn >= 16 && (p.lateCatalystHits||0) >= 2) ? 8 : 0;
+    p.finishBonus = (persona.id === 'HUNTER' && state.maxTurn >= 16 && (p.lateCatalystHits||0) >= 2) ? 10 : 0;
     // (v5.7) MACRO_KING은 국면을 적극 읽다가 리스크를 쉽게 얻으므로 첫 리스크 토큰 1개 면제
     // (v5.9) 16턴 장기전에서는 리스크 누적이 2.5개+ 까지 커져 면제가 과도한 우위가 됨 → 8턴 한정
     const effRisk = (persona.id === 'MACRO_KING' && state.maxTurn < 16) ? Math.max(0, p.risk - 1) : p.risk;
@@ -4095,6 +4095,7 @@ function render(){
   document.getElementById('maxTurnNo').textContent = state.maxTurn;
   document.getElementById('phaseName').textContent = PHASES[state.phase]?.name || '-';
   document.getElementById('cycleN').textContent = state.cycle;
+  document.getElementById('cyclePanelN').textContent = state.cycle;
   document.getElementById('seasonN').textContent = season(state.cycle);
   document.getElementById('cycleMk').style.left = state.cycle + '%';
   document.getElementById('fgN').textContent = state.fearGreed;
