@@ -2161,6 +2161,8 @@ function evaluatePrinciple(p, ctx){
   const persona = PERSONAS[p.personaId];
   let total = 0;
   const msgs = [];
+  // (v5.9f) 페르소나 임계값 = 자산 % 비례 (자본 100 기준 보정: 30점=30%)
+  const bud = Math.max(1, p.cash + Object.values(p.bets).reduce((a,b)=>a+b,0));
 
   if(persona.id === 'ORACLE'){
     // (v5.9) 장기(16턴) 모드에선 연속보유 기준 2배 — 그대로면 텐배거 +10/턴이
@@ -2184,7 +2186,7 @@ function evaluatePrinciple(p, ctx){
     if(!p.sameSectorBoonUsed){
       for(const sid of Object.keys(p.betStreak)){
         if(p.betStreak[sid] >= 4){
-          total += 15; msgs.push('4턴연속이익 +15');
+          total += 12; msgs.push('4턴연속이익 +12');
           p.sameSectorBoonUsed = true;
           break;
         }
@@ -2230,13 +2232,13 @@ function evaluatePrinciple(p, ctx){
     }
     // (v5.6) ① 매크로 방향 정렬 — 확장 카드(+)에 위험선호, 수축 카드(-)에 방어 정렬
     // (v5.9) 장기(16턴)는 +10 → +6: 매 턴 발동 가능한 보너스라 16턴 누적 시 우승률 44%까지 상승
-    const mkAlign = state.maxTurn >= 16 ? 5 : 7; // (v5.9d) 임계점 효과 크기 축소로 시너지 감소 → 8턴 원복
+    const mkAlign = state.maxTurn >= 16 ? 7 : 7; // (v5.9d) 임계점 효과 크기 축소로 시너지 감소 → 8턴 원복
     if(macroMove > 0 && riskOn/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 확장 맞춤(성장·경기 비중확대) +${mkAlign}`); }
     else if(macroMove < 0 && riskOff/allB >= 0.5){ total += mkAlign; msgs.push(`매크로 수축 맞춤(방어·안전자산 비중확대) +${mkAlign}`); }
     // (v5.7) 인플레 맞춤 — 인플레 상승 카드에 가치/에너지/소재 비중
     const macroInflMove = state.currentMacro?.inflMove || 0;
     if(macroInflMove >= 0.4 && (valBet + (p.bets.ENG||0) + (p.bets.MATE||0))/totalB >= 0.35){
-      const inflBonus = state.maxTurn >= 16 ? 5 : 6;
+      const inflBonus = state.maxTurn >= 16 ? 6 : 6;
       total += inflBonus; msgs.push(`인플레 상승 맞춤(ENG·MATE·가치군 비중확대) +${inflBonus}`);
     }
     // (v5.7) 금리 급등 회피 — 금리 오를 때 BOND/TECH/BIO 노출을 줄였으면 보상
@@ -2266,7 +2268,7 @@ function evaluatePrinciple(p, ctx){
     // always: 30+ sector, this-turn delta for that sector
     let hunterDelta = 0;
     for(const sid of SECTORS.map(s=>s.id)){
-      if((p.bets[sid]||0) >= 30 && ctx && ctx.sectorDelta){
+      if((p.bets[sid]||0) >= bud*0.30 && ctx && ctx.sectorDelta){
         const d = ctx.sectorDelta[sid] || 0;
         if(d>0) hunterDelta += 5;
         else if(d<0) hunterDelta -= 5;
@@ -2282,13 +2284,13 @@ function evaluatePrinciple(p, ctx){
     // boon: 40+ single sector + positive delta on it
     // (v5.8) 도전(catalyst)이 사실상 같은 조건을 누적 보상하므로 상시 보너스는 +10→+5 하향
     for(const sid of SECTORS.map(s=>s.id)){
-      if((p.bets[sid]||0) >= 40 && ctx && ctx.sectorDelta && (ctx.sectorDelta[sid]||0) > 0){
+      if((p.bets[sid]||0) >= bud*0.40 && ctx && ctx.sectorDelta && (ctx.sectorDelta[sid]||0) > 0){
         total += 2; msgs.push('집중호재 +2'); break;
       }
     }
   }
   else if(persona.id === 'QUANT'){
-    const active = SECTORS.filter(s => (p.bets[s.id]||0) >= 10).length;
+    const active = SECTORS.filter(s => (p.bets[s.id]||0) >= bud*0.10).length;
     if(active >= 4){
       // (v5.9) 장기(16턴)에선 누적형 페르소나(ORACLE 텐배거 등)에 밀려 우승률 4%까지
       //        떨어짐 — 분산 보너스 상한을 +3 → +5로 상향해 긴 게임의 복리를 보전
@@ -2299,7 +2301,7 @@ function evaluatePrinciple(p, ctx){
     // ban: single sector 30+
     let bad = false;
     for(const sid of SECTORS.map(s=>s.id)){
-      if((p.bets[sid]||0) >= 30){ bad = true; break; }
+      if((p.bets[sid]||0) >= bud*0.30){ bad = true; break; }
     }
     if(bad){ total -= 10; msgs.push('금지위반(집중) -10'); }
     // boon: 5+ sectors + turn average PL positive
@@ -2307,7 +2309,7 @@ function evaluatePrinciple(p, ctx){
       p.quintBetTurns = (p.quintBetTurns||0) + 1;
       if(ctx && ctx.turnPL >= 0){
         // (v5.9) 장기(16턴)는 +7 → +12 — 분산형의 낮은 천장을 긴 게임에서 보전 (우승률 7.8% 보정)
-        const qb = state.maxTurn >= 16 ? 14 : 9; // (v5.9d) 16턴 인플레/금리 임계효과 드래그 보정
+        const qb = state.maxTurn >= 16 ? 6 : 6; // (v5.9f) QUANT 분산이익 보상 추가 하향(꾸준함 유지)
         total += qb; msgs.push(`퀀트분산이익 +${qb}`);
       }
     }
@@ -2366,8 +2368,8 @@ function botPlanBets(p){
     // concentrate into top 1-2 favored; caps scale with total budget (%)
     const pick = favored.slice(0,2);
     if(pick.length===0) pick.push('TECH');
-    target[pick[0]] = Math.min(45, Math.floor(totalBudget*0.55));
-    if(pick[1]) target[pick[1]] = Math.min(35, Math.floor(totalBudget*0.25));
+    target[pick[0]] = Math.floor(totalBudget*0.45);
+    if(pick[1]) target[pick[1]] = Math.floor(totalBudget*0.25);
   } else if(persona.id === 'QUANT'){
     // spread to 5+ sectors
     const pick = favored.slice(0,5);
@@ -3142,8 +3144,9 @@ function phase5_settle(){
     for(const sid in sectorPL){
       p.cumSectorPL[sid] = (p.cumSectorPL[sid]||0) + sectorPL[sid].total;
     }
-    // (v5.8) HUNTER quest: 총자산의 40%+ 베팅 섹터에서 호재(sectorDelta>0) 적중 시 이번 턴 1회 적립
-    if(SECTORS.some(s => (sectorPL[s.id]?.bet||0) >= 40 && (sectorDelta[s.id]||0) > 0)){
+    // (v5.9f) HUNTER quest: 자산의 40%+ 베팅 섹터에서 호재 적중 시 이번 턴 1회 적립
+    const bud = Math.max(1, p.cash + Object.values(p.bets).reduce((a,b)=>a+b,0));
+    if(SECTORS.some(s => (sectorPL[s.id]?.bet||0) >= bud*0.40 && (sectorDelta[s.id]||0) > 0)){
       p.catalystHits = (p.catalystHits||0) + 1;
       // (v5.10) HUNTER 16턴 '테마 완주' — 마지막 4턴 구간의 호재 적중을 따로 적립
       if(state.maxTurn >= 16 && state.turn > state.maxTurn - 4){
@@ -3152,12 +3155,18 @@ function phase5_settle(){
     }
     // QUANT loss absorption — reduce magnitude of negative source contributions
     if(p.personaId==='QUANT'){
-      const active = SECTORS.filter(s => (p.bets[s.id]||0) >= 10).length;
+      const active = SECTORS.filter(s => (p.bets[s.id]||0) >= bud*0.10).length;
       if(active >= 4){
         for(const k of ['macro','event','slot']){
           if(b[k] < 0) b[k] *= 0.8;
         }
       }
+    }
+    // (v5.9f) HUNTER 강점 = 확신·리서치 → 적중력. 집중 포지션(자산 30%+)이 맞으면
+    //         매크로·이벤트 수익을 +40% 증폭(손실은 그대로 — 변동성 유지). 적중이 곧 1등으로.
+    if(p.personaId==='HUNTER'){
+      const conc = SECTORS.some(s => (p.bets[s.id]||0) >= bud*0.30);
+      if(conc){ for(const k of ['macro','event']){ if(b[k] > 0) b[k] *= 1.4; } }
     }
     // Strategy effects
     if(p.activeStrategy === 'PATIENCE'){
@@ -3186,7 +3195,7 @@ function phase5_settle(){
     }
     if(p.activeStrategy === 'BARRAGE'){
       for(const sid of SECTORS.map(s=>s.id)){
-        if((p.bets[sid]||0) >= 30 && (sectorDelta[sid]||0) > 0) b.strategy += 4;
+        if((p.bets[sid]||0) >= bud*0.30 && (sectorDelta[sid]||0) > 0) b.strategy += 4;
       }
     }
     // Persona principle (ban/boon)
@@ -3928,7 +3937,7 @@ function endGame(){
     }
     p.questBonus = questOK ? (persona.id === 'MACRO_KING' && state.maxTurn < 16 ? 17 : 20) : 0;
     // (v5.9c) QUANT 리스크 0개 종료 보너스 — '덜 잃는 운용'을 우승력으로 환산
-    p.zeroRiskBonus = (persona.id === 'QUANT' && p.risk === 0) ? (state.maxTurn >= 16 ? 4 : 3) : 0;
+    p.zeroRiskBonus = (persona.id === 'QUANT' && p.risk === 0) ? 3 : 0;
     // (v5.10) HUNTER 16턴 한정 '테마 완주 보너스'
     p.finishBonus = (persona.id === 'HUNTER' && state.maxTurn >= 16 && (p.lateCatalystHits||0) >= 2) ? 10 : 0;
     // (v5.7) MACRO_KING은 국면을 적극 읽다가 리스크를 쉽게 얻으므로 첫 리스크 토큰 1개 면제
