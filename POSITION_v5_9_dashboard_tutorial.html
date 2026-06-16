@@ -1383,47 +1383,75 @@ const SECTOR_EVENTS = [
   {id:'E_AUTO_RESHORING', name:'보호무역 속 현지생산 수혜', main:'AUTO', mainEff:+4, related:{INDU:+1, SEMI:+1}, omen:{}, phase:'overheat', tags:['auto','protectionism','reshoring'], narrative:'주요 경제권의 보호무역 강화가 현지생산 기업에 반사이익을 준다.'},
   {id:'E_AUTO_TRADE_WAR', name:'관세 전쟁 격화', main:'AUTO', mainEff:-5, related:{SEMI:-2, MATE:-2, CONS:-1}, omen:{geo:1}, phase:'overheat', tags:['auto','tariff','geo'], narrative:'주요국 극우·보호무역 노선 강화로 관세 전쟁이 격화된다.'},
 
-  // INDU
-  {id:'E_INDU_RESHORING', name:'리쇼어링 발주 증가', main:'INDU', mainEff:+5, related:{MATE:+2, SEMI:+1}, omen:{}, tags:['industrial','capex'], narrative:'공급망 재편과 자동화 투자가 산업재 주문을 늘린다.'},
-  {id:'E_INDU_AUTOMATION', name:'자동화 설비 투자', main:'INDU', mainEff:+3, related:{TECH:+1, SEMI:+1}, omen:{}, tags:['industrial','automation'], narrative:'인건비 부담이 자동화 장비 수요를 자극한다.'},
-  {id:'E_INDU_BACKLOG_CUT', name:'수주잔고 축소', main:'INDU', mainEff:-3, related:{MATE:-1}, omen:{rec:1}, tags:['industrial','orders'], narrative:'기존 수주잔고가 줄며 다음 매출 가시성이 약해진다.'},
-  {id:'E_INDU_FREIGHT_RECESSION', name:'운임·물동량 침체', main:'INDU', mainEff:-5, related:{MATE:-2, ENG:-1, AUTO:-1}, omen:{rec:1}, tags:['industrial','recession'], narrative:'물동량 둔화가 제조업과 산업재의 하강을 확인시킨다.'},
+  // INDU (산업재·경기민감)
+  {id:'E_INDU_FREIGHT_RECESSION', name:'운임·물동량 침체', main:'INDU', mainEff:-5, related:{MATE:-2, ENG:-1, AUTO:-1}, omen:{rec:1}, phase:'recession', tags:['industrial','recession'], narrative:'물동량 둔화가 제조업과 산업재의 하강을 확인시킨다.'},
+  {id:'E_INDU_INFRA_STIMULUS', name:'경기부양 인프라 발주', main:'INDU', mainEff:+3, related:{MATE:+1}, omen:{}, phase:'recession', tags:['industrial','policy'], narrative:'침체 대응 재정부양으로 도로·전력망 인프라 발주가 늘어난다.'},
+  {id:'E_INDU_AUTOMATION', name:'자동화 설비 투자', main:'INDU', mainEff:+3, related:{TECH:+1, SEMI:+1}, omen:{}, phase:'recovery', tags:['industrial','automation'], narrative:'인건비 부담이 자동화 장비 수요를 자극한다.'},
+  {id:'E_INDU_BACKLOG_CUT', name:'수주잔고 축소', main:'INDU', mainEff:-3, related:{MATE:-1}, omen:{}, phase:'recovery', tags:['industrial','orders'], narrative:'기존 수주잔고가 줄며 다음 매출 가시성이 약해진다.'},
+  {id:'E_INDU_RESHORING', name:'리쇼어링 발주 증가', main:'INDU', mainEff:+5, related:{MATE:+2, SEMI:+1}, omen:{}, phase:'boom', tags:['industrial','capex'], narrative:'공급망 재편과 자동화 투자가 산업재 주문을 늘린다.'},
+  {id:'E_INDU_LABOR_COST', name:'인건비·파업 압박', main:'INDU', mainEff:-3, related:{}, omen:{}, phase:'boom', tags:['industrial','labor'], narrative:'호황기 임금 인상과 파업이 제조 마진을 압박한다.'},
+  {id:'E_INDU_DEFENSE_BOOM', name:'지정학 긴장·방산 발주', main:'INDU', mainEff:+4, related:{ENG:+1, MATE:+1}, omen:{geo:1}, phase:'overheat', tags:['industrial','defense','geo'], narrative:'주요국 갈등 고조로 방산·인프라 발주가 급증한다.'},
+  {id:'E_INDU_QUAKE', name:'대지진·공급망 충격', main:'INDU', mainEff:-5, related:{SEMI:-2, AUTO:-2, MATE:+1}, omen:{}, phase:'overheat', tags:['industrial','disaster'], narrative:'대규모 지진이 공장 가동과 부품 공급망을 마비시킨다 — 다만 재건 수요로 소재는 일부 수혜.'},
 
-  // FIN
-  {id:'E_FIN_NIM_EXPAND', name:'순이자마진 확대', main:'FIN', mainEff:+5, related:{}, omen:{}, tags:['fin','rate'], narrative:'금리 환경이 은행 마진을 개선한다.'},
-  {id:'E_FIN_BUYBACK', name:'대형 자사주 매입', main:'FIN', mainEff:+3, related:{CONS:+1}, omen:{}, tags:['fin','capital'], narrative:'주주환원 확대가 금융주 할인율을 낮춘다.'},
-  {id:'E_FIN_CREDIT_COST', name:'대손비용 증가', main:'FIN', mainEff:-3, related:{CONS:-1, AUTO:-1}, omen:{cred:1}, tags:['fin','credit'], narrative:'연체율과 충당금 부담이 커진다.'},
-  {id:'E_FIN_BANK_RUN', name:'뱅크런 공포', main:'FIN', mainEff:-6, related:{BOND:+2, UTIL:+1, CONS:-2}, omen:{cred:2}, tags:['fin','credit','shock'], narrative:'예금 이탈과 신용 불안이 금융주를 강하게 압박한다.'},
+  // FIN (금융·금리민감)
+  {id:'E_FIN_BANK_RUN', name:'뱅크런 공포', main:'FIN', mainEff:-6, related:{BOND:+2, UTIL:+1, CONS:-2}, omen:{cred:2}, phase:'recession', tags:['fin','credit','shock'], narrative:'예금 이탈과 신용 불안이 금융주를 강하게 압박한다.'},
+  {id:'E_FIN_RATE_CUT', name:'정책금리 인하·유동성 공급', main:'FIN', mainEff:+3, related:{TECH:+1, BOND:+1}, omen:{}, phase:'recession', tags:['fin','policy','rate'], narrative:'침체 대응 금리 인하와 유동성 공급이 시장 심리를 떠받친다.'},
+  {id:'E_FIN_BUYBACK', name:'대형 자사주 매입', main:'FIN', mainEff:+3, related:{CONS:+1}, omen:{}, phase:'recovery', tags:['fin','capital'], narrative:'주주환원 확대가 금융주 할인율을 낮춘다.'},
+  {id:'E_FIN_CREDIT_COST', name:'대손비용 증가', main:'FIN', mainEff:-3, related:{CONS:-1, AUTO:-1}, omen:{cred:1}, phase:'recovery', tags:['fin','credit'], narrative:'회복 초기 연체율과 충당금 부담이 남아 있다.'},
+  {id:'E_FIN_NIM_EXPAND', name:'순이자마진 확대', main:'FIN', mainEff:+5, related:{}, omen:{}, phase:'boom', tags:['fin','rate'], narrative:'견조한 금리 환경이 은행 마진을 개선한다.'},
+  {id:'E_FIN_REGULATION', name:'건전성 규제 강화', main:'FIN', mainEff:-3, related:{}, omen:{}, phase:'boom', tags:['fin','regulation'], narrative:'호황 속 자본·건전성 규제 강화로 배당·자사주 여력이 줄어든다.'},
+  {id:'E_FIN_TRADING_BOOM', name:'거래대금 급증·IB 호황', main:'FIN', mainEff:+4, related:{TECH:+1}, omen:{}, phase:'overheat', tags:['fin','trading','euphoria'], narrative:'과열기 거래대금 급증과 IPO·M&A 붐이 증권·IB 수익을 끌어올린다.'},
+  {id:'E_FIN_ELECTION_RISK', name:'주요 선거·정책 불확실성', main:'FIN', mainEff:-4, related:{BOND:+1, CONS:-1}, omen:{}, phase:'overheat', tags:['fin','politics','riskoff'], narrative:'주요 경제권 선거와 정책 향방 불확실성이 위험회피를 자극한다.'},
 
-  // CONS
-  {id:'E_CONS_REAL_WAGE', name:'실질임금 회복', main:'CONS', mainEff:+5, related:{AUTO:+2, FIN:+1}, omen:{}, tags:['cons','wage'], narrative:'물가보다 임금이 더 빠르게 회복되며 소비 여력이 생긴다.'},
-  {id:'E_CONS_TRAVEL_BOOM', name:'여행·레저 수요 호조', main:'CONS', mainEff:+3, related:{ENG:+1, AUTO:+1}, omen:{infl:1}, tags:['cons','travel'], narrative:'서비스 소비가 강하게 유지된다.'},
-  {id:'E_CONS_PRICE_WAR', name:'가격 경쟁 심화', main:'CONS', mainEff:-3, related:{AUTO:-1}, omen:{}, tags:['cons','margin'], narrative:'판매량은 버티지만 가격 경쟁이 마진을 훼손한다.'},
-  {id:'E_CONS_DELINQUENCY', name:'연체와 소비 둔화', main:'CONS', mainEff:-5, related:{FIN:-3, AUTO:-2}, omen:{cred:1, rec:1}, tags:['cons','credit','recession'], narrative:'가계 신용 부담이 소비 둔화로 이어진다.'},
+  // CONS (소비재)
+  {id:'E_CONS_DELINQUENCY', name:'연체와 소비 둔화', main:'CONS', mainEff:-5, related:{FIN:-3, AUTO:-2}, omen:{cred:1, rec:1}, phase:'recession', tags:['cons','credit','recession'], narrative:'가계 신용 부담이 소비 둔화로 이어진다.'},
+  {id:'E_CONS_STAPLES', name:'필수소비 방어 수요', main:'CONS', mainEff:+3, related:{UTIL:+1}, omen:{}, phase:'recession', tags:['cons','defensive'], narrative:'경기 둔화에도 필수소비·생필품 수요는 견조하게 유지된다.'},
+  {id:'E_CONS_REAL_WAGE', name:'실질임금 회복', main:'CONS', mainEff:+5, related:{AUTO:+2, FIN:+1}, omen:{}, phase:'recovery', tags:['cons','wage'], narrative:'물가보다 임금이 더 빠르게 회복되며 소비 여력이 생긴다.'},
+  {id:'E_CONS_PRICE_WAR', name:'가격 경쟁 심화', main:'CONS', mainEff:-3, related:{AUTO:-1}, omen:{}, phase:'recovery', tags:['cons','margin'], narrative:'판매량은 버티지만 가격 경쟁이 마진을 훼손한다.'},
+  {id:'E_CONS_TRAVEL_BOOM', name:'여행·레저 수요 호조', main:'CONS', mainEff:+3, related:{ENG:+1, AUTO:+1}, omen:{}, phase:'boom', tags:['cons','travel'], narrative:'서비스 소비가 강하게 유지된다.'},
+  {id:'E_CONS_INPUT_COST', name:'원가 상승·마진 압박', main:'CONS', mainEff:-3, related:{ENG:+1}, omen:{infl:1}, phase:'boom', tags:['cons','margin','inflation'], narrative:'원자재·물류비 상승이 소비재 마진을 압박한다.'},
+  {id:'E_CONS_LUXURY', name:'고소득 소비·명품 호황', main:'CONS', mainEff:+4, related:{}, omen:{}, phase:'overheat', tags:['cons','luxury','euphoria'], narrative:'자산효과로 고소득층 소비와 명품 수요가 정점을 향한다.'},
+  {id:'E_CONS_INFLATION_SQUEEZE', name:'인플레로 실질소비 위축', main:'CONS', mainEff:-4, related:{AUTO:-1}, omen:{infl:1}, phase:'overheat', tags:['cons','inflation'], narrative:'고물가가 실질구매력을 갉아먹어 소비가 위축된다.'},
 
-  // ENG
-  {id:'E_ENG_OIL_SPIKE', name:'유가 급등', main:'ENG', mainEff:+6, related:{MATE:+2, CONS:-2, AUTO:-2, BOND:-1}, omen:{infl:1, geo:1}, tags:['eng','oil','inflation'], narrative:'유가 상승이 에너지 기업에는 호재, 소비와 자동차에는 부담으로 작용한다.'},
-  {id:'E_ENG_LNG_OFFSHORE', name:'LNG·해양플랜트 발주', main:'ENG', mainEff:+3, related:{INDU:+2, MATE:+1}, omen:{}, tags:['eng','capex'], narrative:'에너지 인프라 투자가 엔지니어링과 산업재로 확산된다.'},
-  {id:'E_ENG_WINDFALL_TAX', name:'초과이익세 논의', main:'ENG', mainEff:-3, related:{UTIL:+1}, omen:{}, tags:['eng','policy'], narrative:'에너지 기업의 이익을 정책적으로 회수하려는 압박이 커진다.'},
-  {id:'E_ENG_OIL_CRASH', name:'유가 급락', main:'ENG', mainEff:-6, related:{CONS:+2, AUTO:+2, MATE:-2}, omen:{rec:1}, tags:['eng','oil','recession'], narrative:'수요 둔화 우려로 유가가 급락한다. 에너지에는 악재, 소비에는 일부 완충이다.'},
+  // ENG (에너지·인플레민감)
+  {id:'E_ENG_OIL_CRASH', name:'유가 급락', main:'ENG', mainEff:-6, related:{CONS:+2, AUTO:+2, MATE:-2}, omen:{rec:1}, phase:'recession', tags:['eng','oil','recession'], narrative:'수요 둔화 우려로 유가가 급락한다. 에너지에는 악재, 소비에는 일부 완충이다.'},
+  {id:'E_ENG_OPEC_CUT', name:'감산 합의로 유가 방어', main:'ENG', mainEff:+3, related:{MATE:+1}, omen:{}, phase:'recession', tags:['eng','policy','oil'], narrative:'침체 속 주요 산유국 감산 합의가 유가 하단을 떠받친다.'},
+  {id:'E_ENG_LNG_OFFSHORE', name:'LNG·해양플랜트 발주', main:'ENG', mainEff:+3, related:{INDU:+2, MATE:+1}, omen:{}, phase:'recovery', tags:['eng','capex'], narrative:'에너지 인프라 투자가 엔지니어링과 산업재로 확산된다.'},
+  {id:'E_ENG_INVENTORY_BUILD', name:'재고 증가·정제마진 약세', main:'ENG', mainEff:-3, related:{}, omen:{}, phase:'recovery', tags:['eng','margin'], narrative:'재고가 늘며 정제마진이 약해진다.'},
+  {id:'E_ENG_GEO_SHOCK', name:'지정학 위기·공급 충격', main:'ENG', mainEff:+5, related:{MATE:+1, CONS:-2, AUTO:-1}, omen:{geo:1, infl:1}, phase:'boom', tags:['eng','geo','oil'], narrative:'주요 산유 지역 분쟁으로 공급 차질 우려가 커지며 유가가 뛴다.'},
+  {id:'E_ENG_RENEWABLE_SHIFT', name:'재생에너지 전환 압박', main:'ENG', mainEff:-3, related:{UTIL:+1, INDU:+1}, omen:{}, phase:'boom', tags:['eng','policy','transition'], narrative:'탈탄소 전환 정책이 전통 에너지 기업의 장기 수요 기대를 낮춘다.'},
+  {id:'E_ENG_OIL_SPIKE', name:'유가 급등', main:'ENG', mainEff:+6, related:{MATE:+2, CONS:-2, AUTO:-2, BOND:-1}, omen:{infl:1, geo:1}, phase:'overheat', tags:['eng','oil','inflation'], narrative:'과열·인플레 국면 유가 급등이 에너지엔 호재, 소비·자동차엔 부담이다.'},
+  {id:'E_ENG_WINDFALL_TAX', name:'초과이익세 논의', main:'ENG', mainEff:-3, related:{UTIL:+1}, omen:{}, phase:'overheat', tags:['eng','policy'], narrative:'고유가 국면 에너지 기업 초과이익을 회수하려는 정책 압박이 커진다.'},
 
-  // MATE
-  {id:'E_MATE_COPPER_RALLY', name:'구리 랠리', main:'MATE', mainEff:+5, related:{INDU:+2, UTIL:+1}, omen:{infl:1}, tags:['mate','commodity','power'], narrative:'전력망과 AI 인프라 수요가 구리 가격을 밀어올린다.'},
-  {id:'E_MATE_CHINA_ORDER', name:'중국 소재 주문 회복', main:'MATE', mainEff:+3, related:{INDU:+1, AUTO:+1}, omen:{infl:1}, tags:['mate','china'], narrative:'중국 부양과 재고 축적 기대가 소재주를 자극한다.'},
-  {id:'E_MATE_STEEL_GLUT', name:'철강 공급과잉', main:'MATE', mainEff:-3, related:{INDU:-1}, omen:{}, tags:['mate','supply'], narrative:'공급 증가와 가격 하락이 소재 마진을 압박한다.'},
-  {id:'E_MATE_DOLLAR_TIGHT', name:'달러 강세와 원자재 약세', main:'MATE', mainEff:-5, related:{ENG:-2, AUTO:-1, BOND:+1}, omen:{cred:1}, tags:['mate','dollar','credit'], narrative:'달러 강세가 원자재와 신흥국 수요 기대를 낮춘다.'},
+  // MATE (소재·원자재)
+  {id:'E_MATE_DOLLAR_TIGHT', name:'달러 강세와 원자재 약세', main:'MATE', mainEff:-5, related:{ENG:-2, AUTO:-1, BOND:+1}, omen:{cred:1}, phase:'recession', tags:['mate','dollar','credit'], narrative:'달러 강세가 원자재와 신흥국 수요 기대를 낮춘다.'},
+  {id:'E_MATE_SUPPLY_CUT', name:'광산 감산·공급 조절', main:'MATE', mainEff:+3, related:{}, omen:{}, phase:'recession', tags:['mate','supply'], narrative:'침체 속 광산 감산과 공급 조절이 가격 하단을 지지한다.'},
+  {id:'E_MATE_CHINA_ORDER', name:'중국 소재 주문 회복', main:'MATE', mainEff:+3, related:{INDU:+1, AUTO:+1}, omen:{}, phase:'recovery', tags:['mate','china'], narrative:'부양과 재고 축적 기대가 소재주를 자극한다.'},
+  {id:'E_MATE_STEEL_GLUT', name:'철강 공급과잉', main:'MATE', mainEff:-3, related:{INDU:-1}, omen:{}, phase:'recovery', tags:['mate','supply'], narrative:'공급 증가와 가격 하락이 소재 마진을 압박한다.'},
+  {id:'E_MATE_COPPER_RALLY', name:'구리 랠리', main:'MATE', mainEff:+5, related:{INDU:+2, UTIL:+1}, omen:{}, phase:'boom', tags:['mate','commodity','power'], narrative:'전력망과 AI 인프라 수요가 구리 가격을 밀어올린다.'},
+  {id:'E_MATE_SUBSTITUTION', name:'대체재·효율화 압박', main:'MATE', mainEff:-3, related:{}, omen:{}, phase:'boom', tags:['mate','demand'], narrative:'고가 지속에 대체재 전환과 효율화가 수요를 일부 갉아먹는다.'},
+  {id:'E_MATE_COMMODITY_SUPERCYCLE', name:'원자재 슈퍼사이클', main:'MATE', mainEff:+4, related:{ENG:+1, INDU:+1}, omen:{infl:1}, phase:'overheat', tags:['mate','commodity','inflation'], narrative:'공급 부족과 인플레가 겹치며 원자재 슈퍼사이클 기대가 정점을 향한다.'},
+  {id:'E_MATE_DEMAND_DESTRUCTION', name:'고가에 수요 파괴', main:'MATE', mainEff:-4, related:{INDU:-1}, omen:{infl:1}, phase:'overheat', tags:['mate','demand','inflation'], narrative:'원자재 가격이 너무 오르자 실수요가 위축되기 시작한다.'},
 
-  // UTIL
-  {id:'E_UTIL_AI_POWER', name:'AI 전력수요 급증', main:'UTIL', mainEff:+5, related:{SEMI:+2, ENG:+1, MATE:+1}, omen:{infl:1}, tags:['util','ai','power'], narrative:'데이터센터 전력수요가 유틸리티 성장성을 재평가시킨다.'},
-  {id:'E_UTIL_RATE_APPROVAL', name:'전기요금 인상 승인', main:'UTIL', mainEff:+3, related:{CONS:-1}, omen:{infl:1}, tags:['util','policy'], narrative:'요금 인상이 원가 부담을 완화한다.'},
-  {id:'E_UTIL_FUEL_COST', name:'연료비 부담', main:'UTIL', mainEff:-3, related:{ENG:+1}, omen:{infl:1}, tags:['util','inflation'], narrative:'연료비 상승이 규제 유틸리티의 마진을 압박한다.'},
-  {id:'E_UTIL_GRID_ACCIDENT', name:'전력망 사고', main:'UTIL', mainEff:-5, related:{INDU:-2, SEMI:-1}, omen:{}, tags:['util','accident'], narrative:'전력망 사고와 보상비용 우려가 커진다.'},
+  // UTIL (유틸리티·방어)
+  {id:'E_UTIL_DEFENSIVE_BID', name:'방어주 선호·배당 매력', main:'UTIL', mainEff:+4, related:{BOND:+1}, omen:{rec:1}, phase:'recession', tags:['util','defensive'], narrative:'위험회피 국면 안정적 배당의 유틸리티로 자금이 몰린다.'},
+  {id:'E_UTIL_GRID_ACCIDENT', name:'전력망 사고', main:'UTIL', mainEff:-5, related:{INDU:-2, SEMI:-1}, omen:{}, phase:'recession', tags:['util','accident'], narrative:'전력망 사고와 보상비용 우려가 커진다.'},
+  {id:'E_UTIL_RATE_APPROVAL', name:'전기요금 인상 승인', main:'UTIL', mainEff:+3, related:{CONS:-1}, omen:{}, phase:'recovery', tags:['util','policy'], narrative:'요금 인상 승인이 원가 부담을 완화한다.'},
+  {id:'E_UTIL_DEMAND_DROP', name:'산업 전력수요 둔화', main:'UTIL', mainEff:-3, related:{INDU:-1}, omen:{}, phase:'recovery', tags:['util','demand'], narrative:'회복 초기 산업용 전력수요가 기대만큼 살아나지 않는다.'},
+  {id:'E_UTIL_AI_POWER', name:'AI 전력수요 급증', main:'UTIL', mainEff:+5, related:{SEMI:+2, ENG:+1, MATE:+1}, omen:{}, phase:'boom', tags:['util','ai','power'], narrative:'데이터센터 전력수요가 유틸리티 성장성을 재평가시킨다.'},
+  {id:'E_UTIL_CAPEX_BURDEN', name:'송배전 투자 부담', main:'UTIL', mainEff:-3, related:{}, omen:{}, phase:'boom', tags:['util','capex'], narrative:'전력망 증설 투자 부담이 단기 현금흐름을 압박한다.'},
+  {id:'E_UTIL_POWER_PRICE', name:'전력 도매가 급등', main:'UTIL', mainEff:+4, related:{ENG:+1}, omen:{infl:1}, phase:'overheat', tags:['util','power','inflation'], narrative:'수요 정점과 연료가 상승으로 전력 도매가가 급등한다.'},
+  {id:'E_UTIL_FUEL_COST', name:'연료비 부담', main:'UTIL', mainEff:-3, related:{ENG:+1}, omen:{infl:1}, phase:'overheat', tags:['util','inflation'], narrative:'연료비 급등이 규제 유틸리티의 마진을 압박한다.'},
 
-  // BOND
-  {id:'E_BOND_DOVISH_SURPRISE', name:'비둘기 서프라이즈', main:'BOND', mainEff:+5, related:{TECH:+2, BIO:+2, FIN:-1}, omen:{}, tags:['bond','rate','policy'], narrative:'금리 인하 기대가 채권과 성장자산을 동시에 밀어올린다.'},
-  {id:'E_BOND_FLIGHT_QUALITY', name:'안전자산 선호', main:'BOND', mainEff:+4, related:{UTIL:+2, FIN:-1, CONS:-1}, omen:{rec:1}, tags:['bond','defensive'], narrative:'위험회피가 강해지며 채권과 방어주가 강해진다.'},
-  {id:'E_BOND_BEAR_STEEPENING', name:'베어 스티프닝', main:'BOND', mainEff:-4, related:{FIN:+2, TECH:-2, BIO:-1}, omen:{infl:1}, tags:['bond','rate','inflation'], narrative:'장기금리가 오르며 채권 가격과 성장주 멀티플이 압박받는다.'},
-  {id:'E_BOND_FISCAL_DOWNGRADE', name:'재정 신뢰 훼손', main:'BOND', mainEff:-6, related:{FIN:-2, UTIL:-1, ENG:+1, MATE:+1}, omen:{cred:1}, tags:['bond','fiscal','credit'], narrative:'재정 우려로 채권이 안전자산 역할을 하지 못한다.'},
+  // BOND (채권·안전자산)
+  {id:'E_BOND_FLIGHT_QUALITY', name:'안전자산 선호', main:'BOND', mainEff:+4, related:{UTIL:+2, FIN:-1, CONS:-1}, omen:{rec:1}, phase:'recession', tags:['bond','defensive'], narrative:'위험회피가 강해지며 채권과 방어주가 강해진다.'},
+  {id:'E_BOND_CREDIT_SPREAD', name:'신용 스프레드 급등', main:'BOND', mainEff:-3, related:{FIN:-1}, omen:{cred:1}, phase:'recession', tags:['bond','credit'], narrative:'신용 우려로 회사채 스프레드가 벌어져 크레딧 채권이 약세를 보인다.'},
+  {id:'E_BOND_DOVISH_SURPRISE', name:'비둘기 서프라이즈', main:'BOND', mainEff:+5, related:{TECH:+2, BIO:+2, FIN:-1}, omen:{}, phase:'recovery', tags:['bond','rate','policy'], narrative:'금리 인하 기대가 채권과 성장자산을 동시에 밀어올린다.'},
+  {id:'E_BOND_REFLATION', name:'리플레이션·금리 반등', main:'BOND', mainEff:-3, related:{FIN:+2}, omen:{}, phase:'recovery', tags:['bond','rate','reflation'], narrative:'경기 반등 기대로 시장금리가 오르며 채권 가격이 눌린다.'},
+  {id:'E_BOND_SOFT_LANDING', name:'연착륙 기대·금리 안정', main:'BOND', mainEff:+3, related:{FIN:+1}, omen:{}, phase:'boom', tags:['bond','rate'], narrative:'연착륙 기대 속 금리가 안정되며 채권이 견조하다.'},
+  {id:'E_BOND_BEAR_STEEPENING', name:'베어 스티프닝', main:'BOND', mainEff:-4, related:{FIN:+2, TECH:-2, BIO:-1}, omen:{infl:1}, phase:'boom', tags:['bond','rate','inflation'], narrative:'장기금리가 오르며 채권 가격과 성장주 멀티플이 압박받는다.'},
+  {id:'E_BOND_PEAK_RATE', name:'금리 정점 통과 기대', main:'BOND', mainEff:+3, related:{TECH:+1}, omen:{}, phase:'overheat', tags:['bond','rate'], narrative:'금리가 정점을 지났다는 기대가 채권 매수로 이어진다.'},
+  {id:'E_BOND_FISCAL_DOWNGRADE', name:'재정 신뢰 훼손', main:'BOND', mainEff:-6, related:{FIN:-2, UTIL:-1, ENG:+1, MATE:+1}, omen:{cred:1}, phase:'overheat', tags:['bond','fiscal','credit'], narrative:'재정·인플레 우려로 채권이 안전자산 역할을 하지 못한다.'},
 ];
 
 /* REPORTS (v5.7) — sentiment + macroBias/eventBias/tagBias/omenHint/trap.
@@ -2332,7 +2360,7 @@ function evaluatePrinciple(p, ctx){
       p.quintBetTurns = (p.quintBetTurns||0) + 1;
       if(ctx && ctx.turnPL >= 0){
         // (v5.9) 장기(16턴)는 +7 → +12 — 분산형의 낮은 천장을 긴 게임에서 보전 (우승률 7.8% 보정)
-        const qb = state.maxTurn >= 16 ? 7 : 7; // (v5.9f) QUANT 분산이익 — 과한 약화(20%) 복구해 ~24% 꾸준함
+        const qb = state.maxTurn >= 16 ? 6 : 6; // (v5.12) 국면정렬 카드로 예측성↑→분산이익 과대해져 7→6 트림
         total += qb; msgs.push(`퀀트분산이익 +${qb}`);
       }
     }
