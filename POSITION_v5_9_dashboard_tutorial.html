@@ -255,6 +255,11 @@
     background:var(--panel2)}
   .pcard:hover{border-color:var(--acc)}
   .pcard h4{margin:0 0 4px 0;font-size:14px}
+  .pbadge{display:inline-block;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;margin:0 0 5px}
+  .pbadge.easy{background:rgba(52,211,153,.15);color:#34d399;border:1px solid rgba(52,211,153,.45)}
+  .pbadge.easymid{background:rgba(56,189,248,.15);color:#38bdf8;border:1px solid rgba(56,189,248,.45)}
+  .pbadge.mid{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.45)}
+  .pbadge.hard{background:rgba(248,113,113,.18);color:#f87171;border:1px solid rgba(248,113,113,.55)}
   .pcard .sub{font-size:11px;color:var(--mut);margin-bottom:6px}
   .pcard .pp{font-size:10px;margin:3px 0;padding:3px 6px;border-radius:4px;
     background:#0b0d12}
@@ -1630,7 +1635,7 @@ function addOrExtendSlot(slotId, allowExtend=true){
 /* PERSONAS with ban/boon/quest */
 const PERSONAS = {
   ORACLE: {
-    id:'ORACLE', name:'ORACLE', motif:'워런 버핏', sub:'현인 · 장기 성장 논리', color:'p0',
+    id:'ORACLE', name:'ORACLE', motif:'워런 버핏', sub:'현인 · 장기 성장 논리', color:'p0', badge:'초심자 추천 · 안정형', badgeTone:'easy',
     always:'한 섹터를 오래 들고 있을수록 매 턴 보너스가 쌓인다 (3턴+ 보유 시 베팅 20당 +1/턴, 호재 발현 시 최대 +9). 6턴 이상 보유하면 텐배거 후보로 +10/턴. 오래 보유한 섹터에 악재가 와도 손실을 일부 흡수해준다',
     ban:'한 턴에 같은 섹터를 20 초과로 급격히 늘리거나 줄이면 -10. 급격한 포트폴리오 변경은 패널티다',
     boon:'같은 섹터를 4턴 연속 유지하면 (게임당 1회) +15 보너스',
@@ -1639,7 +1644,7 @@ const PERSONAS = {
     bio:'👴 워런 버핏 — 장기 가치투자의 대가. 좋은 기업을 싸게 사 오래 보유하며 복리로 불린다(「10년 보유 안 할 거면 10분도 갖지 마라」). ▶ 유형: 한 섹터를 길게 들수록 보너스가 복리로 쌓이는 장기 보유형. 게임이 길수록(16턴) 강하다 — 인내가 핵심.',
   },
   MACRO_KING: {
-    id:'MACRO_KING', name:'MACRO KING', motif:'스탠리 드러켄밀러', sub:'거시·사이클', color:'p1',
+    id:'MACRO_KING', name:'MACRO KING', motif:'스탠리 드러켄밀러', sub:'거시·사이클', color:'p1', badge:'중급 · 국면판단형', badgeTone:'mid',
     always:'매크로 카드가 뽑힌 직후 사이클 게이지를 ±5 직접 조정할 수 있다 (턴당 1회). 카드 방향에 맞게 베팅하면 +7, 인플레 상승 국면에 에너지·소재 비중을 늘리면 +8, 금리가 오를 때 채권·성장주 노출을 줄이면 +8. 첫 번째 원칙 훼손은 면제된다',
     ban:'사이클이 회복·호황 구간(50~74)인데 방어주·가치주에 40% 이상 몰아넣거나, 침체 구간(25~49)인데 성장주·경기주에 50% 이상 넣으면 -7. 시장 흐름을 역행하는 포지션이다',
     boon:'사이클이 극단(과열 ≥75 또는 침체 ≤25)에 도달했을 때 반대 방향으로 베팅하면 +6. 그 턴에 실제로 수익까지 내면 +9. 과열에서 방어주로, 침체에서 성장주로 역발상 포지션을 취하는 전략이다',
@@ -1648,7 +1653,7 @@ const PERSONAS = {
     bio:'🌍 스탠리 드러켄밀러 — 30년간 연평균 약 30%, 손실 난 해가 한 번도 없던 전설적 매크로 트레이더(소로스의 오른팔). 금리·경기 사이클을 읽어 크게 베팅한다. ▶ 유형: 사이클 극단에서 역발상하고 거시 흐름을 읽는 거시형. 변동성은 있지만 꾸준히 강하다.',
   },
   HUNTER: {
-    id:'HUNTER', name:'HUNTER', motif:'제시 리버모어', sub:'집중', color:'p2',
+    id:'HUNTER', name:'HUNTER', motif:'제시 리버모어', sub:'집중', color:'p2', badge:'고난도 · 고변동 · 한 방', badgeTone:'hard',
     always:'자산의 30% 이상 집중한 섹터에 호재가 터지면 매번 +5 (악재면 -5). 집중 포지션은 매크로·이벤트 손익을 ±40%(장기 ±20%) 증폭 — 맞으면 크게 벌고 틀리면 크게 잃는 양날의 검. 단일 섹터 한도 60%(다른 페르소나 50%) 허용하되, 집중 유지에 매 턴 소액 비용이 들어 평소 평균은 낮고 대신 한 방이 크다(리버모어형 고변동) — 원칙 훼손 패널티 20% 경감(손절 능력)',
     ban:'동시에 4개 이상 섹터에 베팅하면 -10. 집중 투자가 핵심 — 최대 3개 섹터에만 베팅하라',
     boon:'단일 섹터에 자산의 40% 이상 집중 베팅하고 호재가 터지면 추가로 +3',
@@ -1657,7 +1662,7 @@ const PERSONAS = {
     bio:'🐺 제시 리버모어 — 20세기 초 「월가의 큰 곰」, 전설적 투기꾼. 확신이 설 때 소수 종목에 올인해 거대한 부를 쌓았지만 파산도 여러 번 반복했다. ▶ 유형: 1~2섹터 초집중. 적중하면 폭발적이지만 빗나가면 큰 손실 — 고위험·고변동. 장기로 갈수록 부침이 커진다(승률은 낮아도 한 방이 크다).',
   },
   QUANT: {
-    id:'QUANT', name:'QUANT', motif:'짐 시몬스', sub:'분산 · 안정형', color:'p3',
+    id:'QUANT', name:'QUANT', motif:'짐 시몬스', sub:'분산 · 안정형', color:'p3', badge:'초중급 · 방어형', badgeTone:'easymid',
     always:'자산의 10% 이상 베팅한 섹터가 많을수록 매 턴 보너스가 쌓인다 (4섹터 +1, 5섹터 +2, 6섹터 +3/턴). 매크로·이벤트로 손실이 날 때 20%를 흡수해준다. 단, 7섹터 이상 너무 넓게 퍼뜨리거나 탐욕 지수가 극에 달했을 때, 또는 강한 이벤트 섹터를 보유하지 않으면 페널티가 있다',
     ban:'단일 섹터에 자산의 30% 이상 몰아넣으면 -10. 분산이 이 페르소나의 핵심이다',
     boon:'5개 이상 섹터에 베팅하고 그 턴 평균 손익이 플러스면 +9 추가 보상',
@@ -3888,6 +3893,18 @@ function buildFinalReport(p){
         <div style="color:var(--mut)">턴당 평균 손익 <b style="color:var(--fg)">${avgPl>=0?'+':''}${avgPl}</b> · 수익 ${plTurns}턴 / 손실 ${lossTurns}턴 · 리포트 적중 ${hitRate}%${trapCount?` · 🪤함정 ${trapCount}회`:''}</div>
       </div>
 
+      <!-- 2b. 분포형 평가 (운용 스타일) -->
+      <div style="margin-bottom:10px;padding:8px 12px;background:#11161f;border-radius:6px;font-size:13px;line-height:1.5">
+        ${(()=>{
+          const big = bestT && bestT.pl >= 20, crash = worstT && worstT.pl <= -15;
+          if(persona.id==='HUNTER') return `🎯 <b>HUNTER형 분포</b> — 평균 안정성은 낮은 대신 ${big?`T${bestT.turn} <span style="color:var(--green)">+${bestT.pl}</span> 같은 `:''}큰 수익 구간을 노리는 고변동 스타일입니다. 고수익 직후 현금화·방어 전환 타이밍이 성패를 가릅니다.`;
+          if(persona.id==='ORACLE') return `🔮 <b>ORACLE형 분포</b> — 한 방의 폭발력보다 보유 지속성과 누적 수익으로 쌓는 안정형입니다. ${crash?'급변 구간 방어':'과열 구간 이익 확정'} 타이밍이 다음 과제입니다.`;
+          if(persona.id==='MACRO_KING') return `👑 <b>MACRO형 분포</b> — 사이클 국면을 읽어 크게 베팅하는 형입니다. 방향이 맞으면 강력하지만 변동성이 큽니다 — 극단 역발상 타이밍이 핵심입니다.`;
+          if(persona.id==='QUANT') return `📊 <b>QUANT형 분포</b> — 큰 한 방보다 낮은 변동성으로 덜 잃고 살아남는 방어형입니다. 분산 유지와 꾸준함이 무기입니다.`;
+          return '';
+        })()}
+      </div>
+
       <!-- 3. 턴별 손익 + 등급 -->
       <div style="margin-bottom:10px">
         <div style="font-weight:700;margin-bottom:4px">📈 턴별 손익 <span style="font-weight:400;font-size:13px;color:var(--mut)">(🪤=함정 발동)</span></div>
@@ -5143,6 +5160,7 @@ function bootstrap(){
   pick.innerHTML = Object.values(PERSONAS).map(p => `
     <div class="pcard ${p.color}" onclick="startGame('${p.id}')">
       <h4>${p.name} <span class="term" data-tip="${(p.bio||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation()" style="font-size:12px;font-weight:400;cursor:help">(${p.motif||''})</span></h4>
+      ${p.badge?`<div class="pbadge ${p.badgeTone||''}">${p.badge}</div>`:''}
       <div class="sub">${p.sub}</div>
       <div class="pp always">🔷 ${alwaysText(p)}</div>
       <div class="pp ban">🚫 ${p.ban}</div>

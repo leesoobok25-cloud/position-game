@@ -63,16 +63,16 @@ try { window.logRow = function(){}; } catch(e){}
   const stat = arr => {
     const n=arr.length, mean=arr.reduce((a,b)=>a+b,0)/n;
     const sd=Math.sqrt(arr.reduce((a,b)=>a+(b-mean)*(b-mean),0)/n);
-    const s=[...arr].sort((a,b)=>a-b);
-    return {mean, sd, p10:s[Math.floor(n*0.1)], p90:s[Math.floor(n*0.9)], min:s[0], max:s[n-1]};
+    const s=[...arr].sort((a,b)=>a-b); const q=p=>s[Math.min(n-1,Math.floor(n*p))];
+    return {mean, median:q(0.5), sd, p5:q(0.05), p95:q(0.95), max:s[n-1]};
   };
-  console.log('=== 변동성 vs 리스크토큰 (${mode} ${N}판) ===');
-  console.log('페르소나   | 평균점수 | 변동성(SD) | 하위10% | 상위10% | 최저~최고 | 평균 리스크토큰');
+  console.log('=== 분포 기준 평가 (${mode} ${N}판) — 승률 외 분포 전체 ===');
+  console.log('페르소나   | 평균 | 중앙값 | 변동성SD | 5%하위 | 95%상위 |  최대 | 원칙훼손');
   for (const pid of Object.keys(PERSONAS)){
     const s=stat(scores[pid]); const tk=tokens[pid].reduce((a,b)=>a+b,0)/tokens[pid].length;
-    console.log(pid.padEnd(10)+' | '+s.mean.toFixed(0).padStart(7)+' | '+s.sd.toFixed(1).padStart(9)+' | '+String(s.p10).padStart(6)+' | '+String(s.p90).padStart(6)+' | '+String(s.min)+'~'+String(s.max)+' | '+tk.toFixed(2));
+    console.log(pid.padEnd(10)+' | '+s.mean.toFixed(0).padStart(4)+' | '+String(s.median).padStart(5)+' | '+s.sd.toFixed(1).padStart(7)+' | '+String(s.p5).padStart(5)+' | '+String(s.p95).padStart(6)+' | '+String(s.max).padStart(5)+' | '+tk.toFixed(2));
   }
-  console.log('\\n* 변동성(SD)=게임마다 최종점수가 얼마나 흔들리는지(진짜 변동성). 리스크토큰=규칙위반 페널티 카운터(별개).');
+  console.log('\\n* 중앙값=일반적 체감, SD=변동성, 5%하위=망했을 때, 95%상위·최대=한 방. HUNTER는 중앙값↓·95%/최대↑가 정상.');
 })();
 `;
 eval(m[1] + probe);
