@@ -2975,12 +2975,20 @@ function drawSectorEvents(){
       if(tagBias[t]) w *= tagBias[t];
     }
 
-    // (v5.12) 사이클 방향 정렬 — 호황(높은 사이클)엔 호재, 침체(낮은 사이클)엔 악재가 더 자주 나오게.
-    //          단, 반대 방향도 0.25배로 일정 확률 유지(불황에도 호재가 가끔 나옴).
+    // (v5.12) 국면(phase) 정렬 — phase 태그(recession/recovery/boom/overheat)가 있으면
+    //          현재 사이클 국면과 가까울수록 가중(같은 국면 ×2.4, 인접 ×1.0, 반대 ×0.35).
+    const _order = ['recession','recovery','boom','overheat'];
+    const _cur = state.cycle>=75?'overheat':state.cycle>=50?'boom':state.cycle>=25?'recovery':'recession';
+    if(ev.phase){
+      const _d = Math.abs(_order.indexOf(ev.phase) - _order.indexOf(_cur));
+      const dist = Math.min(_d, 4 - _d); // 순환 거리 0(동일)~2(반대)
+      w *= dist===0 ? 2.4 : dist===1 ? 1.0 : 0.35;
+    }
+    // 방향 미세 정렬 — 호황엔 호재, 침체엔 악재가 조금 더(반대 방향도 유지)
     const dir = ev.mainEff > 0 ? 1 : ev.mainEff < 0 ? -1 : 0;
     if(dir !== 0){
       const cycBias = (state.cycle - 50) / 50; // -1(침체) ~ +1(과열)
-      w *= clamp(1 + dir * cycBias * 0.6, 0.3, 1.6);
+      w *= clamp(1 + dir * cycBias * 0.45, 0.4, 1.55);
     }
 
     // Omen이 높은 쪽과 관련 있는 이벤트 확률 증가
