@@ -3484,7 +3484,15 @@ function buildTurnReview(p, pl, sectorDelta, dampingMul){
 
   // 페르소나 원칙
   if(b.persona >= 3) goods.push(`페르소나 원칙 보너스 <b>+${b.persona}</b> — 스타일대로 플레이했어요`);
-  if(b.persona <= -5) bads.push(`원칙 위반 <b>${b.persona}</b> — 내 패널의 🚫 금지 조항을 확인하세요`);
+  if(b.persona <= -5){
+    let why;
+    if(p.personaId === 'HUNTER') why = '집중한 섹터가 하락하면 상시 능력이 손실로 작동합니다(집중의 양날) — 확신이 약하면 분산도 고려하세요';
+    else if(p.personaId === 'MACRO_KING') why = '사이클 국면과 어긋난 포지션이에요 — 흐름에 맞는 비중을 점검하세요';
+    else if(p.personaId === 'ORACLE') why = '한 턴에 같은 섹터를 20 초과로 급변하면 페널티예요 — 오래 보유하는 인내가 핵심';
+    else if(p.personaId === 'QUANT') why = '단일 섹터 자산 30%+ 집중은 분산 원칙에 어긋나요';
+    else why = '내 패널의 🚫 금지 조항을 확인하세요';
+    bads.push(`페르소나 원칙 적용 <b>${b.persona}</b> — ${why}`);
+  }
 
   // 전략 카드
   if(b.strategy >= 3) goods.push(`전략 카드 효과 <b>+${b.strategy}</b> — 타이밍이 좋았어요`);
