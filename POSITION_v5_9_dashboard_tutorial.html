@@ -1640,7 +1640,7 @@ const PERSONAS = {
   },
   MACRO_KING: {
     id:'MACRO_KING', name:'MACRO KING', motif:'스탠리 드러켄밀러', sub:'거시·사이클', color:'p1',
-    always:'매크로 카드가 뽑힌 직후 사이클 게이지를 ±5 직접 조정할 수 있다 (턴당 1회). 카드 방향에 맞게 베팅하면 +7, 인플레 상승 국면에 에너지·소재 비중을 늘리면 +8, 금리가 오를 때 채권·성장주 노출을 줄이면 +8. 첫 번째 리스크 토큰은 면제된다',
+    always:'매크로 카드가 뽑힌 직후 사이클 게이지를 ±5 직접 조정할 수 있다 (턴당 1회). 카드 방향에 맞게 베팅하면 +7, 인플레 상승 국면에 에너지·소재 비중을 늘리면 +8, 금리가 오를 때 채권·성장주 노출을 줄이면 +8. 첫 번째 원칙 훼손는 면제된다',
     ban:'사이클이 회복·호황 구간(50~74)인데 방어주·가치주에 40% 이상 몰아넣거나, 침체 구간(25~49)인데 성장주·경기주에 50% 이상 넣으면 -7. 시장 흐름을 역행하는 포지션이다',
     boon:'사이클이 극단(과열 ≥75 또는 침체 ≤25)에 도달했을 때 반대 방향으로 베팅하면 +6. 그 턴에 실제로 수익까지 내면 +9. 과열에서 방어주로, 침체에서 성장주로 역발상 포지션을 취하는 전략이다',
     quest:'사이클 극단에서 위의 역발상 베팅을 2회 이상 성공시키면 게임 종료 시 +20',
@@ -1649,7 +1649,7 @@ const PERSONAS = {
   },
   HUNTER: {
     id:'HUNTER', name:'HUNTER', motif:'제시 리버모어', sub:'집중', color:'p2',
-    always:'자산의 30% 이상 집중한 섹터에 호재가 터지면 매번 +5 (악재면 -5). 확신이 맞으면 보상이 증폭된다 — 집중 적중 시 매크로·이벤트 수익 +40%(장기 +20%). 단일 섹터 한도도 60%까지(다른 페르소나 50%) 허용하고, 손절을 아는 투기꾼이라 리스크 페널티 20% 경감 — 리서치로 적중력을 살리는 페르소나',
+    always:'자산의 30% 이상 집중한 섹터에 호재가 터지면 매번 +5 (악재면 -5). 집중 포지션은 매크로·이벤트 손익을 ±40%(장기 ±20%) 증폭 — 맞으면 크게 벌고 틀리면 크게 잃는 양날의 검. 단일 섹터 한도 60%(다른 페르소나 50%) 허용하되, 집중 유지에 매 턴 소액 비용이 들어 평소 평균은 낮고 대신 한 방이 크다(리버모어형 고변동) — 원칙 훼손 패널티 20% 경감(손절 능력)',
     ban:'동시에 4개 이상 섹터에 베팅하면 -10. 집중 투자가 핵심 — 최대 3개 섹터에만 베팅하라',
     boon:'단일 섹터에 자산의 40% 이상 집중 베팅하고 호재가 터지면 추가로 +3',
     quest:'자산의 40% 이상 집중한 섹터에서 호재가 3턴 이상 적중하면 게임 종료 시 +20',
@@ -2136,26 +2136,22 @@ function applyMacroThresholds(macroD){
 
 /* === RISK TOKEN conditions === */
 function checkRiskTokens(p, ctx){
-  // 6 conditions per v5.4 rulebook (interpretive):
-  // R1: single sector > 70 (severely concentrated)
-  // R2: turn loss > 30
-  // R3: leveraged-style (sum of bets > cash+bets ratio — simplified: total bet > 80)
-  // R4: ignored Omen3 warning (forced macro hit against position)
-  // R5: bond=0 in winter
-  // R6: drawdown vs peak > 25
-  const max = Math.max(...Object.values(p.bets));
-  if(max > 70){
-    p.risk++; p.riskReasons.push(`T${state.turn}: 단일섹터>70`);
+  // (v5.11) 원칙 훼손(과거 '리스크 토큰') = 자산 대비 % 기준. 후반 큰 예산에서 매 턴 터지던
+  //         절대 임계값(70/60/80)을 제거하고, 비중 기준으로 재정의:
+  //   R1 단일섹터 > 자산 55% (과도한 집중)  R2 한 턴 손실 > 직전 자산 20%
+  //   R3 현금버퍼 < 자산 10% 로 과투입       R4 침체기(사이클<25) 안전자산 BOND 미보유
+  const bud = Math.max(1, p.cash + Object.values(p.bets).reduce((a,b)=>a+b,0));
+  const assetsBefore = bud - (ctx && ctx.turnPL ? ctx.turnPL : 0); // 손익 적용 전 자산
+  const max = Math.max(0, ...Object.values(p.bets));
+  if(max > bud * 0.55){
+    p.risk++; p.riskReasons.push(`T${state.turn}: 단일섹터 ${Math.round(max/bud*100)}% 집중`);
   }
-  if(max >= 60 && p.personaId === 'HUNTER'){
-    p.risk++; p.riskReasons.push(`T${state.turn}: 헌터 초집중`);
-  }
-  if(ctx && ctx.turnPL <= -30){
-    p.risk++; p.riskReasons.push(`T${state.turn}: 턴손실>30`);
+  if(ctx && ctx.turnPL <= -assetsBefore * 0.20){
+    p.risk++; p.riskReasons.push(`T${state.turn}: 턴손실 자산 20%+`);
   }
   const totalBet = Object.values(p.bets).reduce((a,b)=>a+b,0);
-  if(totalBet > 80 && p.cash < 10){
-    p.risk++; p.riskReasons.push(`T${state.turn}: 과집중`);
+  if(totalBet > bud * 0.85 && p.cash < bud * 0.10){
+    p.risk++; p.riskReasons.push(`T${state.turn}: 현금버퍼<10% 과투입`);
   }
   if(state.cycle < 25 && (p.bets.BOND||0) === 0){
     p.risk++; p.riskReasons.push(`T${state.turn}: 침체기 무BOND`);
@@ -2284,6 +2280,11 @@ function evaluatePrinciple(p, ctx){
     //        집중형의 보상 천장도 함께 올려 우승률 15% → 25%선 회복
     hunterDelta = clamp(hunterDelta, -9, state.maxTurn >= 16 ? 8 : 8); // (v5.9f) 16턴 상한 11→8: 리버모어는 장기로 갈수록 부침↑ → 8턴≥16턴 패턴
     if(hunterDelta){ total += hunterDelta; msgs.push(`헌터 상시 ${hunterDelta>=0?'+':''}${hunterDelta}`); }
+    // (v5.11) 집중 유지 비용 — 리버모어형: 평소엔 평균 이하로 까먹다가 '한 방'으로 승부.
+    //          집중(자산 40%+)을 들수록 매 턴 소액 차감해 평균을 필드 아래로(우승은 변동성으로).
+    if(SECTORS.some(s => (p.bets[s.id]||0) >= bud*0.40)){
+      const drag = state.maxTurn >= 16 ? 3 : 2; total -= drag; msgs.push(`집중 유지비용 -${drag}`);
+    }
     // ban: 4+ sectors
     const active = SECTORS.filter(s => (p.bets[s.id]||0) > 0).length;
     if(active >= 4){ total -= 10; msgs.push('금지위반(분산과다) -10'); }
@@ -2344,6 +2345,25 @@ function evaluatePrinciple(p, ctx){
 }
 
 /* === BOT AI === */
+// (v5.11) 봇 의사결정 한 줄 요약 — 정산 때 공개(베팅 중엔 숨겨 블라인드 베팅 유지)
+function botDecisionNote(p, target){
+  const tb = Math.max(1, p.cash + Object.values(p.bets).reduce((a,b)=>a+b,0));
+  const entries = Object.entries(target).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length) return '🅿️ 관망 — 현금 보유';
+  const [topSid, topV] = entries[0];
+  const pct = Math.round(topV / tb * 100);
+  const n = entries.length;
+  const hot = Object.entries(state.omen||{}).filter(([,v])=>v>=2).map(([k])=>({infl:'인플레',geo:'지정학',cred:'신용',rec:'침체'}[k]||k));
+  const warn = hot.length ? `⚠️${hot[0]} 위험 감지 → ` : '';
+  const cyc = state.cycle, phase = cyc>=75?'과열':cyc>=50?'확장':cyc>=25?'둔화':'침체';
+  switch(p.personaId){
+    case 'HUNTER':     return `🎯 ${warn}${topSid}에 집중(자산 ${pct}%) — 테마 확신 베팅`;
+    case 'QUANT':      return `📊 ${warn}${n}개 섹터 분산 — 변동성 줄이고 생존 우선`;
+    case 'ORACLE':     return `🔮 ${warn}${topSid} 장기 보유 — 인내로 복리`;
+    case 'MACRO_KING': return `👑 ${warn}사이클 ${cyc}(${phase}) 판단 — ${topSid} 등 ${n}섹터 비중`;
+    default:           return `${topSid} ${pct}% 등 ${n}섹터`;
+  }
+}
 function botPlanBets(p){
   const persona = PERSONAS[p.personaId];
   // total budget = cash + sum(bets), bot fully rebalances
@@ -2421,6 +2441,7 @@ function botPlanBets(p){
   //          (기존: 봇이 먼저 확정 → 인간이 보고 결정 = 인간에게 일방적 정보 우위)
   let used = 0;
   for(const sid of Object.keys(target)){ used += target[sid]; }
+  p.botNote = botDecisionNote(p, target);
   p.pendingBets = target;
   p.pendingCash = totalBudget - used;
 }
@@ -2722,9 +2743,9 @@ function alwaysText(persona){
   if(persona.id === 'ORACLE' && long)
     return '한 섹터를 오래 들고 있을수록 매 턴 보너스가 쌓인다 (6턴+ 보유 시 베팅 20당 +1/턴, 호재 발현 시 최대 +9). 14턴 이상 보유하면 텐배거 후보로 +10/턴 — 버핏처럼 장기일수록 강하다. 오래 보유한 섹터에 악재가 와도 손실을 일부 흡수해준다';
   if(persona.id === 'MACRO_KING' && long)
-    return '매크로 카드가 뽑힌 직후 사이클 게이지를 ±5 직접 조정할 수 있다 (턴당 1회). 카드 방향에 맞게 베팅하면 +5, 인플레 상승 국면에 에너지·소재 비중을 늘리면 +8, 금리가 오를 때 채권·성장주 노출을 줄이면 +8. 장기 모드는 리스크 면제 없음';
+    return '매크로 카드가 뽑힌 직후 사이클 게이지를 ±5 직접 조정할 수 있다 (턴당 1회). 카드 방향에 맞게 베팅하면 +5, 인플레 상승 국면에 에너지·소재 비중을 늘리면 +8, 금리가 오를 때 채권·성장주 노출을 줄이면 +8. 장기 모드는 원칙 훼손 면제 없음';
   if(persona.id === 'HUNTER' && long)
-    return '자산의 30% 이상 집중한 섹터에 호재가 터지면 매번 +5 (악재면 -5), 집중 적중 시 매크로·이벤트 수익 +20% 증폭. 단일 한도 60%·리스크 페널티 20% 경감(손절 능력). 단 리버모어처럼 장기로 갈수록 부침이 커진다(16턴 상한 축소). 마지막 4턴 중 2턴 이상 자산의 40%+ 섹터에서 호재 적중 시 게임 종료 보너스 +3';
+    return '자산의 30% 이상 집중한 섹터에 호재가 터지면 매번 +5 (악재면 -5), 집중 포지션은 매크로·이벤트 손익 ±20% 증폭(양날). 단일 한도 60%·집중 유지비용으로 평균은 낮추되 한 방으로 승부·원칙 훼손 패널티 20% 경감(손절). 리버모어처럼 장기로 갈수록 부침이 커진다(16턴 상한 축소). 마지막 4턴 중 2턴 이상 자산의 40%+ 섹터에서 호재 적중 시 게임 종료 보너스 +3';
   if(persona.id === 'QUANT' && long)
     return '자산의 10% 이상 베팅한 섹터가 많을수록 매 턴 보너스가 쌓인다 (4섹터 +1, 5섹터 +2, 6섹터 +3/턴). 5섹터+ 흑자 턴마다 +7. 매크로·이벤트로 손실이 날 때 20% 흡수. 단, 7섹터+ 이상이거나 탐욕 극단·주력 이벤트 미보유 시 페널티';
   return persona.always;
@@ -3049,6 +3070,11 @@ function phase5_settle(){
   const macroD = {}, eventD = {}, slotD = {}, bondD = {};
   SECTORS.forEach(s => {macroD[s.id]=0; eventD[s.id]=0; slotD[s.id]=0; bondD[s.id]=0;});
 
+  // (v5.11) 봇 의사결정 공개 — 베팅 확정 후 정산 단계에서만 (플레이어는 봇 베팅 모른 채 베팅 완료)
+  for(const bp of state.players){
+    if(!bp.isHuman && bp.botNote) logRow(`${bp.name} — ${bp.botNote}`, 'ev');
+  }
+
   // 1) Macro sector effects + threshold effects (infl/rate extremes)
   if(state.currentMacro){
     for(const sid in (state.currentMacro.effects||{})){
@@ -3169,10 +3195,10 @@ function phase5_settle(){
       }
     }
     // (v5.9f) HUNTER 강점 = 확신·리서치 → 적중력. 집중 포지션(자산 30%+)이 맞으면
-    //         매크로·이벤트 수익을 8턴 +40% / 16턴 +20% 증폭(손실은 그대로 — 변동성 유지). 적중이 곧 1등으로.
+    //         매크로·이벤트 손익을 8턴 ±40% / 16턴 ±20% 양방향 증폭(고변동). 집중 유지비용으로 평균↓·변동성으로 승부.
     if(p.personaId==='HUNTER'){
       const conc = SECTORS.some(s => (p.bets[s.id]||0) >= bud*0.30);
-      if(conc){ const amp = state.maxTurn >= 16 ? 1.2 : 1.4; for(const k of ['macro','event']){ if(b[k] > 0) b[k] *= amp; } }
+      if(conc){ const amp = state.maxTurn >= 16 ? 1.2 : 1.4; for(const k of ['macro','event']){ b[k] *= amp; } } // (v5.11) 양방향 증폭 — 집중은 손익 둘 다 키운다(고변동 정체성)
     }
     // Strategy effects
     if(p.activeStrategy === 'PATIENCE'){
@@ -3758,8 +3784,8 @@ function buildFinalReport(p){
   const strengths = [];
   if(gCount.S >= 2) strengths.push(`<b>압도적 운용 구간 다수</b> — S등급 ${gCount.S}회. 특정 국면에서 시장을 완전히 장악하는 순간이 있었다.`);
   if(goodTurns >= hist.length*0.6) strengths.push(`<b>높은 의사결정 적중률</b> — 전체 ${hist.length}턴 중 ${goodTurns}턴(${Math.round(goodTurns/hist.length*100)}%)에서 A등급 이상. 꾸준함이 이 계좌의 핵심 경쟁력이다.`);
-  if(p.risk === 0) strengths.push('<b>완벽한 리스크 통제</b> — 단 한 개의 리스크 토큰도 발생시키지 않았다. 원칙 기반 운용의 모범적 사례다.');
-  else if(p.risk <= 1) strengths.push(`<b>양호한 리스크 관리</b> — 리스크 토큰 ${p.risk}개. 대다수 구간에서 과도한 위험 노출을 자제했다.`);
+  if(p.risk === 0) strengths.push('<b>완벽한 운용 절제</b> — 단 한 번의 원칙 훼손도 없었다. 원칙 기반 운용의 모범적 사례다.');
+  else if(p.risk <= 1) strengths.push(`<b>양호한 운용 절제</b> — 원칙 훼손 ${p.risk}회. 대다수 구간에서 과도한 위험 노출을 자제했다.`);
   if(hitRate >= 65) strengths.push(`<b>리포트 해석 능력</b> — 리포트 적중률 ${hitRate}%. 시장의 방향성 신호를 효과적으로 베팅에 반영했다.`);
   if(p.questBonus > 0) strengths.push(`<b>페르소나 정체성 완성</b> — ${persona.id} 도전 과제 달성(+20). 자신의 투자 스타일을 끝까지 유지하며 보너스를 획득했다.`);
   if(posSecsN >= 4) strengths.push(`<b>넓은 섹터 수익 기반</b> — ${posSecsN}개 섹터에서 누적 양(+) 손익을 기록. 다양한 시장 국면에서 수익 기회를 포착했다.`);
@@ -3771,7 +3797,7 @@ function buildFinalReport(p){
   const weaknesses = [];
   if(gCount.D >= 2) weaknesses.push(`<b>반복적 대규모 손실</b> — D등급 ${gCount.D}회. 동일한 실수(추세 역행·과집중)가 반복됐을 가능성이 높다. 각 D등급 턴의 공통 패턴을 복기하라.`);
   if(worstT && worstT.pl <= -20) weaknesses.push(`<b>최대 낙폭 과다</b> — 최악의 턴 ${worstT.pl}(T${worstT.turn}). 단일 구간 손실이 지나치게 컸다. Omen 경고 시점의 포지션 조정이 필요했다.`);
-  if(p.risk >= 3) weaknesses.push(`<b>리스크 원칙 다수 위반</b> — 리스크 토큰 ${p.risk}개 · 패널티 ${p.riskPenalty != null ? p.riskPenalty : p.risk*5} 차감. ${(p.riskReasons||[]).slice(0,2).join(', ')} 등의 상황에서 원칙을 지키지 못했다.`);
+  if(p.risk >= 3) weaknesses.push(`<b>원칙 훼손 다발</b> — 원칙 훼손 ${p.risk}회 · 패널티 ${p.riskPenalty != null ? p.riskPenalty : p.risk*5} 차감. ${(p.riskReasons||[]).slice(0,2).join(', ')} 등의 상황에서 절제하지 못했다.`);
   if(hitRate <= 40 && hist.length >= 4) weaknesses.push(`<b>리포트 활용 미흡</b> — 적중률 ${hitRate}%. 리포트 방향과 실제 베팅이 자주 어긋났다. 리포트 해설(애널리스트 노트)과 교차 검증 습관이 필요하다.`);
   if(!p.questBonus) weaknesses.push(`<b>${persona.id} 도전 미달성</b> — 페르소나 고유의 알파 조건을 충족하지 못해 +20 기회를 놓쳤다. 다음 판에서는 첫 턴부터 퀘스트 조건을 의식하고 베팅 구조를 짜라.`);
   if(negSecsN >= 4) weaknesses.push(`<b>섹터 선택의 폭넓은 오류</b> — ${negSecsN}개 섹터에서 누적 손실. 특정 군(성장주/방어주)에 대한 방향 판단이 지속적으로 빗나갔다.`);
@@ -3781,7 +3807,7 @@ function buildFinalReport(p){
 
   // ── 보완 방향 ──────────────────────────────────────────
   const improvements = [];
-  if(p.risk >= 2) improvements.push(`📌 <b>리스크 토큰 관리</b>: 단일 섹터 과집중(>70), 거래비용 과다, Omen3 경고 무시가 주된 발생 경로다. 베팅 전 항상 리스크 조건 3가지를 체크하는 습관을 만들어라.`);
+  if(p.risk >= 2) improvements.push(`📌 <b>원칙 훼손 줄이기</b>: 단일 섹터 자산 55%+ 과집중, 한 턴 자산 20%+ 손실, 침체기 BOND 미보유가 주된 발생 경로다. 베팅 전 항상 이 조건들을 점검하는 습관을 만들어라.`);
   if(!p.questBonus){
     const qHint = persona.id==='ORACLE' ? '한 섹터를 6턴 이상 꾸준히 들고 가면서 해당 섹터에서 누적 이익을 내야 한다.'
       : persona.id==='MACRO_KING' ? '사이클이 75 이상 또는 25 이하 극단에서 반대 방향으로 베팅하고, 이 조건을 2회 이상 성공시켜야 한다.'
@@ -3912,6 +3938,16 @@ function buildFinalReport(p){
         <div style="color:var(--mut);font-size:13px">QUANT의 강점은 크게 터뜨리기가 아니라 덜 잃고 살아남기입니다.</div>
       </div>` : ''}
 
+      <!-- 9b. HUNTER 고변동 해설 -->
+      ${(persona.id === 'HUNTER') ? `
+      <div style="margin-bottom:10px;padding:10px 12px;border-left:3px solid var(--gold);background:#1a160b;border-radius:0 6px 6px 0">
+        <div style="font-weight:700;color:var(--gold);margin-bottom:4px">🎯 HUNTER는 고변동 집중형입니다</div>
+        ${myRank === 1
+          ? `<div>집중 포지션이 적중하며 ${(bestT&&bestT.pl>0)?`T${bestT.turn} <span style="color:var(--green)">+${bestT.pl}</span>의 고수익 구간을 만들어 `:''}단기 폭발력으로 우승했습니다. 다만 같은 전략은 빗나가면 손실도 똑같이 빠르게 커집니다 — 이번엔 '한 방'이 맞아떨어진 판입니다.</div>`
+          : `<div>최고 수익 구간(${(bestT&&bestT.pl>0)?`T${bestT.turn} +${bestT.pl}`:'고점'})은 만들었지만, 후반 손실 관리·포지션 잠금이 부족해 우승 전환력이 낮았습니다. HUNTER는 평소 평균 이하로 버티다 한 방으로 승부하는 페르소나라, 잃을 땐 빠르게 줄이고 확신 구간에 집중하는 타이밍이 핵심입니다.</div>`}
+        <div style="color:var(--mut);font-size:13px;margin-top:4px">평균 수익보다 변동성이 큰 것이 정상입니다 — 승률보다 '한 번의 큰 적중'을 노리세요.</div>
+      </div>` : ''}
+
       <!-- 10. 면책 -->
       <div style="padding:8px 10px;background:#0a0a0a;border-radius:6px;border:1px solid #333;font-size:12px;color:#666;text-align:center;line-height:1.6">
         ⚠️ 본 리포트는 게임 내 시뮬레이션 결과이며 실제 투자 조언이 아닙니다.<br>실제 투자는 원금 손실 위험이 있으며, 투자 결정은 본인의 책임입니다.
@@ -3988,7 +4024,7 @@ function endGame(){
     const isHuman = humanP && p.id === humanP.id;
     html += `<div style="padding:8px;background:var(--panel2);border-radius:6px;margin:6px 0;border-left:4px solid var(--p${p.id})${isHuman?';outline:1px solid var(--acc)':''}">`;
     html += `<b>${i+1}위 · ${p.name} (${p.personaId})</b>${isHuman?' <span style="font-size:14px;color:var(--acc)">[나]</span>':''} — 자산 ${p.totalScore} <span style="color:var(--mut)">(누적수익률 ${p.totalScore>=100?'+':''}${p.totalScore-100}%)</span><br>`;
-    html += `<span style="font-size:14px;color:var(--mut)">cash ${p.cash} + 베팅 ${Object.values(p.bets).reduce((a,b)=>a+b,0)} + 도전 ${p.questBonus}${p.finishBonus?` + 테마완주 ${p.finishBonus}`:''}${p.zeroRiskBonus?` + 무결점 ${p.zeroRiskBonus}`:''} - 리스크 ${p.riskPenalty}</span>`;
+    html += `<span style="font-size:14px;color:var(--mut)">cash ${p.cash} + 베팅 ${Object.values(p.bets).reduce((a,b)=>a+b,0)} + 도전 ${p.questBonus}${p.finishBonus?` + 테마완주 ${p.finishBonus}`:''}${p.zeroRiskBonus?` + 무결점 ${p.zeroRiskBonus}`:''} - 원칙 훼손 ${p.riskPenalty}</span>`;
     html += '</div>';
   });
   html += '</div>';
@@ -4287,7 +4323,7 @@ function render(){
       <div>cash <span class="cash">${p.cash}</span> <span class="cashpct">(${Math.round(p.cash/Math.max(1,totalAssets)*100)}%)</span></div>
       <div class="total">자산 ${totalAssets} · 손익 ${p.lastTurnPL>=0?'+':''}${p.lastTurnPL||0}</div>
       <div class="strat">${strats}</div>
-      <div class="risk-box">${p.risk>0?`⚠️ 리스크 ${p.risk}`:''}</div>
+      <div class="risk-box">${p.risk>0?`⚠️ 원칙 훼손 ${p.risk}`:''}</div>
     </div>`;
   }).join('');
 
@@ -4458,7 +4494,7 @@ function midCheckpoint(){
     <div class="ttl" style="color:var(--gold)">🚩 중간 체크포인트 — 전반전 종료 (8/16턴)</div>
     <div class="desc" style="line-height:1.7">
       <b>순위</b>: ${ranked.map((p,i)=>`${i+1}위 ${p.name} ${assetOf(p)}`).join(' · ')}<br>
-      <b>나는 ${myRank}위</b> — 자산 ${assetOf(me)} · 리스크 토큰 ${me.risk}개<br>
+      <b>나는 ${myRank}위</b> — 자산 ${assetOf(me)} · 원칙 훼손 ${me.risk}회<br>
       <b>시장 레짐</b>: 사이클 ${state.cycle} (${season(state.cycle)}) · F&G ${state.fearGreed} · 인플레 ${state.inflation.toFixed(1)}% / 금리 ${state.rate.toFixed(2)}%<br>
       ${best?`<b>내 강점</b>: ${best[0]} 누적 <span style="color:var(--green)">+${Math.round(best[1])}</span>`:''}${worst?` · <b>약점</b>: ${worst[0]} 누적 <span style="color:var(--red)">${Math.round(worst[1])}</span>`:''}
     </div></div>`;
@@ -4926,7 +4962,7 @@ const tutMe = () => state.players[state.myId];
 
 const TUT_STEPS = [
   { title:'🎮 POSITION에 오신 것을 환영합니다!',
-    text:'POSITION은 <b>8턴</b> 동안 시장 사이클을 읽고 11개 섹터에 베팅해 자산을 불리는 투자 전략 게임입니다. 당신(P0)과 서로 다른 페르소나의 봇 3명이 경쟁하며, 최종 성과 = <b>자산 + 도전 보너스 − 리스크 페널티</b>입니다.<br><br>이 튜토리얼은 집중 투자형 페르소나 <b>HUNTER</b>로 첫 1턴을 함께 진행합니다.',
+    text:'POSITION은 <b>8턴</b> 동안 시장 사이클을 읽고 11개 섹터에 베팅해 자산을 불리는 투자 전략 게임입니다. 당신(P0)과 서로 다른 페르소나의 봇 3명이 경쟁하며, 최종 성과 = <b>자산 + 도전 보너스 − 원칙 훼손 패널티</b>입니다.<br><br>이 튜토리얼은 집중 투자형 페르소나 <b>HUNTER</b>로 첫 1턴을 함께 진행합니다.',
     next:true },
   { sel:'header .turn', title:'⏱ 턴과 단계',
     text:'상단에 현재 <b>턴(1~8)</b>, 진행 단계, 시장 사이클 값이 표시됩니다. 매 턴은 7단계로 진행됩니다: <b>리포트 → 베팅 → 매크로 → 섹터이벤트 → 정산 → F&G → 다음턴</b>.',
@@ -4950,7 +4986,7 @@ const TUT_STEPS = [
     text:'당신은 <b>P0(나)</b>, 나머지는 다른 페르소나의 봇 3명입니다. 각자 cash·자산·손익이 보이고, 이름 아래 <b>전략 카드 3장</b>은 게임당 1회씩 베팅 단계에서 클릭해 사용합니다.',
     next:true },
   { sel:'#myBetsPanel', title:'🎯 HUNTER의 원칙 — 상시 능력',
-    text:'페르소나마다 항상 작동하는 <b>상시 능력</b>이 있습니다.<br><br>🔷 <b>상시</b>: <b>자산의 30% 이상</b> 베팅한 섹터에 호재가 뜨면 매번 <b>+5</b> 자동 추가 (악재면 -5), 적중 시 수익 증폭<br>🚫 <b>금지</b>: 동시에 4개 이상 섹터에 베팅하면 <b>-10</b> 패널티<br>⭐ <b>이익</b>: <b>자산의 40% 이상</b> 집중 + 호재 발현 → 추가 <b>+3</b><br><br>상시 능력은 카드를 쓰지 않아도 자동으로 발동됩니다. 좁고 굵게 베팅하는 스타일입니다.',
+    text:'페르소나마다 항상 작동하는 <b>상시 능력</b>이 있습니다.<br><br>🔷 <b>상시</b>: <b>자산의 30% 이상</b> 베팅한 섹터에 호재가 뜨면 매번 <b>+5</b> (악재면 -5), 집중 시 손익 양방향 증폭(고변동·한 방)<br>🚫 <b>금지</b>: 동시에 4개 이상 섹터에 베팅하면 <b>-10</b> 패널티<br>⭐ <b>이익</b>: <b>자산의 40% 이상</b> 집중 + 호재 발현 → 추가 <b>+3</b><br><br>상시 능력은 카드를 쓰지 않아도 자동으로 발동됩니다. 좁고 굵게 베팅하는 스타일입니다.',
     next:true },
   { sel:'#panelPlayers', title:'🃏 HUNTER의 전략 카드',
     text:'플레이어 카드에서 <b>전략 카드 3장</b>을 게임 중 1회씩 클릭해 사용할 수 있습니다.<br><br>🔥 <b>집중 포화</b>: 이번 턴, <b>자산의 30%+</b> 섹터에 호재가 나올 때마다 추가 <b>+4</b><br>📈 <b>한도 확장</b>: 이번 턴 단일 섹터 베팅 한도 하한을 <b>70</b>으로 확장(자산의 50%와 비교해 큰 값)<br>💸 <b>청산 면제</b>: 이번 턴 베팅 변경 시 <b>거래비용 0</b><br><br>🎯 <b>도전 과제</b>: <b>자산의 40%+</b> 섹터에서 호재 <b>3턴 이상</b> 적중 → 게임 종료 시 <b>+20</b><br><br>카드는 베팅 단계에서만 사용할 수 있고 한 번 쓰면 되돌릴 수 없습니다.',
@@ -5248,7 +5284,7 @@ function runAutoTest(n, mode){
     const avgRisk = s.games ? (s.riskSum / s.games) : 0;
     const questRate = s.games ? (s.questHit / s.games * 100) : 0;
     summary[pid] = {games:s.games, avgScore:+avgScore.toFixed(1), avgRank:+avgRank.toFixed(2), wins:s.wins, winRate:+winRate.toFixed(1), avgRisk:+avgRisk.toFixed(2), questRate:+questRate.toFixed(0), nan:s.nan};
-    console.log(`${pid}: 표본 ${s.games} · 평균 ${avgScore.toFixed(1)} · 순위 ${avgRank.toFixed(2)} · 우승 ${s.wins}(${winRate.toFixed(1)}%) · 리스크 ${avgRisk.toFixed(2)} · 도전 ${questRate.toFixed(0)}%`);
+    console.log(`${pid}: 표본 ${s.games} · 평균 ${avgScore.toFixed(1)} · 순위 ${avgRank.toFixed(2)} · 우승 ${s.wins}(${winRate.toFixed(1)}%) · 원칙 훼손 ${avgRisk.toFixed(2)} · 도전 ${questRate.toFixed(0)}%`);
   }
   // 경고 체크
   for(const pid of personaIds){
