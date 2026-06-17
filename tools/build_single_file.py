@@ -10,6 +10,7 @@
 """
 import re
 import base64
+import os
 
 SRC = "POSITION_v5_9_dashboard_tutorial.html"
 OUT = "POSITION_v5_9_single.html"
@@ -22,15 +23,25 @@ def main():
     with open(SRC, "r", encoding="utf-8") as f:
         html = f.read()
 
+    stats = {"inlined": 0, "missing": []}
+
     def repl(m):
-        with open(m.group("path"), "rb") as img:
-            b64 = base64.b64encode(img.read()).decode("ascii")
-        return f'"{m.group("key")}":"data:image/jpeg;base64,{b64}"'
+        path = m.group("path")
+        if os.path.exists(path):
+            with open(path, "rb") as img:
+                b64 = base64.b64encode(img.read()).decode("ascii")
+            stats["inlined"] += 1
+            return f'"{m.group("key")}":"data:image/jpeg;base64,{b64}"'
+        # 파일이 아직 없으면 빈 값 → 게임에서 자동으로 🗳️ 아이콘 폴백
+        stats["missing"].append(m.group("key"))
+        return f'"{m.group("key")}":""'
 
     single, n = PATTERN.subn(repl, html)
     with open(OUT, "w", encoding="utf-8") as f:
         f.write(single)
-    print(f"통합 완료: 이미지 {n}장 인라인 -> {OUT}")
+    print(f"통합 완료: 이미지 {stats['inlined']}장 인라인 -> {OUT}")
+    if stats["missing"]:
+        print(f"  (이미지 없는 카드 {len(stats['missing'])}장은 아이콘 폴백: {', '.join(stats['missing'][:6])}{' …' if len(stats['missing'])>6 else ''})")
 
 
 if __name__ == "__main__":
