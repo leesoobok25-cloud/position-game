@@ -1340,8 +1340,8 @@ const SENTIMENT_DECKS = {
 };
 const SENTIMENT_LABEL = {positive:'➕ 긍정', negative:'➖ 부정', neutral:'⚪ 중립'};
 
-/* SECTOR_EVENT cards (v5.7) — 섹터별 4장(강호재/약호재/약악재/강악재) × 11 = 44장.
-   각 카드: id, name, main, mainEff, related{}, omen{}, tags[], narrative. */
+/* SECTOR_EVENT cards (v5.12) — 섹터별 8장(4국면[침체·회복·호황·과열] × 호재·악재) × 11 = 88장.
+   각 카드: id, name, main, mainEff, related{}, omen{}, phase, tags[], narrative. */
 const SECTOR_EVENTS = [
   // TECH (성장·금리민감) — 4국면 × 호재·악재
   {id:'E_TECH_CAPEX_CUT', name:'클라우드 CAPEX 삭감', main:'TECH', mainEff:-5, related:{SEMI:-4, UTIL:-2}, omen:{rec:1}, phase:'recession', tags:['tech','capex','ai'], narrative:'고객사 투자 축소가 AI 인프라 기대를 꺾는다.'},
@@ -2118,6 +2118,7 @@ function activeThresholds(cycle){
    2) Capital gain/loss: each +0.5%p rate change → BOND -5%; each -0.5%p → BOND +5%.
    3) Cycle bonus: cycle<25 → +3 (safe-haven rush); cycle>75 → -3 (risk-on outflow).
    Returns the BOND per-10-bet delta (added to bondD.BOND in settlement). */
+// BOND per-10-bet delta: 쿠폰(이자) + 자본손익(가격) + 국면 + 인플레 드래그. (혼잡 몰리면 쿠폰도 압축 → 감쇠 유지)
 function bondPerTen(){
   let per = 0;
   // 1) interest income (scaled 1.5x)
@@ -2125,17 +2126,16 @@ function bondPerTen(){
   if(state.rate >= 4) coupon = 3;
   else if(state.rate >= 2.5) coupon = 2;
   else if(state.rate >= 1.0) coupon = 1;
-  else coupon = 0;
   per += Math.round(coupon * 1.5);
   // 2) capital gain/loss from rate delta this turn
   const rateDelta = state.rate - (state.prevRate ?? state.rate);
-  // each +1.0%p → BOND -10%, ie per-10-bet -1.0 per 0.1%p — scaled to integer impact
   per += Math.round(-rateDelta * 10);
   // 3) cycle position bonus
   if(state.cycle < 25) per += 3;
   else if(state.cycle > 75) per -= 3;
-  // 4) high inflation drag still applies (real yield erosion)
-  if(state.inflation >= 3.0) per -= 2;
+  // 4) high inflation drag (real yield erosion) — (v5.12) 완화: 3%+ -1, 4%+ -2
+  if(state.inflation >= 4.0) per -= 2;
+  else if(state.inflation >= 3.0) per -= 1;
   return per;
 }
 
@@ -2197,8 +2197,10 @@ function checkRiskTokens(p, ctx){
   if(totalBet > bud * 0.85 && p.cash < bud * 0.10){
     p.risk++; p.riskReasons.push(`T${state.turn}: 현금버퍼<10% 과투입`);
   }
-  if(state.cycle < 25 && (p.bets.BOND||0) === 0){
-    p.risk++; p.riskReasons.push(`T${state.turn}: 침체기 무BOND`);
+  // (v5.12) 침체기 무방어 — 단, MACRO KING이 UTIL 등 방어 비중(자산 10%+)을 들었으면 면제(BOND만 강제하지 않음)
+  if(state.cycle < 25 && (p.bets.BOND||0) === 0
+     && !(p.personaId === 'MACRO_KING' && (p.bets.UTIL||0) >= bud*0.10)){
+    p.risk++; p.riskReasons.push(`T${state.turn}: 침체기 무방어자산`);
   }
 }
 
