@@ -25,11 +25,11 @@
   /* 헤더 등급체계 */
   .header-tier-guide{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}
   .htier-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;
-    border:1px solid transparent;border-radius:12px;font-size:11px;
+    border:1px solid transparent;border-radius:12px;font-size:12px;
     background:#0d1117;white-space:nowrap;opacity:.65}
   .htier-chip.htier-active{opacity:1;background:#1a2030}
-  .htier-req{color:var(--mut);font-size:10px}
-  .htier-nick{font-size:12px;font-weight:700;color:var(--gold);margin-right:4px;white-space:nowrap}
+  .htier-req{color:var(--mut);font-size:11px}
+  .htier-nick{font-size:13px;font-weight:700;color:var(--gold);margin-right:4px;white-space:nowrap}
 
   /* (v1.1) 새 레이아웃 — 상단: 현재단계(전폭) / 중단: 지표+플레이어 | 로그 | 베팅 / 하단: 섹터보드(전폭) */
   .grid{display:grid;grid-template-columns:1fr;gap:10px;padding:10px}
@@ -205,7 +205,7 @@
     min-height:62px;border:1px solid var(--line);box-shadow:0 4px 14px #0007}
   .card-art .art-icon{font-size:36px;filter:drop-shadow(0 2px 4px #000a);line-height:1}
   .card-art .art-img{width:100%;height:auto;display:block}
-  .card-art .art-tag{position:absolute;right:6px;bottom:4px;font-size:10px;
+  .card-art .art-tag{position:absolute;right:6px;bottom:4px;font-size:11px;
     color:#cdd5df;background:#0009;padding:1px 7px;border-radius:8px}
   .badge-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:4px 0 2px}
   .cyc-badge{font-size:12px;font-weight:700;padding:2px 9px;border-radius:10px;
@@ -213,14 +213,14 @@
   .cyc-badge.up{color:var(--green);border-color:var(--green);background:#13301f}
   .cyc-badge.dn{color:var(--red);border-color:var(--red);background:#2a0f0f}
   .cyc-badge.flat{color:var(--mut);border-color:var(--line);background:var(--panel2)}
-  .meta-chip{font-size:11px;color:var(--mut);background:var(--panel2);
+  .meta-chip{font-size:12px;color:var(--mut);background:var(--panel2);
     border:1px solid var(--line);border-radius:8px;padding:2px 7px}
   .eff-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-  .sec-chip{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;
+  .sec-chip{font-size:12px;font-weight:600;padding:2px 7px;border-radius:6px;
     border:1px solid}
   .sec-chip.pos{color:var(--green);border-color:#1a4a2a;background:#0f2417}
   .sec-chip.neg{color:var(--red);border-color:#4a1a1a;background:#240f0f}
-  .eff-more{font-size:11px;color:var(--mut);align-self:center}
+  .eff-more{font-size:12px;color:var(--mut);align-self:center}
 
   .btn{background:var(--acc);color:#000;border:none;border-radius:6px;
     padding:8px 14px;font-weight:700;cursor:pointer;font-size:13px}
@@ -260,9 +260,9 @@
   .pbadge.easymid{background:rgba(56,189,248,.15);color:#38bdf8;border:1px solid rgba(56,189,248,.45)}
   .pbadge.mid{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.45)}
   .pbadge.hard{background:rgba(248,113,113,.18);color:#f87171;border:1px solid rgba(248,113,113,.55)}
-  .pcard .sub{font-size:11px;color:var(--mut);margin-bottom:6px}
-  .pcard .pp{font-size:10px;margin:3px 0;padding:3px 6px;border-radius:4px;
-    background:#0b0d12}
+  .pcard .sub{font-size:12px;color:var(--mut);margin-bottom:6px}
+  .pcard .pp{font-size:11.5px;margin:3px 0;padding:4px 7px;border-radius:4px;
+    background:#0b0d12;line-height:1.5}
   .pcard .pp.boon{color:var(--green);border-left:3px solid var(--green)}
   .pcard .pp.ban{color:var(--red);border-left:3px solid var(--red)}
   .pcard .pp.quest{color:var(--gold);border-left:3px solid var(--gold)}
@@ -280,9 +280,9 @@
     background:var(--panel2);border:1px solid var(--line);margin:0 2px}
   .pill.slot{background:#2a1f0a;border-color:var(--gold);color:var(--gold)}
 
-  .narrative{font-style:italic;color:var(--mut);font-size:11px;
-    padding:4px 8px;border-left:3px solid var(--acc);background:#0b0d12;
-    border-radius:0 4px 4px 0;margin:4px 0}
+  .narrative{font-style:italic;color:#aeb6c0;font-size:12.5px;
+    padding:5px 9px;border-left:3px solid var(--acc);background:#0b0d12;
+    border-radius:0 4px 4px 0;margin:4px 0;line-height:1.55}
 
   /* === Stage E — activation animations & sector heat === */
   @keyframes cardReveal{
@@ -371,17 +371,17 @@
   .rv-sum .rv-pl{font-size:16px;font-weight:800}
   .rv-sum .rv-pl.pos{color:var(--green)}
   .rv-sum .rv-pl.neg{color:var(--red)}
-  .rv-sum .rv-asset{font-size:11px;color:var(--mut)}
+  .rv-sum .rv-asset{font-size:12px;color:var(--mut)}
   .rv-sum .rv-asset b{color:var(--txt)}
   .rv-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:9px}
-  .rv-col-t{font-size:11px;font-weight:700;margin-bottom:3px}
+  .rv-col-t{font-size:12px;font-weight:700;margin-bottom:3px}
   .rv-col-t.good{color:var(--green)}
   .rv-col-t.bad{color:var(--red)}
-  .rv-col ul{margin:0;padding-left:16px;font-size:11px;line-height:1.55;color:var(--txt)}
+  .rv-col ul{margin:0;padding-left:16px;font-size:12.5px;line-height:1.6;color:var(--txt)}
   .rv-col li{margin:2px 0}
   .rv-col li.none{color:var(--mut);list-style:none;margin-left:-16px}
   .rv-col li b{color:var(--gold)}
-  .rv-tip{margin-top:9px;padding:6px 9px;font-size:11px;line-height:1.5;
+  .rv-tip{margin-top:9px;padding:7px 10px;font-size:12.5px;line-height:1.55;
     border-left:3px solid var(--acc);background:#0b1622;border-radius:0 4px 4px 0;
     color:var(--txt)}
   .rv-tip b{color:var(--acc)}
@@ -3066,6 +3066,21 @@ function phase4_event(){
 }
 
 /* (v5.7) headless event resolution for auto-test (no human input) */
+// (v5.12) 섹터 이벤트가 인플레/금리를 직접 움직임 — 채택된 이벤트가 거시 환경에 피드백.
+//          작은 충격(±0.1~0.2)이 적용되고, 다음 턴부터 점진적으로 사이클 기준값으로 되돌아간다.
+const EVENT_FACTOR_MOVES = {
+  // 인플레 ↑ (원자재·관세·전력)
+  E_ENG_OIL_SPIKE:{infl:+0.2}, E_ENG_GEO_SHOCK:{infl:+0.2}, E_MATE_COMMODITY_SUPERCYCLE:{infl:+0.2},
+  E_MATE_COPPER_RALLY:{infl:+0.1}, E_SEMI_HBM_SHORTAGE:{infl:+0.1}, E_UTIL_POWER_PRICE:{infl:+0.1},
+  E_CONS_INPUT_COST:{infl:+0.1}, E_AUTO_TRADE_WAR:{infl:+0.15},
+  // 인플레 ↓ (수요 둔화·유가 급락)
+  E_ENG_OIL_CRASH:{infl:-0.2}, E_MATE_DEMAND_DESTRUCTION:{infl:-0.15}, E_INDU_FREIGHT_RECESSION:{infl:-0.1},
+  E_CONS_DELINQUENCY:{infl:-0.1},
+  // 금리 ↑ (장기금리·재정·신용)
+  E_BOND_BEAR_STEEPENING:{rate:+0.2}, E_BOND_FISCAL_DOWNGRADE:{rate:+0.2}, E_BOND_REFLATION:{rate:+0.15}, E_BOND_CREDIT_SPREAD:{rate:+0.1},
+  // 금리 ↓ (인하·정점 통과·안전선호)
+  E_BOND_DOVISH_SURPRISE:{rate:-0.2}, E_FIN_RATE_CUT:{rate:-0.2}, E_BOND_PEAK_RATE:{rate:-0.15}, E_BOND_FLIGHT_QUALITY:{rate:-0.1},
+};
 function resolveEventVote(){
   let aCount=0, bCount=0;
   for(const pid in state.eventVotes){
@@ -3075,6 +3090,13 @@ function resolveEventVote(){
   if(bCount > aCount) pick = state.currentEvents[1];
   else pick = state.currentEvents[0];
   state.currentEventChosen = pick;
+  // (v5.12) 채택 이벤트의 인플레/금리 충격 적용 (거시 피드백)
+  const fm = pick && EVENT_FACTOR_MOVES[pick.id];
+  if(fm){
+    if(fm.infl){ const pv=state.inflation; state.inflation=clamp(state.inflation+fm.infl,-1.0,7.0); state.inflDelta=(state.inflDelta||0)+(state.inflation-pv); }
+    if(fm.rate){ const pv=state.rate; state.rate=clamp(state.rate+fm.rate,0.25,6.0); state.rateDelta=(state.rateDelta||0)+(state.rate-pv); }
+    if(typeof logRow==='function'){ const parts=[]; if(fm.infl)parts.push(`인플레 ${fm.infl>0?'+':''}${fm.infl}`); if(fm.rate)parts.push(`금리 ${fm.rate>0?'+':''}${fm.rate}`); if(parts.length) logRow(`[거시 파급] ${pick.name} → ${parts.join(', ')}`, 'ev'); }
+  }
 }
 
 function castEventVote(choice){
@@ -3166,12 +3188,15 @@ function phase5_settle(){
   bondD.BOND = (bondD.BOND||0) + bondPerTen();
 
   // 5) Crowding damping per sector — applied uniformly to all sources
+  // (v5.12) 혼잡 임계 %화 — 총 투입자산이 커지면 임계도 비례 상향(절대 60/80 → 후반 과열 방지)
   const dampingMul = {};
+  const _totAssets = state.players.reduce((a,p)=>a + p.cash + Object.values(p.bets).reduce((x,y)=>x+y,0), 0);
+  const _scale = Math.max(1, _totAssets / 400);  // 4인×100 기준
   for(const s of SECTORS){
     const sum = state.players.reduce((a,p)=>a+(p.bets[s.id]||0), 0);
     let m = 1;
-    if(sum >= 80) m = 0.25;
-    else if(sum >= 60) m = 0.5;
+    if(sum >= 80*_scale) m = 0.25;
+    else if(sum >= 60*_scale) m = 0.5;
     dampingMul[s.id] = m;
     macroD[s.id] = Math.round(macroD[s.id] * m);
     eventD[s.id] = Math.round(eventD[s.id] * m);
@@ -5192,10 +5217,12 @@ function tutShow(){
       ${st.next ? `<button class="btn" onclick="tutNext()">${st.done ? '튜토리얼 완료 ✓' : '다음 →'}</button>` : ''}
     </div>`;
   tip.style.display = 'block';
-  tutPosition();
+  tutPosition(true);
 }
 
-function tutPosition(){
+/* allowScroll: 단계가 처음 표시될 때만 true → 대상이 화면 밖이면 한 번 스크롤.
+   스크롤/리사이즈/리렌더로 호출될 때는 false → 사용자가 자유롭게 스크롤(스크롤 트랩 방지). */
+function tutPosition(allowScroll){
   if(!TUT.active) return;
   const st = TUT_STEPS[TUT.step];
   const hl = document.getElementById('tutHL');
@@ -5203,6 +5230,13 @@ function tutPosition(){
   if(!st || !hl || !tip) return;
   const target = st.sel ? document.querySelector(st.sel) : null;
   if(target){
+    // 처음 표시될 때만, 그리고 대상이 화면 밖일 때만 한 번 스크롤한다.
+    if(allowScroll){
+      const pre = target.getBoundingClientRect();
+      if(pre.top < 0 || pre.bottom > window.innerHeight){
+        target.scrollIntoView({behavior:'smooth', block:'center'});
+      }
+    }
     const r = target.getBoundingClientRect();
     hl.style.display = 'block';
     hl.style.left = (r.left - 4) + 'px';
@@ -5215,9 +5249,6 @@ function tutPosition(){
     const left = clamp(r.left, 12, Math.max(12, window.innerWidth - tw - 12));
     tip.style.top = top + 'px';
     tip.style.left = left + 'px';
-    if(r.top < 0 || r.bottom > window.innerHeight){
-      target.scrollIntoView({behavior:'smooth', block:'center'});
-    }
   } else {
     hl.style.display = 'none';
     tip.style.left = Math.max(12, (window.innerWidth - tip.offsetWidth) / 2) + 'px';
