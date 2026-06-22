@@ -26,7 +26,7 @@ from lessons import LESSONS
 from telegram_utils import escape_html, make_tts_mp3, send_audio, send_message
 
 # 코스 시작일. 이 날 첫 과(Day 1)가 나갑니다.
-START_DATE = date(2026, 6, 14)
+START_DATE = date(2026, 6, 22)
 DIVIDER = "━━━━━━━━━━━━━━━━━━"
 
 
