@@ -2194,16 +2194,22 @@ function checkRiskTokens(p, ctx){
   const cash = (p._discCash != null) ? p._discCash : p.cash;
   const bud = Math.max(1, cash + Object.values(bets).reduce((a,b)=>a+b,0));
   const max = Math.max(0, ...Object.values(bets));
+  // 사유를 누적하고, 사람 플레이어에겐 정산 로그에 '왜' 찍혔는지 즉시 설명한다.
+  const add = (short, full) => {
+    p.risk++; p.riskReasons.push(`T${state.turn}: ${short}`);
+    if(p.isHuman && typeof logRow==='function') logRow(`⚠️ <b>원칙 훼손</b> — ${full}`, 'neg');
+  };
   if(max > bud * 0.55){
-    p.risk++; p.riskReasons.push(`T${state.turn}: 단일섹터 ${Math.round(max/bud*100)}% 집중`);
+    const pct = Math.round(max/bud*100);
+    add(`한 섹터 ${pct}% 과집중`, `한 섹터에 자산의 <b>${pct}%</b>를 몰았습니다 — 상한 55% 초과(과도한 집중)`);
   }
   if(cash < bud * 0.05){   // (v5.12) 현금버퍼 거의 0(5% 미만) = 과투입. 10%→5%로 완화(분산 투자도 약간 여유 허용)
-    p.risk++; p.riskReasons.push(`T${state.turn}: 현금버퍼<5% 과투입`);
+    add(`현금버퍼<5%`, `현금을 자산의 <b>5% 미만</b>만 남기고 거의 전액 투입했습니다 — 생존 버퍼 부족(손실 자체와는 무관, 베팅 시점 기준)`);
   }
   // (v5.12) 침체기 무방어 — 단, MACRO KING이 UTIL 등 방어 비중(자산 10%+)을 들었으면 면제(BOND만 강제하지 않음)
   if(state.cycle < 25 && (bets.BOND||0) === 0
      && !(p.personaId === 'MACRO_KING' && (bets.UTIL||0) >= bud*0.10)){
-    p.risk++; p.riskReasons.push(`T${state.turn}: 침체기 무방어자산`);
+    add(`침체기 무방어`, `침체기(사이클&lt;25)인데 <b>방어자산(BOND·UTIL)</b>을 하나도 안 들었습니다`);
   }
 }
 
@@ -4845,7 +4851,8 @@ function renderAction(){
          <div style="margin-top:4px;font-size:14px;color:var(--mut)">🗳️ A <b>${A.name}</b>: ${voteNames('A')}<br>🗳️ B <b>${B.name}</b>: ${voteNames('B')}</div>
          <div style="margin-top:8px"><button class="btn" onclick="goSettle()">→ 정산으로</button></div>`
       : `<div style="margin-top:6px;font-size:14px;color:var(--mut)">당신의 한 표로 결과가 결정됩니다. 어느 쪽을 채택할까요?</div>`;
-    a.innerHTML = `<div class="card"><div class="ttl">🗳️ 섹터 이벤트 투표 — 2장 중 1장 채택</div></div>
+    a.innerHTML = `<div class="card"><div class="ttl">🗳️ 섹터 이벤트 투표 — 2장 중 1장 채택</div>
+      <div style="font-size:12px;color:var(--mut);margin-top:4px">💡 유가·관세·금리·채권 관련 일부 카드는 채택되면 <b>그 턴 정산 직전에 인플레이션·금리에도 파급</b>됩니다 (정산 로그의 <b style="color:var(--gold)">[거시 파급]</b> 표시).</div></div>
       <div class="vote" style="margin-top:8px">
         ${evCard(A,'A')}
         ${evCard(B,'B')}
@@ -5147,7 +5154,7 @@ const TUT_STEPS = [
     mission:'👆 "→ 섹터 이벤트로" 버튼을 누르세요',
     until: () => state.phase >= 3 || state.turn >= 2 },
   { sel:'#panelPhase', title:'4단계 — 🗳️ 섹터 이벤트 투표',
-    text:'2장 중 1장을 <b>다수결</b>로 채택합니다. 봇들은 이미 투표했고(아래 집계), 동률이면 당신이 캐스팅보트! 내 베팅 섹터에 유리한 카드에 투표하세요. 다른 플레이어들의 포지션을 보면 봇들의 표도 예측할 수 있습니다.',
+    text:'2장 중 1장을 <b>다수결</b>로 채택합니다. 봇들은 이미 투표했고(아래 집계), 동률이면 당신이 캐스팅보트! 내 베팅 섹터에 유리한 카드에 투표하세요. 다른 플레이어들의 포지션을 보면 봇들의 표도 예측할 수 있습니다.<br><br>💡 유가·관세·금리 관련 일부 카드는 채택되면 <b>그 턴 정산 직전에 인플레이션·금리에도 파급</b>됩니다 (정산 로그 <b>[거시 파급]</b>).',
     mission:'👆 둘 중 원하는 카드를 클릭해 투표하고, 결과를 읽은 뒤 "→ 정산으로"를 누르세요',
     until: () => state.phase >= 4 || state.turn >= 2 },
   { sel:'#panelPhase', title:'5단계 — 🧮 정산과 턴 리뷰',
