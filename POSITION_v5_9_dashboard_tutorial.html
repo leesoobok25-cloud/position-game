@@ -1991,7 +1991,7 @@ function checkOmen3(){
 function drawMacro(){
   // Priority:
   // 1) forced (Omen3)
-  // 2) F&G extreme: pick 2, human chooses
+  // 2) F&G extreme: 평균회귀 매크로 1장 자동 발동 (선택 없음, v5.9e)
   // 3) normal: weighted by Omen gauges
   //    — shock cards live in their randomly-assigned deck and are part of normal pool.
 
@@ -3018,8 +3018,9 @@ function fgExtremePick(idx){
 
 /* (v5.7) 섹터 이벤트 weighted draw — REPORT eventBias/tagBias + Omen + 사이클 경향 */
 function drawSectorEvents(){
-  // (QA) forceEvent()로 지정된 이벤트를 강제로 A카드(index 0)에 배치 — 개발자 테스트용
-  if(state._forceEventId){
+  // (QA) forceEvent()로 지정된 이벤트를 강제로 A카드(index 0)에 배치 — 개발자 테스트용.
+  //      DEBUG 모드에서만 허용. 공개판에서 콘솔로 state._forceEventId를 직접 심어도 무시한다.
+  if(DEBUG && state._forceEventId){
     const forced = SECTOR_EVENTS.find(e => e.id === state._forceEventId);
     state._forceEventId = null;
     if(forced){
@@ -3028,6 +3029,7 @@ function drawSectorEvents(){
       return [forced, other];
     }
   }
+  if(!DEBUG && state._forceEventId){ state._forceEventId = null; } // 공개판 우회 차단
   state._forcedThisDraw = false;
   const report = state.currentReport || {};
   const eventBias = report.eventBias || {};
@@ -3159,9 +3161,11 @@ const QA_PRINCIPLE_CASES = {
   // type: { bets, cash, cyc, pl, exp, d }  (자산합 100 기준)
   cashLow:            { bets:{TECH:50,BOND:46}, cash:4,  cyc:50, pl:0,   exp:1, d:'베팅현금 4%(현금버퍼<5%)' },
   lossButEnoughCash:  { bets:{TECH:50,BOND:30}, cash:20, cyc:50, pl:-40, exp:0, d:'베팅현금 20% + 손실 -40(손실≠위반)' },
+  concentration:      { bets:{TECH:60},         cash:40, cyc:50, pl:0,   exp:1, d:'단일 TECH 60%(>55% 과집중)' },
   recessionNoDefense: { bets:{TECH:50},         cash:50, cyc:20, pl:0,   exp:1, d:'침체(사이클20)·BOND/UTIL 0' },
   recessionWithBond:  { bets:{TECH:45,BOND:5},  cash:50, cyc:20, pl:0,   exp:0, d:'침체·BOND 자산 5%' },
   recessionWithUtil:  { bets:{TECH:45,UTIL:5},  cash:50, cyc:20, pl:0,   exp:0, d:'침체·UTIL 자산 5%' },
+  cleanBet:           { bets:{TECH:30,BOND:20,UTIL:10}, cash:40, cyc:50, pl:0, exp:0, d:'정상 분산 베팅(위반 0 기대)' },
 };
 function forcePrincipleCase(type){
   if(!DEBUG){ console.warn('[QA] DEBUG 모드 전용입니다 — ?debug=1 또는 localStorage POSITION_DEBUG=1 후 사용하세요.'); return; }
@@ -3891,7 +3895,8 @@ function phase6_fg(){
 function phase7_next(){
   // Decrement slot durations
   state.slots = state.slots.map(s => ({...s, dur: s.dur-1})).filter(s => s.dur > 0);
-  // (B안) 인플레/금리는 매크로 적용시 cycle 에서 자동 파생됨 — 별도 누적/갱신 로직 불필요
+  // (B안) 인플레/금리는 매크로 적용시 cycle에서 자동 파생 + (v5.12) 섹터이벤트 EVENT_FACTOR_MOVES가
+  //        정산 시 가산됨. 다음 턴 phase1_report의 deriveInflRate가 기준선으로 되돌린다(일시 충격).
   // Next turn
   state.turn++;
   if(state.turn > state.maxTurn){
@@ -5405,6 +5410,11 @@ function validateGameData(){
   checkEffects(MACRO_CARDS, 'MACRO');
   checkEffects(SHOCK_CARDS, 'SHOCK');
   checkEffects(SECTOR_EVENTS, 'EVENT');
+
+  // (v5.12) 거시 파급 매핑 무결성 — 등록된 모든 ID가 실제 섹터 이벤트에 존재하는지 검사
+  for(const id of Object.keys(typeof EVENT_FACTOR_MOVES!=='undefined' ? EVENT_FACTOR_MOVES : {})){
+    if(!SECTOR_EVENTS.some(e => e.id === id)) err(`[INVALID EVENT_FACTOR_MOVE] ${id} 에 해당하는 SECTOR_EVENT 없음`);
+  }
 
   const ids = new Set();
   for(const arr of [MACRO_CARDS, SHOCK_CARDS, SECTOR_EVENTS, REPORTS]){
