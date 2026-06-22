@@ -1,0 +1,37 @@
+name: Daily Basic English Lesson (Telegram)
+
+# 매일 기초 영어 코스를 한 과씩 텔레그램으로 보냅니다. (회화와는 별도)
+on:
+  schedule:
+    # cron은 UTC 기준입니다. '0 11 * * *' = 매일 11:00 UTC = 20:00 KST(저녁 8시).
+    # 보내는 시간을 바꾸려면 아래 숫자를 조정하세요. (KST = UTC + 9시간)
+    #   예) 저녁 7시 KST -> '0 10 * * *'  /  밤 10시 KST -> '0 13 * * *'
+    - cron: '0 11 * * *'
+  # Actions 탭에서 'Run workflow' 버튼으로 직접 테스트할 수 있습니다.
+  workflow_dispatch:
+
+concurrency:
+  group: daily-lesson
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies (text-to-speech)
+        run: pip install gtts requests
+
+      - name: Send today's basic English lesson
+        working-directory: english-telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 send_lesson.py
