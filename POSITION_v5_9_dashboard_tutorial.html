@@ -3819,6 +3819,7 @@ function phase6_fg(){
   const avgPL = state.players.reduce((a,p)=>a+(p.lastTurnPL||0),0) / Math.max(1, state.players.length);
 
   let move = 0;
+  const parts = [];  // (v5.12) F&G 변동 분해 — 로그에 '왜 이렇게 움직였는지' 표시
   // 상승 속도를 하락보다 느리게 (약 70% 수준)
   if(avgPL >= 20) move = +7;
   else if(avgPL >= 10) move = +4;
@@ -3828,20 +3829,27 @@ function phase6_fg(){
   else if(avgPL > -10) move = -5;
   else if(avgPL > -20) move = -9;
   else move = -13;
+  if(move) parts.push(`손익 ${move>0?'+':''}${move}`);
 
   // 극탐욕 구간에서 상승 억제 (35%), 극공포 구간에서 하락 덜 억제 (55%) — 공황 시 추가 낙폭 허용
+  let _b = move;
   if(state.fearGreed >= 80 && move > 0) move = Math.ceil(move * 0.35);
   if(state.fearGreed <= 20 && move < 0) move = Math.floor(move * 0.55);
+  if(move !== _b) parts.push(`${state.fearGreed>=80?'극탐욕':'극공포'} 억제 ${move-_b>0?'+':''}${move-_b}`);
 
   // 사이클 극단에서는 심리 평균회귀
+  _b = move;
   if(state.cycle >= 85) move -= 3;
   if(state.cycle <= 15) move += 3;
+  if(move !== _b) parts.push(`사이클 평균회귀 ${move-_b>0?'+':''}${move-_b}`);
 
   // (v5.9c) 16턴 장기 모드 — 탐욕권 누적 상승 억제 (평균 종료값 71 → 60대로 조정)
   if(state.maxTurn >= 16){
+    _b = move;
     if(state.fearGreed >= 70 && move > 0) move = Math.ceil(move * 0.6);
     if(state.fearGreed >= 80) move -= 2;
     if(state.fearGreed <= 25 && move < 0) move = Math.floor(move * 0.7);
+    if(move !== _b) parts.push(`장기 탐욕 억제 ${move-_b>0?'+':''}${move-_b}`);
   }
 
   // (v5.9b) 매크로 카드 직접 심리 충격 — 하락 카드는 급격히, 상승 카드는 완만하게
@@ -3861,13 +3869,15 @@ function phase6_fg(){
     else if(cm >= 1) cardFg = +2;
     if(mc.shock) cardFg = Math.round(cardFg * 1.5); // 쇼크 카드 증폭
     // 16턴에서는 누적 드리프트를 막기 위해 카드 충격 비활성화
-    if(state.maxTurn < 16) move += cardFg;
+    if(state.maxTurn < 16 && cardFg){ move += cardFg; parts.push(`매크로 ${cardFg>0?'호재':'악재'} ${cardFg>0?'+':''}${cardFg}`); }
   }
 
   // (v5.9b) 사이클 겨울·봄 구간 하락 바이어스 — 8턴 전용 (16턴은 누적 효과로 비활성화)
   if(state.maxTurn < 16){
+    _b = move;
     if(state.cycle <= 20) move -= 3;
     else if(state.cycle <= 35) move -= 1;
+    if(move !== _b) parts.push(`침체기 심리 ${move-_b>0?'+':''}${move-_b}`);
   }
 
   const prevFG = state.fearGreed;
@@ -3888,7 +3898,9 @@ function phase6_fg(){
     logRow(`F&G 극공포 ${state.fearGreed} → 다음 턴 상방 매크로 자동 발동 (평균회귀)`, 'ev');
   }
 
-  logRow(`F&G ${move>=0?'+':''}${move} → ${state.fearGreed} (평균 손익 ${avgPL.toFixed(1)})`, move>=0?'pos':'neg');
+  // (v5.12) 분해 내역 표시 — 손익과 반대로 움직일 때 '왜'를 바로 알 수 있게 (예: 손익 +7, 매크로 악재 -9)
+  const _bd = parts.length > 1 ? ` [${parts.join(', ')}]` : '';
+  logRow(`F&G ${move>=0?'+':''}${move} → ${state.fearGreed} (평균 손익 ${avgPL.toFixed(1)})${_bd}`, move>=0?'pos':'neg');
 }
 
 /* PHASE 7 — NEXT TURN PREP */
