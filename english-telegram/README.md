@@ -1,8 +1,8 @@
-# 📚 매일 여행 영어 회화 (텔레그램 자동 발송)
+# 📚 매일 영어 학습 (텔레그램 자동 발송)
 
 매일 텔레그램으로 영어 공부거리를 자동으로 보내주는 자동화입니다. 세 가지를 보냅니다:
 
-- 🌍 **여행 영어 회화** (아침 9시) — 공항·호텔·식당·길찾기 등 30개 여행 시나리오. `대화 → 핵심 표현 → 팁`. 한 달 주기로 순환.
+- 🗣️ **단계별 영어 회화** (아침 9시) — **중1 → 고3** 6단계. 레벨이 오를수록 문장·표현이 어려워져요. 매일 회화 끝에 봇이 "다음 학년으로 올릴까요?"라고 물어보고, 봇에게 **`up`**(올리기)/**`down`**(내리기)으로 답하면 다음 발송 때 **한 학년씩** 조정됩니다. (현재 학년은 자동 저장)
 - 🔤 **오늘의 동사** (낮 1시) — 회화에 자주 쓰는 핵심 동사 60개를 **순서대로** 하루 하나씩. `뜻 → 변화형 → 예문 2개 → 자주 쓰는 표현`.
 - 📘 **기초 영어 코스** (저녁 8시) — 인사부터 시제까지 45과를 **순서대로** 하루 한 과씩. `설명 → 핵심 패턴 → 예문 → 연습문제(정답 가림)`. 완전 초보용.
 
@@ -90,11 +90,16 @@ python3 send_daily.py --preview-all   # 30개 전체 미리보기
 | 밤 10시 | `0 13 * * *` |
 
 ### 콘텐츠 추가·수정하기
-- 회화: `scenarios.py` 의 `SCENARIOS`
+- 단계별 회화: `conversation_levels.py` 의 `GRADES` (학년별 `dialogues` 에 대화 추가)
 - 동사: `verbs.py` 의 `VERBS`
 - 기초 코스: `lessons.py` 의 `LESSONS`
 
 같은 형식으로 항목을 추가하면 자동으로 포함됩니다.
+
+### 회화 레벨(학년) 관련
+- 봇에게 **`up`** 보내기 → 다음 발송 때 한 학년 ⬆️ / **`down`** → 한 학년 ⬇️
+- 현재 학년은 `state/conversation_state.json` 의 `grade_index`(0=중1 … 5=고3)에 저장돼요. 직접 숫자를 바꿔 원하는 학년에서 시작할 수도 있어요.
+- ⚠️ 레벨 저장이 안 되면(항상 같은 학년) 저장소 **Settings → Actions → General → Workflow permissions** 를 **"Read and write"** 로 설정하세요.
 
 ---
 
@@ -102,14 +107,16 @@ python3 send_daily.py --preview-all   # 30개 전체 미리보기
 
 | 파일 | 설명 |
 |------|------|
-| `scenarios.py` | 여행 영어 회화 30개 (콘텐츠) |
+| `conversation_levels.py` | 단계별 회화 6단계 중1~고3 (콘텐츠) |
 | `verbs.py` | 오늘의 동사 60개 (콘텐츠) |
 | `lessons.py` | 기초 영어 코스 45과 (콘텐츠) |
-| `telegram_utils.py` | 텔레그램 전송·음성(TTS) 공용 함수 |
-| `send_daily.py` | 오늘의 회화를 골라 전송 |
+| `telegram_utils.py` | 텔레그램 전송·음성(TTS)·응답읽기 공용 함수 |
+| `send_conversation.py` | 오늘의 단계별 회화 전송 + up/down 레벨 조정 |
 | `send_verb.py` | 오늘의 동사를 골라 전송 |
 | `send_lesson.py` | 오늘의 기초 과를 골라 전송 |
-| `../.github/workflows/daily-english.yml` | 회화 자동 발송 (아침) |
+| `state/conversation_state.json` | 현재 회화 학년(레벨) 저장 — 자동 갱신 |
+| `scenarios.py`, `send_daily.py` | (예전) 여행 회화 30개 — 지금은 미사용, 보관용 |
+| `../.github/workflows/daily-english.yml` | 단계별 회화 자동 발송 (아침) |
 | `../.github/workflows/daily-verb.yml` | 동사 자동 발송 (낮) |
 | `../.github/workflows/daily-lesson.yml` | 기초 코스 자동 발송 (저녁) |
 

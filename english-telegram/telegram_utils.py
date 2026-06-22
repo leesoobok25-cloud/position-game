@@ -6,9 +6,26 @@ send_daily.py(여행 회화) 와 send_lesson.py(기초 영어 코스) 가 함께
 """
 
 import json
+import urllib.parse
 import urllib.request
 
 TELEGRAM = "https://api.telegram.org/bot{token}/{method}"
+
+
+def get_updates(token, offset=None, timeout=25):
+    """getUpdates로 봇이 받은 새 메시지를 가져옵니다. (사용자의 레벨 조정 응답 'up/down' 읽기용)"""
+    params = {}
+    if offset is not None:
+        params["offset"] = offset
+    url = TELEGRAM.format(token=token, method="getUpdates")
+    if params:
+        url += "?" + urllib.parse.urlencode(params)
+    request = urllib.request.Request(url, method="GET")
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        data = json.loads(response.read().decode("utf-8"))
+    if not data.get("ok"):
+        raise RuntimeError("getUpdates 오류: {0}".format(data))
+    return data.get("result", [])
 
 
 def escape_html(text):
