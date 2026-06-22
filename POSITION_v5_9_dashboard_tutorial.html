@@ -2206,10 +2206,11 @@ function checkRiskTokens(p, ctx){
   if(cash < bud * 0.05){   // (v5.12) 현금버퍼 거의 0(5% 미만) = 과투입. 10%→5%로 완화(분산 투자도 약간 여유 허용)
     add(`현금버퍼<5%`, `현금을 자산의 <b>5% 미만</b>만 남기고 거의 전액 투입했습니다 — 생존 버퍼 부족(손실 자체와는 무관, 베팅 시점 기준)`);
   }
-  // (v5.12) 침체기 무방어 — 단, MACRO KING이 UTIL 등 방어 비중(자산 10%+)을 들었으면 면제(BOND만 강제하지 않음)
-  if(state.cycle < 25 && (bets.BOND||0) === 0
-     && !(p.personaId === 'MACRO_KING' && (bets.UTIL||0) >= bud*0.10)){
-    add(`침체기 무방어`, `침체기(사이클&lt;25)인데 <b>방어자산(BOND·UTIL)</b>을 하나도 안 들었습니다`);
+  // (v5.12) 침체기 무방어 — BOND 또는 UTIL을 자산 5% 이상 보유하면 충족(전 페르소나 공통).
+  //   문구-코드 일치: '일부라도'가 아니라 5% 기준. UTIL도 경기 방어주로 BOND와 동일하게 인정.
+  const hasDefense = (bets.BOND||0) >= bud*0.05 || (bets.UTIL||0) >= bud*0.05;
+  if(state.cycle < 25 && !hasDefense){
+    add(`침체기 무방어`, `침체기(사이클&lt;25)인데 <b>BOND 또는 UTIL을 자산의 5% 이상</b> 보유하지 않았습니다 (방어자산 부족)`);
   }
 }
 
@@ -3130,13 +3131,21 @@ function applyEventFactorMove(pick){
 
 /* ============================================================
    (v5.12) 개발자 QA 콘솔 함수 — 기능 회귀 검증용 (UI에 노출 안 됨)
+   ★ DEBUG 모드에서만 동작 — 출시 공개판에서 콘솔 치트로 악용되는 것을 막는다.
+     활성화: URL에 ?debug=1  또는  localStorage.setItem('POSITION_DEBUG','1')
    브라우저 콘솔에서 호출:
      forceEvent('E_ENG_OIL_SPIKE')  → 다음 섹터이벤트를 강제, 정산에서 [거시 파급]·인플레↑ 확인
      forceEvent('E_FIN_RATE_CUT')   → 금리 인하 강제, 정산에서 금리↓ 확인
-     forcePrincipleCase('cashLow')           → 현금<5%면 원칙훼손 1개 (기대)
-     forcePrincipleCase('lossButEnoughCash') → 손실 나도 베팅현금 충분하면 0개 (버그 회귀 검증)
+     forcePrincipleCase('cashLow' | 'lossButEnoughCash' |
+                        'recessionNoDefense' | 'recessionWithBond' | 'recessionWithUtil')
    ============================================================ */
+const DEBUG = (function(){
+  try { return /[?&]debug=1\b/.test(location.search || '') || (typeof localStorage!=='undefined' && localStorage.getItem('POSITION_DEBUG')==='1'); }
+  catch(e){ return false; }
+})();
+
 function forceEvent(id){
+  if(!DEBUG){ console.warn('[QA] DEBUG 모드 전용입니다 — URL에 ?debug=1 을 붙이거나 localStorage POSITION_DEBUG=1 설정 후 사용하세요.'); return; }
   const ev = SECTOR_EVENTS.find(e => e.id === id);
   if(!ev){ console.warn(`[QA] 없는 이벤트 ID: ${id} — SECTOR_EVENTS.map(e=>e.id) 로 목록 확인`); return; }
   state._forceEventId = id;
@@ -3145,30 +3154,36 @@ function forceEvent(id){
   console.log(`[QA] 다음 섹터 이벤트 강제 → '${ev.name}' (${id})\n     섹터이벤트 단계로 진행 → A 카드 채택됨(봇 자동 A 투표) → '정산으로' → 거시 파급: ${eff}`);
 }
 
+/* 표 기반 비파괴 단위검증 — p.risk/사유/스냅샷/사이클을 저장했다가 복구한다 */
+const QA_PRINCIPLE_CASES = {
+  // type: { bets, cash, cyc, pl, exp, d }  (자산합 100 기준)
+  cashLow:            { bets:{TECH:50,BOND:46}, cash:4,  cyc:50, pl:0,   exp:1, d:'베팅현금 4%(현금버퍼<5%)' },
+  lossButEnoughCash:  { bets:{TECH:50,BOND:30}, cash:20, cyc:50, pl:-40, exp:0, d:'베팅현금 20% + 손실 -40(손실≠위반)' },
+  recessionNoDefense: { bets:{TECH:50},         cash:50, cyc:20, pl:0,   exp:1, d:'침체(사이클20)·BOND/UTIL 0' },
+  recessionWithBond:  { bets:{TECH:45,BOND:5},  cash:50, cyc:20, pl:0,   exp:0, d:'침체·BOND 자산 5%' },
+  recessionWithUtil:  { bets:{TECH:45,UTIL:5},  cash:50, cyc:20, pl:0,   exp:0, d:'침체·UTIL 자산 5%' },
+};
 function forcePrincipleCase(type){
+  if(!DEBUG){ console.warn('[QA] DEBUG 모드 전용입니다 — ?debug=1 또는 localStorage POSITION_DEBUG=1 후 사용하세요.'); return; }
   const p = state.players && state.players[state.myId];
   if(!p){ console.warn('[QA] 게임을 먼저 시작하세요(startGame).'); return; }
-  // 비파괴 검증: risk/사유/스냅샷을 저장했다가 복구한다
-  const save = { risk:p.risk, reasons:[...p.riskReasons], db:p._discBets, dc:p._discCash, human:p.isHuman };
+  const c = QA_PRINCIPLE_CASES[type];
+  if(!c){ console.warn('[QA] type:', Object.keys(QA_PRINCIPLE_CASES).join(' | ')); return; }
+  const save = { risk:p.risk, reasons:[...p.riskReasons], db:p._discBets, dc:p._discCash, human:p.isHuman, cyc:state.cycle };
   p.isHuman = true; // in-context 로그까지 확인
-  let desc, expect;
-  if(type === 'cashLow'){
-    p._discBets = {TECH:50, BOND:46}; p._discCash = 4; // 자산 100 중 현금 4% (단일 50%<55%, BOND보유→침체규율 면제)
-    desc = '베팅시점 현금 4%'; expect = 1;
-    checkRiskTokens(p, {turnPL: 0});
-  } else if(type === 'lossButEnoughCash'){
-    p._discBets = {TECH:50, BOND:30}; p._discCash = 20; // 현금 20% 충분
-    desc = '베팅시점 현금 20% + 손실 -40'; expect = 0;
-    checkRiskTokens(p, {turnPL: -40}); // 큰 손실이 나도 베팅시점 기준이라 무관해야 함
-  } else {
-    console.warn("[QA] type은 'cashLow' 또는 'lossButEnoughCash'"); return;
-  }
+  p._discBets = c.bets; p._discCash = c.cash; state.cycle = c.cyc;
+  checkRiskTokens(p, {turnPL: c.pl});
   const got = p.risk - save.risk;
   const reasons = p.riskReasons.slice(save.reasons.length).map(r=>r.replace(/^T\d+:\s*/,'')).join(', ') || '(없음)';
-  const ok = got === expect ? '✅ PASS' : '❌ FAIL';
-  console.log(`[QA ${type}] ${desc} → 원칙훼손 +${got}개 (기대 ${expect}) ${ok} | 사유: ${reasons}`);
-  // 복구
-  p.risk = save.risk; p.riskReasons = save.reasons; p._discBets = save.db; p._discCash = save.dc; p.isHuman = save.human;
+  console.log(`[QA ${type}] ${c.d} → 원칙훼손 +${got}개 (기대 ${c.exp}) ${got===c.exp?'✅ PASS':'❌ FAIL'} | 사유: ${reasons}`);
+  // 복구 (비파괴)
+  p.risk=save.risk; p.riskReasons=save.reasons; p._discBets=save.db; p._discCash=save.dc; p.isHuman=save.human; state.cycle=save.cyc;
+}
+/* 한 번에 전부 검증 */
+function qaAll(){
+  if(!DEBUG){ console.warn('[QA] DEBUG 모드 전용 (?debug=1)'); return; }
+  console.log('=== forcePrincipleCase 전체 검증 ===');
+  Object.keys(QA_PRINCIPLE_CASES).forEach(forcePrincipleCase);
 }
 
 function castEventVote(choice){
@@ -4531,7 +4546,7 @@ function render(){
        <div style="color:var(--red)">🚫 ${persona.ban}</div>
        <div style="color:var(--green)">⭐ ${persona.boon}</div>
        <div style="color:var(--gold)">🎯 ${questText(persona)}</div>
-       <div style="color:var(--mut);font-size:12px;margin-top:4px;border-top:1px solid var(--line);padding-top:4px">⚠️ <b>공통 규율</b>(전 페르소나, 어기면 '원칙 훼손' 누적 → 종료 점수 차감): ① 단일 섹터에 자산 55% 초과 집중 ② 현금 5% 미만(거의 전액 투입) ③ 침체기(사이클&lt;25)에 방어자산 0 — <b>BOND 또는 UTIL</b>을 일부라도 보유하면 충족(UTIL=전기·가스 등 경기 방어주). <br><span style="color:var(--green)">규율은 손익이 아니라 '베팅 결정' 기준 — 손실이 나도 책임감 있게 베팅했으면 훼손이 아닙니다.</span></div>`;
+       <div style="color:var(--mut);font-size:12px;margin-top:4px;border-top:1px solid var(--line);padding-top:4px">⚠️ <b>공통 규율</b>(전 페르소나, 어기면 '원칙 훼손' 누적 → 종료 점수 차감): ① 단일 섹터에 자산 55% 초과 집중 ② 현금 5% 미만(거의 전액 투입) ③ 침체기(사이클&lt;25)에 방어자산 부족 — <b>BOND 또는 UTIL을 자산의 5% 이상</b> 보유하면 충족(UTIL=전기·가스 등 경기 방어주). <br><span style="color:var(--green)">규율은 손익이 아니라 '베팅 결정' 기준 — 손실이 나도 책임감 있게 베팅했으면 훼손이 아닙니다.</span></div>`;
     const editable = state.phase === 1; // Phase 2 betting
     const betsDiv = document.getElementById('myBets');
     // (v5.9e) 예산 인지 토큰 UI — perMax = 자본의 50%(최소 50, EXPAND 70). bumpBet/setBet과 동일.
