@@ -17,6 +17,8 @@ import re
 import base64
 import os
 import io
+import subprocess
+import datetime
 
 try:
     from PIL import Image
@@ -26,6 +28,19 @@ except ImportError:
 
 SRC = "POSITION_v5_9_dashboard_tutorial.html"
 OUT = "POSITION_v5_9_single.html"
+
+# (v5.12) 빌드 식별자 — 같은 이름의 구버전 파일 혼선 방지용. <meta name="position-build">에 주입.
+BUILD_META = re.compile(r'(<meta name="position-build" content=")[^"]*(">)')
+
+
+def _build_stamp():
+    """git short hash + UTC 날짜로 빌드 식별자 생성 (git 없으면 날짜만)."""
+    try:
+        h = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"],
+                                    stderr=subprocess.DEVNULL).decode().strip()
+    except Exception:
+        h = "nogit"
+    return f"v5.9-{h} ({datetime.datetime.utcnow().strftime('%Y-%m-%d')})"
 
 MAX_DIM = 400   # 웹 인라인 최대 변(픽셀) — 카드 표시 크기에 충분
 JPEG_Q = 85
@@ -67,12 +82,17 @@ def main():
         return f'"{m.group("key")}":""'
 
     single, n = PATTERN.subn(repl, html)
+
+    # 빌드 식별자 주입
+    stamp = _build_stamp()
+    single, sn = BUILD_META.subn(lambda m: m.group(1) + stamp + m.group(2), single)
+
     with open(OUT, "w", encoding="utf-8") as f:
         f.write(single)
 
     mb = os.path.getsize(OUT) / 1024 / 1024
     note = f"(다운스케일 {MAX_DIM}px q{JPEG_Q})" if _HAS_PIL else "(Pillow 없음 — 원본 크기 인라인)"
-    print(f"통합 완료: 이미지 {stats['inlined']}장 인라인 {note} -> {OUT}  [{mb:.1f}MB]")
+    print(f"통합 완료: 이미지 {stats['inlined']}장 인라인 {note} · 빌드 {stamp}{' (메타 미발견!)' if not sn else ''} -> {OUT}  [{mb:.1f}MB]")
     if stats["missing"]:
         print(f"  (이미지 없는 카드 {len(stats['missing'])}장은 아이콘 폴백: {', '.join(stats['missing'][:6])}{' …' if len(stats['missing'])>6 else ''})")
 

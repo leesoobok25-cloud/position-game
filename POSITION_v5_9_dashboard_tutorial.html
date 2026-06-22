@@ -2,6 +2,8 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<!-- (v5.12) 빌드 식별자 — 같은 이름의 구버전 파일 혼선 방지. 빌드 시 tools/build_single_file.py가 교체. -->
+<meta name="position-build" content="dev (소스 미빌드)">
 <title>POSITION v5.9 — Tutorial Build</title>
 <style>
   :root{
@@ -579,7 +581,7 @@
   </div>
 </div>
 <header>
-  <h1>POSITION <span class="ver">v5.9 · Tutorial Build</span></h1>
+  <h1>POSITION <span class="ver">v5.9 · Tutorial Build</span><span class="ver" id="buildStamp" title="빌드 식별자 (구버전 파일 구분용)"></span></h1>
   <button class="btn alt" style="font-size:14px;padding:4px 10px" onclick="startTutorial()">🎓 튜토리얼</button>
   <div id="headerTierGuide" class="header-tier-guide"></div>
   <div class="turn">턴 <span id="turnNo">1</span>/<span id="maxTurnNo">8</span> · <span id="phaseName">시작</span> · 사이클 <span id="cycleN">50</span><span id="cycleDelta"></span> (<span id="seasonN">봄</span>)</div>
@@ -2889,6 +2891,8 @@ function confirmBetting(){
 function phase3_macro(){
   applyBotPendingBets(); // (v5.10) 봇 베팅은 인간 확정과 동시에 공개
   const result = drawMacro();
+  // ⚠️ DEPRECATED 분기 (v5.9e 이후 drawMacro는 fgPick을 반환하지 않음 → 항상 false).
+  //    구버전 'F&G 극단 2장 중 1장 선택' 잔재. fgExtremePick/fgPickIndexFor 주석 참고.
   if(result.fgPick){
     state.currentMacro = {pending:true, picks:result.fgPick};
     return;
@@ -2987,10 +2991,11 @@ function macroKingShift(delta){
   renderAction();
 }
 
-/* FG extreme pick: human chooses among 2 cards (next-turn) */
-/* (v5.8) 후보 카드 중 player의 현재 베팅에 가장 유리한 카드 index.
-   카드의 섹터 효과(effects)와 보유 베팅의 내적이 최대인 카드를 고른다.
-   — 자동 테스트에서 봇이 '자기 포지션에 유리한 매크로'를 고르도록(사람 플레이 근사). */
+/* ⚠️ DEPRECATED (v5.9e 이후 미사용) — 구버전 'F&G 극단 시 2장 중 1장 직접 선택' 기구.
+   현재는 F&G 80/20 도달 시 drawMacro가 자동으로 평균회귀 매크로 1장을 발동한다(fgExtremeDraws,
+   선택 없음). drawMacro는 더 이상 {fgPick:...}을 반환하지 않으므로 phase3_macro의
+   if(result.fgPick) 분기·state.currentMacro.pending UI·아래 두 함수는 실제 플레이에서 도달하지 않는다.
+   (자동 테스트 하니스가 방어적으로 참조하므로 호환을 위해 남겨둠 — 삭제 시 하니스도 함께 수정할 것) */
 function fgPickIndexFor(player, cards){
   let bestI = 0, bestScore = -Infinity;
   cards.forEach((c, i) => {
@@ -3138,8 +3143,9 @@ function applyEventFactorMove(pick){
    브라우저 콘솔에서 호출:
      forceEvent('E_ENG_OIL_SPIKE')  → 다음 섹터이벤트를 강제, 정산에서 [거시 파급]·인플레↑ 확인
      forceEvent('E_FIN_RATE_CUT')   → 금리 인하 강제, 정산에서 금리↓ 확인
-     forcePrincipleCase('cashLow' | 'lossButEnoughCash' |
-                        'recessionNoDefense' | 'recessionWithBond' | 'recessionWithUtil')
+     forcePrincipleCase('cashLow' | 'lossButEnoughCash' | 'concentration' |
+                        'recessionNoDefense' | 'recessionWithBond' | 'recessionWithUtil' | 'cleanBet')
+     qaAll()  → 위 7종 한 번에 검증
    ============================================================ */
 const DEBUG = (function(){
   try { return /[?&]debug=1\b/.test(location.search || '') || (typeof localStorage!=='undefined' && localStorage.getItem('POSITION_DEBUG')==='1'); }
@@ -5388,6 +5394,12 @@ function bootstrap(){
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  // (v5.12) 빌드 식별자 표시 — 헤더에 build 해시/날짜를 노출(구버전 파일 혼선 방지)
+  try {
+    const bm = document.querySelector('meta[name="position-build"]');
+    const bs = document.getElementById('buildStamp');
+    if(bm && bs) bs.textContent = ' · ' + bm.content;
+  } catch(e){}
   bootstrap();
   initSplash();       // (v1.0) splash + continue button
   renderNickArea();   // (v5.10) nickname profiles
