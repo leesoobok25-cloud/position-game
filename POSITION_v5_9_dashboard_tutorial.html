@@ -2206,11 +2206,11 @@ function checkRiskTokens(p, ctx){
   if(cash < bud * 0.05){   // (v5.12) 현금버퍼 거의 0(5% 미만) = 과투입. 10%→5%로 완화(분산 투자도 약간 여유 허용)
     add(`현금버퍼<5%`, `현금을 자산의 <b>5% 미만</b>만 남기고 거의 전액 투입했습니다 — 생존 버퍼 부족(손실 자체와는 무관, 베팅 시점 기준)`);
   }
-  // (v5.12) 침체기 무방어 — BOND 또는 UTIL을 자산 5% 이상 보유하면 충족(전 페르소나 공통).
-  //   문구-코드 일치: '일부라도'가 아니라 5% 기준. UTIL도 경기 방어주로 BOND와 동일하게 인정.
-  const hasDefense = (bets.BOND||0) >= bud*0.05 || (bets.UTIL||0) >= bud*0.05;
-  if(state.cycle < 25 && !hasDefense){
-    add(`침체기 무방어`, `침체기(사이클&lt;25)인데 <b>BOND 또는 UTIL을 자산의 5% 이상</b> 보유하지 않았습니다 (방어자산 부족)`);
+  // (v5.12) 침체기 방어자산 부족 — BOND+UTIL '합산'이 자산 5% 이상이면 충족(전 페르소나 공통).
+  //   문구-코드 일치: 합산 기준이라 BOND 3%+UTIL 3% 같은 분산 방어도 인정. UTIL도 경기 방어주.
+  const defense = (bets.BOND||0) + (bets.UTIL||0);
+  if(state.cycle < 25 && defense < bud*0.05){
+    add(`침체기 방어자산 5% 미만`, `침체기(사이클&lt;25)인데 <b>방어자산(BOND+UTIL 합산)이 자산의 5% 미만</b>입니다 (방어 부족)`);
   }
 }
 
@@ -3998,7 +3998,7 @@ function buildFinalReport(p){
 
   // ── 보완 방향 ──────────────────────────────────────────
   const improvements = [];
-  if(p.risk >= 2) improvements.push(`📌 <b>원칙 훼손 줄이기</b>: 단일 섹터 자산 55%+ 과집중, 현금버퍼 5% 미만 과투입, 침체기 방어자산(BOND·UTIL) 미보유가 주된 발생 경로다. (손실 자체는 원칙 훼손이 아니다 — 규율 위반만 카운트) 베팅 전 이 조건들을 점검하라.`);
+  if(p.risk >= 2) improvements.push(`📌 <b>원칙 훼손 줄이기</b>: 단일 섹터 자산 55%+ 과집중, 현금버퍼 5% 미만 과투입, 침체기 방어자산(BOND+UTIL 합산) 5% 미만이 주된 발생 경로다. (손실 자체는 원칙 훼손이 아니다 — 규율 위반만 카운트) 베팅 전 이 조건들을 점검하라.`);
   if(!p.questBonus){
     const qHint = persona.id==='ORACLE' ? '한 섹터를 6턴 이상 꾸준히 들고 가면서 해당 섹터에서 누적 이익을 내야 한다.'
       : persona.id==='MACRO_KING' ? '사이클이 75 이상 또는 25 이하 극단에서 반대 방향으로 베팅하고, 이 조건을 2회 이상 성공시켜야 한다.'
@@ -4546,7 +4546,7 @@ function render(){
        <div style="color:var(--red)">🚫 ${persona.ban}</div>
        <div style="color:var(--green)">⭐ ${persona.boon}</div>
        <div style="color:var(--gold)">🎯 ${questText(persona)}</div>
-       <div style="color:var(--mut);font-size:12px;margin-top:4px;border-top:1px solid var(--line);padding-top:4px">⚠️ <b>공통 규율</b>(전 페르소나, 어기면 '원칙 훼손' 누적 → 종료 점수 차감): ① 단일 섹터에 자산 55% 초과 집중 ② 현금 5% 미만(거의 전액 투입) ③ 침체기(사이클&lt;25)에 방어자산 부족 — <b>BOND 또는 UTIL을 자산의 5% 이상</b> 보유하면 충족(UTIL=전기·가스 등 경기 방어주). <br><span style="color:var(--green)">규율은 손익이 아니라 '베팅 결정' 기준 — 손실이 나도 책임감 있게 베팅했으면 훼손이 아닙니다.</span></div>`;
+       <div style="color:var(--mut);font-size:12px;margin-top:4px;border-top:1px solid var(--line);padding-top:4px">⚠️ <b>공통 규율</b>(전 페르소나, 어기면 '원칙 훼손' 누적 → 종료 점수 차감): ① 단일 섹터에 자산 55% 초과 집중 ② 현금 5% 미만(거의 전액 투입) ③ 침체기(사이클&lt;25)에 방어자산 부족 — <b>BOND+UTIL 합산이 자산의 5% 이상</b>이면 충족(UTIL=전기·가스 등 경기 방어주). <br><span style="color:var(--green)">규율은 손익이 아니라 '베팅 결정' 기준 — 손실이 나도 책임감 있게 베팅했으면 훼손이 아닙니다.</span></div>`;
     const editable = state.phase === 1; // Phase 2 betting
     const betsDiv = document.getElementById('myBets');
     // (v5.9e) 예산 인지 토큰 UI — perMax = 자본의 50%(최소 50, EXPAND 70). bumpBet/setBet과 동일.
