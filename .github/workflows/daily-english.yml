@@ -1,19 +1,22 @@
-name: Daily English (Telegram)
+name: Daily English Conversation (Telegram)
 
-# 매일 여행 영어 회화 스크립트를 텔레그램으로 보냅니다.
+# 매일 '단계별 영어 회화'(중1 → 고3)를 텔레그램으로 보냅니다.
+# 사용자가 봇에게 up/down 으로 답하면 학년이 바뀌고, 그 상태(현재 학년)를 저장소에 저장합니다.
 on:
   schedule:
     # cron은 UTC 기준입니다. '0 0 * * *' = 매일 00:00 UTC = 09:00 KST(한국).
     # 보내는 시간을 바꾸려면 아래 숫자를 조정하세요. (KST = UTC + 9시간)
-    #   예) 아침 7시 KST -> '0 22 * * *'  /  아침 8시 KST -> '0 23 * * *'
     - cron: '0 0 * * *'
   # Actions 탭에서 'Run workflow' 버튼으로 직접 테스트할 수 있습니다.
   workflow_dispatch:
 
-# 동시에 여러 번 실행되지 않도록 보장합니다.
 concurrency:
   group: daily-english
   cancel-in-progress: false
+
+# 학년 상태 파일(state/conversation_state.json)을 커밋하기 위해 쓰기 권한이 필요합니다.
+permissions:
+  contents: write
 
 jobs:
   send:
@@ -30,9 +33,23 @@ jobs:
       - name: Install dependencies (text-to-speech)
         run: pip install gtts requests
 
-      - name: Send today's English script
+      - name: Send today's conversation (leveled) and read up/down replies
         working-directory: english-telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python3 send_daily.py
+        run: python3 send_conversation.py
+
+      - name: Save level state (commit)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add english-telegram/state/conversation_state.json
+          if git diff --staged --quiet; then
+            echo "레벨 상태 변화 없음 — 커밋 생략."
+          else
+            git commit -m "chore: update conversation level state [skip ci]"
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+            git push origin "HEAD:${GITHUB_REF_NAME}" \
+              || echo "상태 저장 push 실패: 저장소 Settings > Actions > General > Workflow permissions 를 'Read and write'로 설정하세요."
+          fi
