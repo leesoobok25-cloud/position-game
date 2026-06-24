@@ -4329,7 +4329,7 @@ const GLOSSARY = {
   '기준금리':   '중앙은행이 정하는 정책금리. 오르면 차입비용↑·성장주/채권 부담, 내리면 유동성↑·위험자산 강세.',
   '금리':       '돈을 빌리는 비용(이자율). 상승은 성장주·장기채에 역풍, 금융주(FIN)엔 호재인 경향.',
   '사이클':     '경기의 순환 국면(❄️겨울 불황 → 🌱봄 회복 → 🔥여름 호황 → 🍂가을 둔화). 국면마다 유리한 섹터가 바뀐다.',
-  '레짐':       '한동안 지속되는 시장 국면/체제(예: AI 인프라 붐, 골디락스). 특정 섹터에 꾸준한 유·불리를 준다.',
+  '레짐':       '한동안(3~4턴) 지속되는 시장 국면/체제(예: AI 인프라 붐, 골디락스). 표시된 숫자는 "베팅 10당 손익 계수"로, 유지되는 매 턴 해당 섹터 베팅에 비례해 실제 자산(손익)에 가감된다(점수가 아니라 실손익). 예: AI 인프라 레짐 SEMI +2에서 SEMI에 40 베팅 → 매 턴 +8. 매크로·이벤트 카드 효과와 같은 "베팅 10당" 방식이며, 다른 점은 한 장이 아니라 여러 턴 지속된다는 것.',
   '연착륙':     '경기가 침체에 빠지지 않고 완만히 둔화하는 것(soft landing). 증시엔 안도 랠리 재료.',
   '경착륙':     '경기가 급격히 침체로 빠지는 것(hard landing). 위험자산 급락을 부른다.',
   '긴축':       '중앙은행이 금리 인상·유동성 회수로 시중의 돈을 죄는 것. 성장주·고밸류 자산에 역풍.',
@@ -4481,9 +4481,14 @@ function render(){
   slotList.innerHTML = state.slots.length===0 ? '없음' :
     state.slots.map(s => {
       const base = Object.values(SLOTS).find(sl => sl.name === s.name) || {};
-      const tip = base.tip ? base.tip + '\n\n유리: ' + Object.entries(base.eff||{}).filter(([,v])=>v>0).map(([k,v])=>`${k} +${v}`).join(' / ') + '\n불리: ' + Object.entries(base.eff||{}).filter(([,v])=>v<0).map(([k,v])=>`${k} ${v}`).join(' / ') : s.name;
+      const eg = Object.entries(base.eff||{}).filter(([,v])=>v>0).map(([k,v])=>`${k} +${v}`).join(' / ');
+      const eb = Object.entries(base.eff||{}).filter(([,v])=>v<0).map(([k,v])=>`${k} ${v}`).join(' / ');
+      const tip = base.tip
+        ? base.tip + '\n\n[숫자 = 베팅 10당 손익] 레짐이 유지되는 동안 매 턴, 해당 섹터 베팅에 비례해 실제 자산(손익)에 가감됩니다. 예) SEMI +2 이고 SEMI에 40 베팅 → 매 턴 +8.'
+            + '\n\n유리: ' + (eg||'—') + '\n불리: ' + (eb||'—')
+        : s.name;
       return `<span class="pill slot" title="${tip.replace(/"/g,'&quot;')}" style="cursor:help">${s.name} (${s.dur}턴)</span>`;
-    }).join(' ');
+    }).join(' ') + `<div style="margin-top:6px;font-size:12px;color:var(--mut);line-height:1.45">ⓘ 지속되는 시장국면. 칩의 숫자는 <b>베팅 10당 손익</b> — 보유 베팅에 비례해 매 턴 자산에 가감(점수가 아니라 실제 손익). 칩에 마우스를 올리면 유·불리 섹터가 보여요.</div>`;
 
   // (v1.2) 섹터 테이블 — 성장/경기 2행 + 가치·방어·안전 1행(구획 구분)
   const TOP_ROWS = [
@@ -5044,12 +5049,13 @@ function renderAction(){
       <table style="width:100%;font-size:14px;border-collapse:collapse;margin-top:6px;text-align:center">
         <thead><tr style="color:var(--mut);border-bottom:1px solid var(--line)">
           <th style="text-align:left">플레이어</th>
-          <th>매크로</th><th>이벤트</th><th>슬롯</th><th>BOND</th>
+          <th>매크로</th><th>이벤트</th><th title="지속 시장국면(레짐)이 보유 섹터에 주는 손익">레짐</th><th>BOND</th>
           <th>페르소나</th><th>전략</th><th>거래비용</th>
           <th style="border-left:1px solid var(--line)">합계</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
+      <div style="margin-top:6px;font-size:12px;color:var(--mut);line-height:1.5">ⓘ 모든 수치는 <b>이번 턴 실제 자산 증감(손익)</b>이며 합계가 자산에 바로 반영됩니다(자산=점수). <b>매크로·이벤트·레짐</b>은 각 출처의 <b>섹터 효과 × (해당 섹터 베팅÷10)</b> — 즉 <b>베팅 비중이 클수록 효과도 큼</b>. <b>레짐</b>은 한동안 지속되는 시장국면이라 유지되는 매 턴 반복 적용됩니다.</div>
       </div>
       ${renderSectorBreakdown()}
       <div style="margin-top:8px"><button class="btn" onclick="goFG()">→ F&G 갱신</button></div>`;
