@@ -643,7 +643,7 @@
         <div id="omenWarn" style="font-size:14px;margin-top:6px;line-height:1.4"></div>
       </div>
       <div class="panel" style="margin-top:10px">
-        <h3>활성 슬롯</h3>
+        <h3>활성 장세</h3>
         <div id="slotList" style="font-size:14px;color:var(--mut)">없음</div>
       </div>
     </div>
@@ -1613,49 +1613,49 @@ const REPORTS = [
 /* LONG_TERM SLOTS (v5.7) — 8 regimes, 3~4턴 지속. Omen3 + tagMemory로 발동. */
 const SLOTS = {
   HIGH_INFL: {
-    name:'고인플레 레짐', dur:4,
+    name:'고인플레 장세', dur:4,
     eff:{ENG:+1.5, MATE:+1.5, FIN:+0.5, TECH:-1.5, BIO:-1.5, BOND:-2, CONS:-1},
     trigger:'infl3',
     tip:'물가가 장기 고공행진 중. 실물자산(에너지·소재)이 유리하고 채권·성장주는 불리. 인플레 헤지 포지션이 유효한 구간이다.'
   },
   RECESSION: {
-    name:'경기침체 레짐', dur:4,
+    name:'경기침체 장세', dur:4,
     eff:{UTIL:+1.5, BOND:+1.5, BIO:+0.5, FIN:-1.5, CONS:-1.5, AUTO:-1.5, INDU:-1},
     trigger:'rec3',
     tip:'경기가 뚜렷하게 꺾이고 있다. 경기방어(유틸·채권·바이오)가 피신처가 되고, 금융·소비·자동차는 실적 타격을 받는다.'
   },
   GEO_TENSE: {
-    name:'지정학 긴장 레짐', dur:4,
+    name:'지정학 긴장 장세', dur:4,
     eff:{ENG:+2, MATE:+1.5, UTIL:+1, AUTO:-1.5, SEMI:-1.5, TECH:-1},
     trigger:'geo3',
     tip:'국제 분쟁·공급망 불안이 지속되는 구간. 에너지·원자재가 급등하고 반도체·기술주는 수출통제·공급 차질 우려로 하락 압력을 받는다.'
   },
   CREDIT_CR: {
-    name:'신용경색 레짐', dur:4,
+    name:'신용경색 장세', dur:4,
     eff:{FIN:-2.5, CONS:-1.5, AUTO:-1.5, BOND:+1, UTIL:+1, TECH:-0.5},
     trigger:'cred3',
     tip:'신용시장이 얼어붙어 자금 조달이 어려워진 상태. 금융·소비·자동차에 강한 하락 압력. 안전자산(국채·유틸)으로 자금이 이동한다.'
   },
   GOLDILOCKS: {
-    name:'골디락스 레짐', dur:3,
+    name:'골디락스 장세', dur:3,
     eff:{TECH:+1.5, SEMI:+1.5, BIO:+1, CONS:+1, BOND:+0.5, ENG:-0.5},
     trigger:'softlanding',
     tip:'경기는 탄탄한데 인플레는 잡힌 "적당히 좋은" 환경. 성장주·반도체·소비재가 고르게 강세. 에너지는 수요 둔화 우려로 소폭 약세.'
   },
   AI_INFRA: {
-    name:'AI 인프라 레짐', dur:3,
+    name:'AI 인프라 장세', dur:3,
     eff:{SEMI:+2, TECH:+1.5, UTIL:+1.5, MATE:+1, BOND:-1},
     trigger:'ai',
     tip:'AI 데이터센터 투자 붐이 진행 중. 반도체·기술주가 핵심 수혜, 전력 수요 급증으로 유틸리티도 동반 강세. 채권은 금리 상승 압박으로 약세.'
   },
   POLICY_PUT: {
-    name:'정책 풋 레짐', dur:3,
+    name:'정책 풋 장세', dur:3,
     eff:{TECH:+1, BIO:+1, FIN:+1, BOND:+1, ENG:-0.5},
     trigger:'policy',
     tip:'중앙은행·정부가 시장을 떠받치는 완화 정책을 펼치고 있다. 금리 인하 기대로 성장주·채권이 강세. 에너지는 경기 자극보다 수요 회복이 느려 소폭 약세.'
   },
   BUBBLE_LATE: {
-    name:'과열 말기 레짐', dur:3,
+    name:'과열 말기 장세', dur:3,
     eff:{TECH:+1, SEMI:+1, BIO:+0.5, BOND:-1.5, FIN:+0.5},
     crashRisk:true,
     trigger:'bubble',
@@ -1674,7 +1674,7 @@ function addOrExtendSlot(slotId, allowExtend=true){
     if(allowExtend) existing.dur = Math.min(5, existing.dur + 1);
   } else {
     state.slots.push({id:slotId, ...base});
-    logRow(`레짐 진입: ${base.name} (${base.dur}턴)`, 'ev');
+    logRow(`장세 진입: ${base.name} (${base.dur}턴)`, 'ev');
   }
 }
 
@@ -1728,7 +1728,7 @@ const STRATEGIES = {
      desc:'이번 턴 정산 후 현금(cash)을 +10 직접 지급한다. 단, 5턴 이후에만 발동된다(1~4턴은 사용 불가). 게임 후반 복리 효과를 극대화할 타이밍에 쓰는 카드다. 이미 자산 차가 벌어진 상황에서 추격 기회를 만들 수도 있다.',
      phase:'phase2_locked'},
     {id:'VISION',   name:'장기 비전',
-     desc:'현재 활성화된 레짐 슬롯(보드 상단 "활성 슬롯" 칸에 표시되는 지속 효과) 중 하나를 +2턴 연장한다. 유리한 슬롯(예: 성장 사이클 +3, AI 인프라 붐 등)이 곧 만료될 때 사용하면 손익 우위를 연장할 수 있다.',
+     desc:'현재 활성화된 장세(보드 상단 "활성 장세" 칸에 표시되는 지속 효과) 중 하나를 +2턴 연장한다. 유리한 장세(예: 성장 사이클 +3, AI 인프라 붐 등)가 곧 만료될 때 사용하면 손익 우위를 연장할 수 있다.',
      phase:'phase2_locked'},
   ],
   MACRO_KING: [
@@ -2922,7 +2922,7 @@ function phase3_macro(){
   state.narrative = state.currentMacro.narrative || '';
   const tag = state.currentMacro.isShock ? '⚡충격' : (state.currentMacro.isForced ? '강제' : '매크로');
   logRow(`[${tag}] <b>${state.currentMacro.name}</b> · 사이클 ${state.currentMacro.cycleMove>=0?'+':''}${state.currentMacro.cycleMove} → 인플레 ${state.inflation.toFixed(1)}%, 금리 ${state.rate.toFixed(2)}%`, state.currentMacro.isShock?'sh':'ev');
-  // (v5.7) tag 누적 → 보조 레짐 발동
+  // (v5.7) tag 누적 → 보조 장세 발동
   for(const t of state.currentMacro.tags || []){
     state.tagMemory[t] = (state.tagMemory[t] || 0) + 1;
   }
@@ -3409,7 +3409,7 @@ function phase5_settle(){
     if(p.activeStrategy === 'COMPOUND' && state.turn >= 5) b.strategy += 10;
     if(p.activeStrategy === 'VISION' && state.slots.length){
       state.slots[0].dur += 2;
-      logRow(`${p.name} 장기비전 — 슬롯 +2턴`, 'ev');
+      logRow(`${p.name} 장기비전 — 장세 +2턴`, 'ev');
     }
     if(p.activeStrategy === 'BARRAGE'){
       for(const sid of SECTORS.map(s=>s.id)){
@@ -3648,7 +3648,7 @@ function buildTurnReview(p, pl, sectorDelta, dampingMul){
 
   // 베스트 / 워스트 섹터
   const ents = Object.entries(p.lastSectorPL||{}).sort((a,x)=>x[1].total - a[1].total);
-  const causeName = {macro:'매크로', event:'이벤트', slot:'레짐', bond:'BOND'};
+  const causeName = {macro:'매크로', event:'이벤트', slot:'장세', bond:'BOND'};
   if(ents.length){
     const [bSid, bD] = ents[0];
     if(bD.total >= 3){
@@ -4329,7 +4329,7 @@ const GLOSSARY = {
   '기준금리':   '중앙은행이 정하는 정책금리. 오르면 차입비용↑·성장주/채권 부담, 내리면 유동성↑·위험자산 강세.',
   '금리':       '돈을 빌리는 비용(이자율). 상승은 성장주·장기채에 역풍, 금융주(FIN)엔 호재인 경향.',
   '사이클':     '경기의 순환 국면(❄️겨울 불황 → 🌱봄 회복 → 🔥여름 호황 → 🍂가을 둔화). 국면마다 유리한 섹터가 바뀐다.',
-  '레짐':       '한동안(3~4턴) 지속되는 시장 국면/체제(예: AI 인프라 붐, 골디락스). 표시된 숫자는 "베팅 10당 손익 계수"로, 유지되는 매 턴 해당 섹터 베팅에 비례해 실제 자산(손익)에 가감된다(점수가 아니라 실손익). 예: AI 인프라 레짐 SEMI +2에서 SEMI에 40 베팅 → 매 턴 +8. 매크로·이벤트 카드 효과와 같은 "베팅 10당" 방식이며, 다른 점은 한 장이 아니라 여러 턴 지속된다는 것.',
+  '장세':       '장세(場勢, 영어 regime) — 한동안(3~4턴) 지속되는 시장 분위기/국면(예: AI 인프라 붐, 골디락스). 표시된 숫자는 "베팅 10당 손익 계수"로, 유지되는 매 턴 해당 섹터 베팅에 비례해 실제 자산(손익)에 가감된다(점수가 아니라 실손익). 예: AI 인프라 장세 SEMI +2에서 SEMI에 40 베팅 → 매 턴 +8. 매크로·이벤트 카드 효과와 같은 "베팅 10당" 방식이며, 다른 점은 한 장이 아니라 여러 턴 지속된다는 것.',
   '연착륙':     '경기가 침체에 빠지지 않고 완만히 둔화하는 것(soft landing). 증시엔 안도 랠리 재료.',
   '경착륙':     '경기가 급격히 침체로 빠지는 것(hard landing). 위험자산 급락을 부른다.',
   '긴축':       '중앙은행이 금리 인상·유동성 회수로 시중의 돈을 죄는 것. 성장주·고밸류 자산에 역풍.',
@@ -4484,11 +4484,11 @@ function render(){
       const eg = Object.entries(base.eff||{}).filter(([,v])=>v>0).map(([k,v])=>`${k} +${v}`).join(' / ');
       const eb = Object.entries(base.eff||{}).filter(([,v])=>v<0).map(([k,v])=>`${k} ${v}`).join(' / ');
       const tip = base.tip
-        ? base.tip + '\n\n[숫자 = 베팅 10당 손익] 레짐이 유지되는 동안 매 턴, 해당 섹터 베팅에 비례해 실제 자산(손익)에 가감됩니다. 예) SEMI +2 이고 SEMI에 40 베팅 → 매 턴 +8.'
+        ? base.tip + '\n\n[숫자 = 베팅 10당 손익] 장세가 유지되는 동안 매 턴, 해당 섹터 베팅에 비례해 실제 자산(손익)에 가감됩니다. 예) SEMI +2 이고 SEMI에 40 베팅 → 매 턴 +8.'
             + '\n\n유리: ' + (eg||'—') + '\n불리: ' + (eb||'—')
         : s.name;
       return `<span class="pill slot" title="${tip.replace(/"/g,'&quot;')}" style="cursor:help">${s.name} (${s.dur}턴)</span>`;
-    }).join(' ') + `<div style="margin-top:6px;font-size:12px;color:var(--mut);line-height:1.45">ⓘ 지속되는 시장국면. 칩의 숫자는 <b>베팅 10당 손익</b> — 보유 베팅에 비례해 매 턴 자산에 가감(점수가 아니라 실제 손익). 칩에 마우스를 올리면 유·불리 섹터가 보여요.</div>`;
+    }).join(' ') + `<div style="margin-top:6px;font-size:12px;color:var(--mut);line-height:1.45">ⓘ <b>장세(레짐)</b> = 한동안 지속되는 시장 분위기. 칩의 숫자는 <b>베팅 10당 손익</b> — 보유 베팅에 비례해 매 턴 자산에 가감(점수가 아니라 실제 손익). 칩에 마우스를 올리면 유·불리 섹터가 보여요.</div>`;
 
   // (v1.2) 섹터 테이블 — 성장/경기 2행 + 가치·방어·안전 1행(구획 구분)
   const TOP_ROWS = [
@@ -4733,7 +4733,7 @@ function midCheckpoint(){
     <div class="desc" style="line-height:1.7">
       <b>순위</b>: ${ranked.map((p,i)=>`${i+1}위 ${p.name} ${assetOf(p)}`).join(' · ')}<br>
       <b>나는 ${myRank}위</b> — 자산 ${assetOf(me)} · 원칙 훼손 ${me.risk}회<br>
-      <b>시장 레짐</b>: 사이클 ${state.cycle} (${season(state.cycle)}) · F&G ${state.fearGreed} · 인플레 ${state.inflation.toFixed(1)}% / 금리 ${state.rate.toFixed(2)}%<br>
+      <b>시장 상황</b>: 사이클 ${state.cycle} (${season(state.cycle)}) · F&G ${state.fearGreed} · 인플레 ${state.inflation.toFixed(1)}% / 금리 ${state.rate.toFixed(2)}%<br>
       ${best?`<b>내 강점</b>: ${best[0]} 누적 <span style="color:var(--green)">+${Math.round(best[1])}</span>`:''}${worst?` · <b>약점</b>: ${worst[0]} 누적 <span style="color:var(--red)">${Math.round(worst[1])}</span>`:''}
     </div></div>`;
 }
@@ -5049,13 +5049,13 @@ function renderAction(){
       <table style="width:100%;font-size:14px;border-collapse:collapse;margin-top:6px;text-align:center">
         <thead><tr style="color:var(--mut);border-bottom:1px solid var(--line)">
           <th style="text-align:left">플레이어</th>
-          <th>매크로</th><th>이벤트</th><th title="지속 시장국면(레짐)이 보유 섹터에 주는 손익">레짐</th><th>BOND</th>
+          <th>매크로</th><th>이벤트</th><th title="지속 시장국면(장세)이 보유 섹터에 주는 손익">장세</th><th>BOND</th>
           <th>페르소나</th><th>전략</th><th>거래비용</th>
           <th style="border-left:1px solid var(--line)">합계</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
-      <div style="margin-top:6px;font-size:12px;color:var(--mut);line-height:1.5">ⓘ 모든 수치는 <b>이번 턴 실제 자산 증감(손익)</b>이며 합계가 자산에 바로 반영됩니다(자산=점수). <b>매크로·이벤트·레짐</b>은 각 출처의 <b>섹터 효과 × (해당 섹터 베팅÷10)</b> — 즉 <b>베팅 비중이 클수록 효과도 큼</b>. <b>레짐</b>은 한동안 지속되는 시장국면이라 유지되는 매 턴 반복 적용됩니다.</div>
+      <div style="margin-top:6px;font-size:12px;color:var(--mut);line-height:1.5">ⓘ 모든 수치는 <b>이번 턴 실제 자산 증감(손익)</b>이며 합계가 자산에 바로 반영됩니다(자산=점수). <b>매크로·이벤트·장세</b>는 각 출처의 <b>섹터 효과 × (해당 섹터 베팅÷10)</b> — 즉 <b>베팅 비중이 클수록 효과도 큼</b>. <b>장세</b>는 한동안 지속되는 시장국면이라 유지되는 매 턴 반복 적용됩니다.</div>
       </div>
       ${renderSectorBreakdown()}
       <div style="margin-top:8px"><button class="btn" onclick="goFG()">→ F&G 갱신</button></div>`;
@@ -5148,11 +5148,11 @@ function renderSectorBreakdown(){
     <table style="width:100%;font-size:14px;border-collapse:collapse;margin-top:4px;text-align:center">
       <thead><tr style="color:var(--mut);border-bottom:1px solid var(--line)">
         <th style="text-align:left">섹터 <span style="font-size:14px">(베팅)</span></th>
-        <th>매크로</th><th>이벤트</th><th>슬롯</th><th>BOND</th>
+        <th>매크로</th><th>이벤트</th><th title="지속 시장국면(장세) 손익">장세</th><th>BOND</th>
         <th style="border-left:1px solid var(--line)">합계</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <div style="font-size:14px;color:var(--mut);margin-top:4px">▲ = 섹터 손익 상한(±${SECTOR_PL_CAP}) 적용됨 · 혼잡 비용은 출처값에 이미 반영</div>
+    <div style="font-size:14px;color:var(--mut);margin-top:4px">각 수치 = <b>섹터효과 × (베팅÷10)</b> 실손익 · 장세=지속 국면(매 턴 반복) · ▲ = 섹터 손익 상한(±${SECTOR_PL_CAP}) 적용 · 혼잡 비용은 이미 반영</div>
   </div>`;
 }
 function useStrategy(id){
@@ -5217,7 +5217,7 @@ const TUT_STEPS = [
     text:'두 지표는 사이클을 따라가되 매크로 카드의 충격이 더해집니다. <b>정상 범위는 1~3%</b> — 인플레·금리가 이 구간을 벗어나면 정산 때 섹터별 추가 효과가 붙습니다 (예: 긴축 → 성장주 부담, 고인플레 → 에너지·소재 유리).',
     next:true },
   { sel:'#panelOmen', title:'🔮 Omen 게이지 (위험 누적)',
-    text:'지정학·신용·인플레·침체 4종의 위험 누적도입니다. 카드가 나올 때마다 쌓이고 <b>3에 도달하면 다음 턴 해당 위기 매크로가 강제 발동</b>되며 3~4턴 지속되는 장기 레짐이 시작됩니다. 2 이상이면 경고와 대피 섹터 힌트가 표시돼요.',
+    text:'지정학·신용·인플레·침체 4종의 위험 누적도입니다. 카드가 나올 때마다 쌓이고 <b>3에 도달하면 다음 턴 해당 위기 매크로가 강제 발동</b>되며 3~4턴 지속되는 <b>장세(레짐)</b>가 시작됩니다 — 상단 <b>활성 장세</b> 칸에 표시되고, 지속되는 동안 <b>보유 섹터 손익에 매 턴(베팅 10당) 영향</b>을 줍니다(칩에 마우스를 올리면 유·불리 섹터 확인). 2 이상이면 경고와 대피 섹터 힌트가 표시돼요.',
     next:true },
   { sel:'#panelSectors', title:'📊 섹터 보드 — 게임의 중심',
     text:'11개 섹터가 5개 군으로 나뉩니다. <b>성장군</b>(TECH·SEMI·BIO·AUTO)은 금리에, <b>경기군</b>(INDU·FIN·CONS)은 경기에, <b>가치군</b>(ENG·MATE)은 인플레에 민감하고, UTIL은 방어주, BOND는 안전자산입니다.<br><br>⚠️ <b>BOND 주의</b>: 안전자산이지만 침체·신용불안에서만 강합니다. <b>금리 급등·재정 신뢰 훼손</b> 카드에서는 채권도 크게 손실날 수 있어요.<br><br>카드 효과는 <b>베팅 10당</b> 적용 — "TECH +5"면 TECH에 30 베팅 시 +15! 한 섹터에 <b>모든 플레이어의 베팅이 과도하게 쏠리면</b> ⚠️혼잡·🔥과열 감쇠가 붙어 수익이 깎이니 쏠림도 조심하세요 (기준은 전체 자산 규모에 비례 — 게임이 커지면 함께 올라갑니다).',
@@ -5257,7 +5257,7 @@ const TUT_STEPS = [
     mission:'👆 둘 중 원하는 카드를 클릭해 투표하고, 결과를 읽은 뒤 "→ 정산으로"를 누르세요',
     until: () => state.phase >= 4 || state.turn >= 2 },
   { sel:'#panelPhase', title:'5단계 — 🧮 정산과 턴 리뷰',
-    text:'맨 위 <b>턴 리뷰 카드</b>가 이번 턴을 S~D 등급으로 평가하고 ✅잘한 점 / ⚠️아쉬운 점 / 💡다음 턴 팁을 알려줍니다. 그 아래 정산 명세는 <b>손익 = 매크로 + 이벤트 + 슬롯 + BOND + 페르소나 + 전략 − 거래비용</b>의 분해표예요. 매 턴 리뷰를 읽는 습관이 실력을 만듭니다.',
+    text:'맨 위 <b>턴 리뷰 카드</b>가 이번 턴을 S~D 등급으로 평가하고 ✅잘한 점 / ⚠️아쉬운 점 / 💡다음 턴 팁을 알려줍니다. 그 아래 정산 명세는 <b>손익 = 매크로 + 이벤트 + 장세 + BOND + 페르소나 + 전략 − 거래비용</b>의 분해표예요.<br><br>💡 표의 모든 숫자는 <b>점수가 아니라 이번 턴 실제 자산 증감(손익)</b>입니다. <b>매크로·이벤트·장세</b>는 모두 <b>섹터효과 × (그 섹터 베팅÷10)</b> — 즉 <b>많이 베팅한 섹터일수록 효과도 큽니다</b>. 특히 <b>장세</b>(상단 "활성 장세" 칸)는 한 장 카드가 아니라 <b>3~4턴 지속되는 시장 분위기</b>라, 유지되는 동안 매 턴 반복으로 손익에 가감돼요. 매 턴 리뷰를 읽는 습관이 실력을 만듭니다.',
     mission:'👆 "→ F&G 갱신" 버튼을 누르세요',
     until: () => state.phase >= 5 || state.turn >= 2 },
   { sel:'#panelPhase', title:'6단계 — 😨 F&G 갱신',
