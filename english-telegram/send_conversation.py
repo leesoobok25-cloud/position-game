@@ -106,9 +106,10 @@ def pick_dialogue(grade, today=None):
 def build_message(grade_index, dialogue, moved):
     grade = GRADES[grade_index]
     total = len(GRADES)
+    question = dialogue["speak_q"]
     lines = []
     lines.append(
-        "🗣️ <b>오늘의 회화</b>  ·  레벨 {n}/{t} · <b>{g}</b>".format(
+        "🗣️ <b>오늘의 말하기</b>  ·  레벨 {n}/{t} · <b>{g}</b>".format(
             n=grade_index + 1, t=total, g=escape_html(grade["grade"])
         )
     )
@@ -116,9 +117,13 @@ def build_message(grade_index, dialogue, moved):
         lines.append("🎉 <b>축하해요! {g}(으)로 올라갔어요!</b>".format(g=escape_html(grade["grade"])))
     elif moved < 0:
         lines.append("🔽 <b>{g}(으)로 한 단계 내렸어요.</b>".format(g=escape_html(grade["grade"])))
-    lines.append("📝 주제: {title}".format(title=escape_html(dialogue["title"])))
+    lines.append("")
+    lines.append("🎤 <b>30초 말하기</b>: {en}".format(en=escape_html(question["en"])))
+    lines.append("<i>{ko}</i>".format(ko=escape_html(question["ko"])))
+    lines.append("👉 먼저 <b>영어로 30초</b> 직접 말해보세요. 버벅여도 괜찮아요!")
     lines.append("")
     lines.append(DIVIDER)
+    lines.append("📋 <b>이렇게 말할 수 있어요</b> (소리 내어 따라 하기)")
     for turn in dialogue["turns"]:
         lines.append(
             "<b>{s}:</b> {en}".format(s=escape_html(turn["s"]), en=escape_html(turn["en"]))
@@ -126,16 +131,16 @@ def build_message(grade_index, dialogue, moved):
         lines.append("<i>{ko}</i>".format(ko=escape_html(turn["ko"])))
     lines.append(DIVIDER)
     lines.append("")
-    lines.append("📈 <b>오늘 회화 끝!</b>")
-    lines.append("다음 학년으로 <b>올리려면</b> 이 봇에게 <b>up</b> 이라고 보내주세요.")
-    lines.append("(너무 어려우면 <b>down</b>, 그대로면 그냥 두면 돼요 · 다음 발송 때 반영)")
-    lines.append("")
-    lines.append("🔊 음성도 같이 보낼게요. 큰 소리로 따라 읽어보세요!")
+    lines.append("🚶 <b>걸으면서 위 문장을 5번</b> 소리 내어 말해보세요.")
+    lines.append("📈 다음 학년 올리려면 <b>up</b>, 너무 어려우면 <b>down</b> 을 봇에게 보내세요.")
+    lines.append("🔊 음성으로 따라 말하기(섀도잉) 해보세요!")
     return "\n".join(lines)
 
 
 def build_audio_text(dialogue):
-    return "\n".join(turn["en"] for turn in dialogue["turns"])
+    parts = [dialogue["speak_q"]["en"]]
+    parts.extend(turn["en"] for turn in dialogue["turns"])
+    return "\n".join(parts)
 
 
 def main():

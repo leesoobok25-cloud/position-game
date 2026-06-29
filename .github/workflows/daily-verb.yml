@@ -1,6 +1,6 @@
-name: Daily Verb (Telegram)
+name: Daily Pattern (Telegram)
 
-# 매일 회화에 자주 쓰는 동사 하나를 텔레그램으로 보냅니다. (회화/기초와는 별도)
+# 매일 회화 핵심 '문장 패턴' 하나를 텔레그램으로 보냅니다 (문장 자동화 훈련).
 on:
   schedule:
     # cron은 UTC 기준입니다. '0 4 * * *' = 매일 04:00 UTC = 13:00 KST(낮 1시).
@@ -29,9 +29,9 @@ jobs:
       - name: Install dependencies (text-to-speech)
         run: pip install gtts requests
 
-      - name: Send today's verb
+      - name: Send today's pattern
         working-directory: english-telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python3 send_verb.py
+        run: python3 send_pattern.py

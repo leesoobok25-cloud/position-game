@@ -1,13 +1,15 @@
 # 📚 매일 영어 학습 (텔레그램 자동 발송)
 
-매일 텔레그램으로 영어 공부거리를 자동으로 보내주는 자동화입니다. 세 가지를 보냅니다:
+매일 텔레그램으로 **말하기 중심** 영어 훈련을 자동으로 보내주는 자동화입니다. "읽기"가 아니라 **입으로 말하게** 만드는 게 목표예요. 하루 세 번:
 
-- 🗣️ **단계별 영어 회화** (아침 9시) — **중1 → 고3** 6단계. 레벨이 오를수록 문장·표현이 어려워져요. 매일 회화 끝에 봇이 "다음 학년으로 올릴까요?"라고 물어보고, 봇에게 **`up`**(올리기)/**`down`**(내리기)으로 답하면 다음 발송 때 **한 학년씩** 조정됩니다. (현재 학년은 자동 저장)
-- 🔤 **오늘의 동사** (낮 1시) — 회화에 자주 쓰는 핵심 동사 60개를 **순서대로** 하루 하나씩. `뜻 → 변화형 → 예문 2개 → 자주 쓰는 표현`.
-- 📘 **기초 영어 코스** (저녁 8시) — 인사부터 시제까지 45과를 **순서대로** 하루 한 과씩. `설명 → 핵심 패턴 → 예문 → 연습문제(정답 가림)`. 완전 초보용.
+- 🗣️ **오늘의 말하기** (아침 9시) — **30초 질문**에 직접 답하고, 모범답안을 소리 내어 따라 말해요(섀도잉). **중1 → 고3 6단계**, 봇에게 **`up`/`down`** 을 보내면 한 학년씩 오르내려요. (학년 자동 저장)
+- ☀️ **오늘의 패턴** (낮 1시) — 회화 핵심 문장 패턴 1개를 **내 주제(일상·투자)로 바꿔 5번씩** 말해요 (문장 자동화).
+- 🇰🇷➡️🇬🇧 **한→영 말하기** (저녁 8시) — 한국어 문장을 보고 **먼저 직접 영어로 말한 뒤** 정답을 확인해요 (한국어→영어 출력 훈련).
 
-공통 특징:
-- **발음 듣기**: 텍스트와 함께 영어를 읽어주는 **음성(MP3)** 도 보내드려요. 탭하면 재생됩니다. (무료 TTS `gtts` 사용)
+공통:
+- 주제는 **일상 + 투자/시장** 으로 맞췄어요.
+- 각 메시지에 **음성(MP3)** 첨부 — 따라 말하기(섀도잉)용. 무료(`gtts`).
+- 원칙: **짧게, 틀려도, 바로, 소리 내어.** (완성도보다 반응속도)
 - **비용**: 텔레그램 봇 API, GitHub Actions 모두 무료입니다.
 
 ---
@@ -76,23 +78,23 @@ python3 send_daily.py --preview-all   # 30개 전체 미리보기
 ## 🔧 자주 바꾸는 설정
 
 ### 보내는 시간 바꾸기
-- 회화(아침): `.github/workflows/daily-english.yml`
-- 오늘의 동사(낮): `.github/workflows/daily-verb.yml`
-- 기초 코스(저녁): `.github/workflows/daily-lesson.yml`
+- 오늘의 말하기(아침): `.github/workflows/daily-english.yml`
+- 오늘의 패턴(낮): `.github/workflows/daily-verb.yml`
+- 한→영 말하기(저녁): `.github/workflows/daily-lesson.yml`
 
 각 파일의 `cron` 값을 수정하세요. **UTC 기준**이라 한국 시간 − 9시간입니다.
 
 | 받고 싶은 시간 (KST) | cron 값 |
 |------|------|
-| 오전 9시 (회화 기본) | `0 0 * * *` |
-| 낮 1시 (동사 기본) | `0 4 * * *` |
-| 저녁 8시 (기초 기본) | `0 11 * * *` |
+| 오전 9시 (말하기 기본) | `0 0 * * *` |
+| 낮 1시 (패턴 기본) | `0 4 * * *` |
+| 저녁 8시 (한→영 기본) | `0 11 * * *` |
 | 밤 10시 | `0 13 * * *` |
 
 ### 콘텐츠 추가·수정하기
-- 단계별 회화: `conversation_levels.py` 의 `GRADES` (학년별 `dialogues` 에 대화 추가)
-- 동사: `verbs.py` 의 `VERBS`
-- 기초 코스: `lessons.py` 의 `LESSONS`
+- 오늘의 말하기: `conversation_levels.py` 의 `GRADES` (학년별 `dialogues`)
+- 오늘의 패턴: `patterns.py` 의 `PATTERNS`
+- 한→영 말하기: `ke_drills.py` 의 `KE_SETS`
 
 같은 형식으로 항목을 추가하면 자동으로 포함됩니다.
 
@@ -107,18 +109,18 @@ python3 send_daily.py --preview-all   # 30개 전체 미리보기
 
 | 파일 | 설명 |
 |------|------|
-| `conversation_levels.py` | 단계별 회화 6단계 중1~고3 (콘텐츠) |
-| `verbs.py` | 오늘의 동사 60개 (콘텐츠) |
-| `lessons.py` | 기초 영어 코스 45과 (콘텐츠) |
+| `conversation_levels.py` | 오늘의 말하기 6단계 중1~고3 (콘텐츠) |
+| `patterns.py` | 오늘의 패턴 29개 (콘텐츠) |
+| `ke_drills.py` | 한→영 말하기 24세트 (콘텐츠) |
 | `telegram_utils.py` | 텔레그램 전송·음성(TTS)·응답읽기 공용 함수 |
-| `send_conversation.py` | 오늘의 단계별 회화 전송 + up/down 레벨 조정 |
-| `send_verb.py` | 오늘의 동사를 골라 전송 |
-| `send_lesson.py` | 오늘의 기초 과를 골라 전송 |
-| `state/conversation_state.json` | 현재 회화 학년(레벨) 저장 — 자동 갱신 |
-| `scenarios.py`, `send_daily.py` | (예전) 여행 회화 30개 — 지금은 미사용, 보관용 |
-| `../.github/workflows/daily-english.yml` | 단계별 회화 자동 발송 (아침) |
-| `../.github/workflows/daily-verb.yml` | 동사 자동 발송 (낮) |
-| `../.github/workflows/daily-lesson.yml` | 기초 코스 자동 발송 (저녁) |
+| `send_conversation.py` | 오늘의 말하기 전송 + up/down 레벨 조정 |
+| `send_pattern.py` | 오늘의 패턴 전송 |
+| `send_ke.py` | 한→영 말하기 전송 (정답 스포일러) |
+| `state/conversation_state.json` | 현재 말하기 학년(레벨) 저장 — 자동 갱신 |
+| `scenarios.py` · `verbs.py` · `lessons.py` 등 | (예전) 여행·동사·기초 콘텐츠 — 지금은 미사용, 보관용 |
+| `../.github/workflows/daily-english.yml` | 오늘의 말하기 자동 발송 (아침) |
+| `../.github/workflows/daily-verb.yml` | 오늘의 패턴 자동 발송 (낮) |
+| `../.github/workflows/daily-lesson.yml` | 한→영 말하기 자동 발송 (저녁) |
 
 ---
 
