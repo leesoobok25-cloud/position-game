@@ -1,6 +1,6 @@
-name: Daily Basic English Lesson (Telegram)
+name: Daily Korean-to-English (Telegram)
 
-# 매일 기초 영어 코스를 한 과씩 텔레그램으로 보냅니다. (회화와는 별도)
+# 매일 '한→영 말하기' 한 세트를 텔레그램으로 보냅니다 (한국어→영어 출력 훈련).
 on:
   schedule:
     # cron은 UTC 기준입니다. '0 11 * * *' = 매일 11:00 UTC = 20:00 KST(저녁 8시).
@@ -29,9 +29,9 @@ jobs:
       - name: Install dependencies (text-to-speech)
         run: pip install gtts requests
 
-      - name: Send today's basic English lesson
+      - name: Send today's Korean-to-English drill
         working-directory: english-telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python3 send_lesson.py
+        run: python3 send_ke.py
