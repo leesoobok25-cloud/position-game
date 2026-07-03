@@ -30,6 +30,7 @@ https://www.data.go.kr/data/15098547/openapi.do
 import json
 import os
 import sys
+import time
 from datetime import date, timedelta
 
 from applyhome_api import (
@@ -111,20 +112,26 @@ def format_entry(row):
 
 
 def chunk_messages(header, entries):
-    """텔레그램 길이 제한을 넘기지 않도록 항목들을 여러 메시지로 나눕니다."""
+    """
+    텔레그램 길이 제한을 넘기지 않도록 항목들을 여러 메시지로 나눕니다.
+    entries는 (본문, row) 쌍의 목록이며, (메시지, [포함된 row들]) 쌍의 목록을 반환합니다.
+    """
     chunks = []
     current = [header]
+    current_rows = []
     current_len = len(header)
-    for entry in entries:
+    for entry, row in entries:
         entry_len = len(entry) + 2
         if current_len + entry_len > TELEGRAM_LIMIT and len(current) > 1:
-            chunks.append("\n\n".join(current))
+            chunks.append(("\n\n".join(current), current_rows))
             current = [header]
+            current_rows = []
             current_len = len(header)
         current.append(entry)
+        current_rows.append(row)
         current_len += entry_len
     if len(current) > 1:
-        chunks.append("\n\n".join(current))
+        chunks.append(("\n\n".join(current), current_rows))
     return chunks
 
 
@@ -165,7 +172,7 @@ def main():
 
     grouped = {}
     for row in targets:
-        grouped.setdefault(group_label(row), []).append(format_entry(row))
+        grouped.setdefault(group_label(row), []).append((format_entry(row), row))
 
     known_labels = [label for label, _ in GROUP_ORDER]
     ordered_labels = known_labels + sorted(set(grouped) - set(known_labels))
@@ -180,7 +187,7 @@ def main():
         messages.extend(chunk_messages(header, entries))
 
     if preview:
-        print(("\n\n" + "=" * 40 + "\n\n").join(messages))
+        print(("\n\n" + "=" * 40 + "\n\n").join(message for message, _ in messages))
         return 0
 
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
@@ -189,16 +196,31 @@ def main():
         sys.stderr.write("오류: TELEGRAM_BOT_TOKEN 과 TELEGRAM_CHAT_ID 환경 변수가 필요합니다.\n")
         return 1
 
-    for message in messages:
-        send_message(token, chat_id, message)
+    # 메시지마다 보낸 공고를 즉시 상태에 기록해, 중간에 실패해도
+    # 이미 보낸 공고가 다음 실행 때 중복 발송되지 않도록 합니다.
+    sent = 0
+    for i, (message, message_rows) in enumerate(messages):
+        if i > 0:
+            time.sleep(1.5)  # 텔레그램 속도 제한(같은 채팅에 초당 약 1건) 예방.
+        try:
+            send_message(token, chat_id, message)
+        except Exception as exc:  # noqa: BLE001
+            sys.stderr.write(
+                "메시지 {0}/{1} 전송 실패: {2}\n".format(i + 1, len(messages), exc)
+            )
+            prune_state(state, today)
+            save_state(state)
+            return 1
+        for row in message_rows:
+            state[listing_key(row)] = today_str
+        save_state(state)
+        sent += len(message_rows)
 
-    for row in targets:
-        state[listing_key(row)] = today_str
     prune_state(state, today)
     save_state(state)
 
     counts = {label: len(entries) for label, entries in grouped.items()}
-    print("전송 완료: 신규 {0}건 — {1}".format(len(targets), counts))
+    print("전송 완료: 신규 {0}건 — {1}".format(sent, counts))
     return 0
 
 
