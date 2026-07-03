@@ -100,23 +100,24 @@ def make_tts_mp3(text, path):
 
 
 def send_audio(token, chat_id, mp3_path, title, caption):
-    """텔레그램으로 발음 듣기용 음성(오디오) 파일을 전송합니다."""
+    """발음 mp3를 텔레그램으로 전송합니다.
+
+    '오디오'가 아니라 '문서(document)'로 보냅니다. 오디오로 보내면 재생이 끝났을 때
+    텔레그램이 채팅 내 다음 오디오를 자동 재생(재생목록)하는데, 문서로 보내면 그 자동
+    넘김이 없습니다. (탭하면 재생되는 것은 그대로예요.)
+    """
     import requests  # gtts 설치 시 함께 설치됩니다.
 
-    url = TELEGRAM.format(token=token, method="sendAudio")
+    url = TELEGRAM.format(token=token, method="sendDocument")
+    filename = "{0}.mp3".format(title).replace(" ", "_").replace("/", "-")
     with open(mp3_path, "rb") as audio_file:
         response = requests.post(
             url,
-            data={
-                "chat_id": chat_id,
-                "title": title,
-                "performer": "Daily English",
-                "caption": caption,
-            },
-            files={"audio": ("audio.mp3", audio_file, "audio/mpeg")},
+            data={"chat_id": chat_id, "caption": caption},
+            files={"document": (filename, audio_file, "audio/mpeg")},
             timeout=60,
         )
     result = response.json()
     if not result.get("ok"):
-        raise RuntimeError("Telegram sendAudio 오류: {0}".format(response.text))
+        raise RuntimeError("Telegram sendDocument 오류: {0}".format(response.text))
     return result
