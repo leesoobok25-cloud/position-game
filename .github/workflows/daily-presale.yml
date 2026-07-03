@@ -1,0 +1,53 @@
+name: Daily Real Estate Presale Alerts (Telegram)
+
+# 매일 서울·경기 지역 아파트 분양정보(공공분양 + 민간분양) 중 새 공고를 텔레그램으로 보냅니다.
+on:
+  schedule:
+    # cron은 UTC 기준입니다. '0 23 * * *' = 매일 23:00 UTC = 08:00 KST(한국, 다음날).
+    # 보내는 시간을 바꾸려면 아래 숫자를 조정하세요. (KST = UTC + 9시간)
+    - cron: '0 23 * * *'
+  # Actions 탭에서 'Run workflow' 버튼으로 직접 테스트할 수 있습니다.
+  workflow_dispatch:
+
+concurrency:
+  group: daily-presale
+  cancel-in-progress: false
+
+# 발송 이력 파일(state/notified.json)을 커밋하기 위해 쓰기 권한이 필요합니다.
+permissions:
+  contents: write
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Send new presale listings (Seoul & Gyeonggi)
+        working-directory: realestate-telegram
+        env:
+          APPLYHOME_API_KEY: ${{ secrets.APPLYHOME_API_KEY }}
+          # 분양 알림 전용 봇 (english-telegram 봇과 별개)
+          TELEGRAM_BOT_TOKEN: ${{ secrets.PRESALE_TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.PRESALE_TELEGRAM_CHAT_ID }}
+        run: python3 send_presale.py
+
+      - name: Save notified state (commit)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add realestate-telegram/state/notified.json
+          if git diff --staged --quiet; then
+            echo "발송 이력 변화 없음 — 커밋 생략."
+          else
+            git commit -m "chore: update presale notified state [skip ci]"
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+            git push origin "HEAD:${GITHUB_REF_NAME}" \
+              || echo "상태 저장 push 실패: 저장소 Settings > Actions > General > Workflow permissions 를 'Read and write'로 설정하세요."
+          fi
