@@ -33,8 +33,9 @@ jobs:
         working-directory: realestate-telegram
         env:
           APPLYHOME_API_KEY: ${{ secrets.APPLYHOME_API_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # 분양 알림 전용 봇 (english-telegram 봇과 별개)
+          TELEGRAM_BOT_TOKEN: ${{ secrets.PRESALE_TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.PRESALE_TELEGRAM_CHAT_ID }}
         run: python3 send_presale.py
 
       - name: Save notified state (commit)

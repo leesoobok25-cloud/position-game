@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-서울·경기 지역의 아파트 분양정보(공공분양 + 민간분양)를 매일 텔레그램으로 보냅니다.
+서울·경기 지역의 분양정보를 매일 텔레그램으로 보냅니다.
+  - APT (공공분양 + 민간분양)
+  - 오피스텔 / 도시형생활주택 / 민간임대 / 생활숙박시설
+  - APT 무순위·잔여세대
+  - 공공지원 민간임대
+  - 임의공급
 
 데이터 출처: 한국부동산원_청약홈 분양정보 조회 서비스 (공공데이터포털 #15098547)
 https://www.data.go.kr/data/15098547/openapi.do
 
 동작 방식:
-  1) 청약홈 API에서 서울·경기 지역 APT 분양정보를 모두 가져옵니다.
-  2) 청약접수가 아직 끝나지 않은(RCEPT_ENDDE가 오늘 이후이거나 비어있는) 공고만 추립니다.
+  1) 청약홈 API의 주택유형별 엔드포인트에서 서울·경기 분양정보를 모두 가져옵니다.
+  2) 청약접수가 아직 끝나지 않은(접수종료일이 오늘 이후이거나 비어있는) 공고만 추립니다.
   3) 그중 한 번도 보낸 적 없는(state/notified.json에 없는) 공고만 텔레그램으로 보냅니다.
   4) 보낸 공고는 state/notified.json에 기록합니다.
      (GitHub Actions 워크플로우가 이 파일을 커밋해 다음 실행으로 이어집니다.)
@@ -27,12 +32,29 @@ import os
 import sys
 from datetime import date, timedelta
 
-from applyhome_api import classify, detail_url, fetch_seoul_gyeonggi, listing_key
+from applyhome_api import (
+    detail_url,
+    fetch_seoul_gyeonggi,
+    group_label,
+    house_type,
+    listing_key,
+    rcept_dates,
+)
 from telegram_utils import escape_html, send_message
 
 STATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "state", "notified.json")
 STATE_TTL_DAYS = 180  # 상태 파일이 무한정 커지지 않도록 오래된 기록은 정리합니다.
 TELEGRAM_LIMIT = 3500  # 텔레그램 메시지 최대 길이(4096) 대비 여유를 둔 값.
+
+# 메시지 그룹 표시 순서와 아이콘.
+GROUP_ORDER = [
+    ("공공분양", "🏛"),
+    ("민간분양", "🏙"),
+    ("오피스텔·도시형·민간임대·생활숙박", "🏬"),
+    ("APT 무순위·잔여세대", "🎯"),
+    ("공공지원 민간임대", "🏘"),
+    ("임의공급", "📦"),
+]
 
 
 def load_state():
@@ -59,7 +81,8 @@ def prune_state(state, today):
 
 def is_active(row, today_str):
     """청약접수 종료일이 지나지 않았으면(또는 비어있으면) 진행중/예정 공고로 봅니다."""
-    end = (row.get("RCEPT_ENDDE") or "").strip().replace(".", "-").replace("/", "-")
+    _, end = rcept_dates(row)
+    end = end.strip().replace(".", "-").replace("/", "-")
     return (not end) or end[:10] >= today_str
 
 
@@ -67,21 +90,20 @@ def format_entry(row):
     name = escape_html(row.get("HOUSE_NM") or "(단지명 미상)")
     area = escape_html(row.get("SUBSCRPT_AREA_CODE_NM") or "-")
     addr = escape_html(row.get("HSSPLY_ADRES") or "-")
-    detail_type = escape_html(row.get("HOUSE_DTL_SECD_NM") or "-")
+    detail_type = escape_html(house_type(row))
     scale = escape_html(row.get("TOT_SUPLY_HSHLDCO") or "-")
     builder = escape_html(row.get("BSNS_MBY_NM") or "-")
     announce = escape_html(row.get("RCRIT_PBLANC_DE") or "-")
-    rcept_begin = escape_html(row.get("RCEPT_BGNDE") or "-")
-    rcept_end = escape_html(row.get("RCEPT_ENDDE") or "-")
+    begin, end = rcept_dates(row)
     tel = escape_html(row.get("MDHS_TELNO") or "-")
     url = detail_url(row)
 
     lines = [
-        "🏢 <b>{0}</b>  [{1} · {2}]".format(name, classify(row), detail_type),
+        "🏢 <b>{0}</b>  [{1}]".format(name, detail_type),
         "📍 {0} ({1})".format(area, addr),
-        "🏗 공급규모: {0}세대  ·  사업주체: {1}".format(scale, builder),
+        "🏗 공급규모: {0}세대/실  ·  사업주체: {1}".format(scale, builder),
         "📢 모집공고일: {0}".format(announce),
-        "🗓 청약접수: {0} ~ {1}".format(rcept_begin, rcept_end),
+        "🗓 청약접수: {0} ~ {1}".format(escape_html(begin or "-"), escape_html(end or "-")),
         "☎️ 문의처: {0}".format(tel),
         '🔗 <a href="{0}">청약홈에서 자세히 보기</a>'.format(url),
     ]
@@ -125,7 +147,7 @@ def main():
         return 1
 
     active = [row for row in rows if is_active(row, today_str)]
-    active.sort(key=lambda row: (row.get("RCEPT_BGNDE") or "", row.get("HOUSE_NM") or ""))
+    active.sort(key=lambda row: (rcept_dates(row)[0], row.get("HOUSE_NM") or ""))
 
     state = {} if preview else load_state()
     targets = active if preview else [row for row in active if listing_key(row) not in state]
@@ -141,14 +163,21 @@ def main():
         print("신규 분양공고가 없어 메시지를 보내지 않습니다.")
         return 0
 
-    public_entries = [format_entry(row) for row in targets if classify(row) == "공공분양"]
-    private_entries = [format_entry(row) for row in targets if classify(row) == "민간분양"]
+    grouped = {}
+    for row in targets:
+        grouped.setdefault(group_label(row), []).append(format_entry(row))
+
+    known_labels = [label for label, _ in GROUP_ORDER]
+    ordered_labels = known_labels + sorted(set(grouped) - set(known_labels))
+    icons = dict(GROUP_ORDER)
 
     messages = []
-    if public_entries:
-        messages.extend(chunk_messages("🏛 <b>공공분양 신규 공고</b> (서울·경기)", public_entries))
-    if private_entries:
-        messages.extend(chunk_messages("🏙 <b>민간분양 신규 공고</b> (서울·경기)", private_entries))
+    for label in ordered_labels:
+        entries = grouped.get(label)
+        if not entries:
+            continue
+        header = "{0} <b>{1} 신규 공고</b> (서울·경기)".format(icons.get(label, "🏢"), label)
+        messages.extend(chunk_messages(header, entries))
 
     if preview:
         print(("\n\n" + "=" * 40 + "\n\n").join(messages))
@@ -168,11 +197,8 @@ def main():
     prune_state(state, today)
     save_state(state)
 
-    print(
-        "전송 완료: 신규 {0}건 (공공분양 {1} / 민간분양 {2})".format(
-            len(targets), len(public_entries), len(private_entries)
-        )
-    )
+    counts = {label: len(entries) for label, entries in grouped.items()}
+    print("전송 완료: 신규 {0}건 — {1}".format(len(targets), counts))
     return 0
 
 
