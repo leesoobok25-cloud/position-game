@@ -64,11 +64,39 @@ def send_message(token, chat_id, text):
         return result
 
 
+# 음성 속도. 1.0 = 원래 속도, 낮출수록 느려짐 (학습용으로 약간 느리게).
+#   더 느리게: 0.8 / 0.75  ·  조금 빠르게: 0.9 / 1.0
+TTS_SPEED = 0.85
+
+
 def make_tts_mp3(text, path):
-    """영어 텍스트를 MP3 음성 파일로 변환합니다 (gTTS 사용)."""
+    """영어 텍스트를 MP3 음성 파일로 변환합니다.
+
+    gTTS로 만든 뒤 ffmpeg로 약간 느리게(TTS_SPEED) 처리합니다.
+    ffmpeg가 없거나 실패하면 gTTS 자체 느린 모드로 대체합니다.
+    """
+    import os
+    import subprocess
+
     from gtts import gTTS  # 음성 생성이 필요할 때만 불러옵니다.
 
-    gTTS(text=text, lang="en", slow=False).save(path)
+    raw_path = path + ".raw.mp3"
+    gTTS(text=text, lang="en", slow=False).save(raw_path)
+    try:
+        subprocess.run(
+            [
+                "ffmpeg", "-y", "-i", raw_path,
+                "-filter:a", "atempo={0}".format(TTS_SPEED),
+                "-vn", path,
+            ],
+            check=True,
+            capture_output=True,
+        )
+        os.remove(raw_path)
+    except Exception:  # noqa: BLE001  # ffmpeg 없음/실패 → gTTS 느린 모드로 대체
+        gTTS(text=text, lang="en", slow=True).save(path)
+        if os.path.exists(raw_path):
+            os.remove(raw_path)
 
 
 def send_audio(token, chat_id, mp3_path, title, caption):
