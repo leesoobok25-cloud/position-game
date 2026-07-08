@@ -100,26 +100,28 @@ def make_tts_mp3(text, path):
 
 
 def _mp3_to_mp4(mp3_path, mp4_path):
-    """mp3를 단색 배경의 작은 mp4(영상)로 변환합니다. 성공하면 True."""
+    """mp3를 단색 배경의 작은 mp4(영상)로 변환합니다. 성공하면 True.
+
+    코덱은 libx264를 먼저 쓰고, 없으면 mpeg4로 대체합니다. ffmpeg 자체가 없으면 False.
+    """
     import subprocess
 
-    try:
-        subprocess.run(
-            [
-                "ffmpeg", "-y",
-                "-f", "lavfi", "-i", "color=c=0x0f4c81:s=480x270:r=10",
-                "-i", mp3_path,
-                "-c:v", "libx264", "-tune", "stillimage",
-                "-c:a", "aac", "-b:a", "128k",
-                "-pix_fmt", "yuv420p", "-shortest",
-                mp4_path,
-            ],
-            check=True,
-            capture_output=True,
-        )
-        return True
-    except Exception:  # noqa: BLE001
-        return False
+    for vcodec in ("libx264", "mpeg4"):
+        cmd = [
+            "ffmpeg", "-y",
+            "-f", "lavfi", "-i", "color=c=0x0f4c81:s=480x270:r=10",
+            "-i", mp3_path,
+            "-c:v", vcodec, "-c:a", "aac", "-b:a", "128k",
+            "-pix_fmt", "yuv420p", "-shortest", mp4_path,
+        ]
+        try:
+            subprocess.run(cmd, check=True, capture_output=True)
+            return True
+        except FileNotFoundError:
+            return False  # ffmpeg 미설치
+        except subprocess.CalledProcessError:
+            continue  # 이 코덱 실패 → 다음 코덱 시도
+    return False
 
 
 def send_audio(token, chat_id, mp3_path, title, caption):
@@ -158,6 +160,7 @@ def send_audio(token, chat_id, mp3_path, title, caption):
             )
         method = "sendDocument"
 
+    print("음성 전송 방식: {0}".format(method))
     result = response.json()
     if not result.get("ok"):
         raise RuntimeError("Telegram {0} 오류: {1}".format(method, response.text))
