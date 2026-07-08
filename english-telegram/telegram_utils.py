@@ -99,25 +99,66 @@ def make_tts_mp3(text, path):
             os.remove(raw_path)
 
 
-def send_audio(token, chat_id, mp3_path, title, caption):
-    """발음 mp3를 텔레그램으로 전송합니다.
+def _mp3_to_mp4(mp3_path, mp4_path):
+    """mp3를 단색 배경의 작은 mp4(영상)로 변환합니다. 성공하면 True."""
+    import subprocess
 
-    '오디오'가 아니라 '문서(document)'로 보냅니다. 오디오로 보내면 재생이 끝났을 때
-    텔레그램이 채팅 내 다음 오디오를 자동 재생(재생목록)하는데, 문서로 보내면 그 자동
-    넘김이 없습니다. (탭하면 재생되는 것은 그대로예요.)
+    try:
+        subprocess.run(
+            [
+                "ffmpeg", "-y",
+                "-f", "lavfi", "-i", "color=c=0x0f4c81:s=480x270:r=10",
+                "-i", mp3_path,
+                "-c:v", "libx264", "-tune", "stillimage",
+                "-c:a", "aac", "-b:a", "128k",
+                "-pix_fmt", "yuv420p", "-shortest",
+                mp4_path,
+            ],
+            check=True,
+            capture_output=True,
+        )
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def send_audio(token, chat_id, mp3_path, title, caption):
+    """발음을 텔레그램으로 전송합니다.
+
+    오디오/음성/오디오문서는 재생이 끝나면 텔레그램이 다음 것을 자동 재생(이어재생)합니다.
+    그래서 발음 mp3를 작은 '영상(video)'으로 감싸서 보냅니다 — 영상은 이어재생되지 않아
+    하나만 재생되고 멈춥니다. (소리는 그대로, 화면만 단색)
+    ffmpeg가 없으면 문서(document)로 대체합니다.
     """
+    import os
+
     import requests  # gtts 설치 시 함께 설치됩니다.
 
-    url = TELEGRAM.format(token=token, method="sendDocument")
-    filename = "{0}.mp3".format(title).replace(" ", "_").replace("/", "-")
-    with open(mp3_path, "rb") as audio_file:
-        response = requests.post(
-            url,
-            data={"chat_id": chat_id, "caption": caption},
-            files={"document": (filename, audio_file, "audio/mpeg")},
-            timeout=60,
-        )
+    mp4_path = mp3_path + ".mp4"
+    if _mp3_to_mp4(mp3_path, mp4_path):
+        url = TELEGRAM.format(token=token, method="sendVideo")
+        with open(mp4_path, "rb") as video_file:
+            response = requests.post(
+                url,
+                data={"chat_id": chat_id, "caption": caption, "supports_streaming": True},
+                files={"video": ("pronunciation.mp4", video_file, "video/mp4")},
+                timeout=90,
+            )
+        os.remove(mp4_path)
+        method = "sendVideo"
+    else:
+        url = TELEGRAM.format(token=token, method="sendDocument")
+        filename = "{0}.mp3".format(title).replace(" ", "_").replace("/", "-")
+        with open(mp3_path, "rb") as audio_file:
+            response = requests.post(
+                url,
+                data={"chat_id": chat_id, "caption": caption},
+                files={"document": (filename, audio_file, "audio/mpeg")},
+                timeout=60,
+            )
+        method = "sendDocument"
+
     result = response.json()
     if not result.get("ok"):
-        raise RuntimeError("Telegram sendDocument 오류: {0}".format(response.text))
+        raise RuntimeError("Telegram {0} 오류: {1}".format(method, response.text))
     return result
