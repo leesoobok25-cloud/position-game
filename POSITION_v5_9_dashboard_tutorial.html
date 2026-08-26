@@ -19,8 +19,12 @@
   body{margin:0;background:var(--bg);color:var(--txt);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     font-size:15px;line-height:1.6}
-  header{padding:10px 16px;border-bottom:1px solid var(--line);
+  /* (v5.12) viewport-fit=cover 사용 시 노치·홈바 아래로 콘텐츠가 들어가 위아래가 잘린다.
+     safe-area 만큼 상단(헤더)·하단(본문) 여백을 준다. 미지원 브라우저는 env()가 0으로 처리됨. */
+  header{padding:calc(10px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 10px calc(16px + env(safe-area-inset-left));
+    border-bottom:1px solid var(--line);
     display:flex;align-items:center;gap:12px;background:#0a0d12;flex-wrap:wrap}
+  body{padding-bottom:env(safe-area-inset-bottom)}
   header h1{margin:0;font-size:18px;font-weight:600}
   header .turn{margin-left:auto;color:var(--txt);font-size:15px;font-weight:600}
   header .ver{color:var(--mut);font-size:11px}
@@ -247,11 +251,15 @@
   .log .sh{color:var(--red);font-weight:700}
 
   /* persona modal */
+  /* (v5.12) 모달도 스플래시와 같은 세로 잘림 버그가 있었다(중앙정렬+긴 콘텐츠 → 위쪽 접근 불가).
+     flex-start + margin:auto + 자체 스크롤로 해결. safe-area 여백 포함. */
   .modal-bg{position:fixed;inset:0;background:#000a;display:none;
-    justify-content:center;align-items:center;z-index:50}
+    justify-content:center;align-items:flex-start;z-index:50;overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom))}
   .modal-bg.on{display:flex}
   .modal{background:var(--panel);border:1px solid var(--line);
-    border-radius:10px;padding:18px;max-width:780px;width:90%}
+    border-radius:10px;padding:18px;max-width:780px;width:90%;margin:auto}
   .personas{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
   .pcard{border:2px solid var(--line);border-radius:8px;padding:10px;cursor:pointer;
     background:var(--panel2)}
@@ -445,10 +453,15 @@
   .tier-row.active-tier{background:#0b1622;border-radius:6px;padding:4px 6px;
     border-bottom:1px solid var(--acc) !important;margin:2px -2px}
   /* === (v1.0) splash === */
+  /* (v5.12) 세로 잘림 수정: align-items:center + overflow는 콘텐츠가 화면보다 길 때
+     위쪽이 잘리고 스크롤로도 못 보는 고전 버그. flex-start + margin:auto 로 바꾸면
+     짧을 땐 중앙정렬, 길 땐 위에서부터 정상 스크롤된다. safe-area는 노치·홈바 대응. */
   #splash{position:fixed;inset:0;z-index:90;background:
     radial-gradient(1200px 600px at 50% -10%, #14233f 0%, #0b0d12 60%);
-    display:flex;align-items:center;justify-content:center;overflow:auto}
-  .sp-inner{max-width:680px;padding:30px 24px;text-align:center}
+    display:flex;align-items:flex-start;justify-content:center;overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  .sp-inner{max-width:680px;padding:30px 24px;text-align:center;margin:auto}
   .sp-art{position:relative;width:150px;height:150px;margin:0 auto 6px}
   @keyframes spSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
   .sp-ring{position:absolute;inset:0;border-radius:50%;
@@ -550,6 +563,9 @@
     /* 시작화면(스플래시)도 좁은 화면에 맞춘다 */
     .sp-title{font-size:30px!important;letter-spacing:6px!important;word-break:break-word}
     .sp-inner{padding:22px 14px!important}
+    /* (v5.12) 페르소나 선택: 폰에서 2열이면 글자가 너무 좁아 읽기 힘들다 → 1열 */
+    .personas{grid-template-columns:1fr!important}
+    .modal{padding:14px!important;width:100%!important}
   }
 </style>
 </head>
