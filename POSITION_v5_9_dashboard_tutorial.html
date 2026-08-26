@@ -40,6 +40,7 @@
   /* (v1.1) 새 레이아웃 — 상단: 현재단계(전폭) / 중단: 지표+플레이어 | 로그 | 베팅 / 하단: 섹터보드(전폭) */
   .grid{display:grid;grid-template-columns:1fr;gap:10px;padding:10px}
   .grid-mid{display:grid;grid-template-columns:280px 1fr 300px;gap:10px}
+  .mid-center{display:flex;flex-direction:column;gap:10px}
   .grid-bot{margin-top:0}
   .panel{background:var(--panel);border:1px solid var(--line);
     border-radius:8px;padding:10px}
@@ -98,8 +99,11 @@
   /* 개별 섹터 셀 */
   .sec{background:#0b0f17;border:1px solid var(--line);border-radius:7px;
     padding:8px 9px;position:relative;min-height:64px;
-    display:flex;flex-direction:column;
+    display:flex;flex-direction:column;cursor:pointer;
     transition:box-shadow .12s,border-color .12s}
+  /* (v5.12) 섹터보드 탭 → 베팅 UI로 이동 시 해당 행 강조 */
+  @keyframes betRowFocus{0%,100%{box-shadow:0 0 0 0 rgba(88,166,255,0)}50%{box-shadow:0 0 0 3px rgba(88,166,255,.55)}}
+  .bet-row-focus{animation:betRowFocus 1.2s ease-out;border-color:var(--acc)!important}
   .sec:hover{box-shadow:0 0 0 1px rgba(255,255,255,.13)}
   .sec.crowded{border-color:var(--gold)}
   .sec.jammed{border-color:var(--red);background:#150a0a}
@@ -675,7 +679,9 @@
     </div>
 
     <!-- MID-CENTER: 플레이어(가로행) + 로그 + 섹터보드 -->
-    <div style="display:flex;flex-direction:column;gap:10px">
+    <!-- (v5.12) 인라인 style을 클래스로 교체 — 인라인은 모바일 탭 CSS(display:none)를
+         이겨버려서, 폰에서 이 컬럼이 탭과 무관하게 항상 보이는 버그가 있었다. -->
+    <div class="mid-center">
       <div class="panel" id="panelPlayers">
         <h3>플레이어</h3>
         <div class="players players-row" id="players"></div>
@@ -2589,9 +2595,17 @@ function botVoteEvent(p, evA, evB){
 
 /* === PHASE MACHINE === */
 function setPhase(idx){
+  const prev = state.phase;
   state.phase = idx;
   render();
   renderAction();
+  // (v5.12) 모바일: 베팅 단계에 들어가면 '💰 베팅' 탭으로 자동 전환.
+  //   폰에서는 3개 컬럼이 탭으로 나뉘는데, 베팅 UI가 숨은 탭에 있어서
+  //   "섹터보드를 눌러도 베팅이 안 된다"는 혼선이 있었다. (섹터보드는 표시 전용)
+  if(idx === 1 && prev !== 1 && typeof switchMobTab === 'function'
+     && window.matchMedia && window.matchMedia('(max-width:768px)').matches){
+    switchMobTab(2);
+  }
   saveGame(); // (v1.0) 단계마다 자동 저장 — 브라우저를 꺼도 이어하기 가능
 }
 
@@ -4535,8 +4549,10 @@ function render(){
                : cls==='crowded'?'<span class="heat" title="쏠림 주의">⚠️</span>':'';
     const tokens = state.players.filter(p=>(p.bets[sid]||0)>0)
       .map(p=>`<span class="tok tok-p${p.id}" title="${p.name}${p.isHuman?' (나)':''}: ${p.bets[sid]}">${p.bets[sid]}</span>`).join('');
-    return `<div class="sec ${grpCls} ${cls}">
-      <div class="nm"><span title="${SECTOR_TIPS[sid]||''}">${s.name}${heat}</span><span class="total ${cls}">${totalSum}</span></div>
+    // (v5.12) 섹터보드는 '현황 표시'이고 베팅은 [내 베팅] 패널에서 한다.
+    //   폰에서는 섹터보드를 눌러 베팅하려는 시도가 많아, 탭하면 베팅 UI로 이동시킨다.
+    return `<div class="sec ${grpCls} ${cls}" onclick="focusBetting('${sid}')" title="${SECTOR_TIPS[sid]||''}">
+      <div class="nm"><span>${s.name}${heat}</span><span class="total ${cls}">${totalSum}</span></div>
       <div class="tokens">${tokens}</div>
       <div class="sec-bar"><i style="width:${Math.min(100,totalSum)}%"></i></div>
     </div>`;
@@ -4628,7 +4644,7 @@ function render(){
           <span class="pre">이전 ${prev}</span>
           <span class="betval ${cur>0?'on':''}">${cur}${cur>0?`<span class="betpct">(${Math.round(cur/assetBase*100)}%)</span>`:''}</span>
         </div>`;
-      if(!editable) return `<div class="bet-row">${head}</div>`;
+      if(!editable) return `<div class="bet-row" data-sid="${s.id}">${head}</div>`;
       const tok = (d) => {
         const plus = d > 0;
         // 비활성: -는 현재값 부족, +는 (섹터 상한 초과 || 남은 예산 부족)
@@ -4636,7 +4652,7 @@ function render(){
         return `<button class="tok ${plus?'plus':'minus'}" ${dis?'disabled':''} `
              + `onclick="bumpBet('${s.id}',${d},event)">${plus?'+':'−'}${Math.abs(d)}</button>`;
       };
-      return `<div class="bet-row">${head}
+      return `<div class="bet-row" data-sid="${s.id}">${head}
           <div class="bet-tokens">${tok(-10)}${tok(-5)}${tok(-1)}${tok(1)}${tok(5)}${tok(10)}</div>
         </div>`;
     }).join('');
@@ -5580,6 +5596,23 @@ function runAutoTest(n, mode){
 }
 
 /* === Mobile Tab Switching === */
+/* (v5.12) 섹터보드 셀 탭 → 실제 베팅 UI로 이동.
+   섹터보드는 전체 현황 표시 전용이라 눌러도 베팅이 되지 않아 "베팅이 안 된다"는
+   오해가 있었다. 폰에서는 베팅 탭으로 전환하고, 해당 섹터 베팅 행을 강조·스크롤한다. */
+function focusBetting(sid){
+  const isMobile = window.matchMedia && window.matchMedia('(max-width:768px)').matches;
+  if(isMobile) switchMobTab(2);
+  const row = document.querySelector(`.bet-row[data-sid="${sid}"]`);
+  if(row){
+    row.scrollIntoView({behavior:'smooth', block:'center'});
+    row.classList.add('bet-row-focus');
+    setTimeout(()=>row.classList.remove('bet-row-focus'), 1200);
+  } else {
+    const panel = document.getElementById('myBetsPanel');
+    if(panel) panel.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+}
+
 function switchMobTab(idx){
   const cols = document.querySelectorAll('#gridMid > div');
   const tabs = document.querySelectorAll('.mob-tab');
