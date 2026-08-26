@@ -232,6 +232,27 @@
   .sec-chip.neg{color:var(--red);border-color:#4a1a1a;background:#240f0f}
   .eff-more{font-size:12px;color:var(--mut);align-self:center}
 
+  /* === (v5.12) 다음 행동 유도(어포던스) — "지금 뭘 눌러야 하지?"를 시각적으로 안내 === */
+  @keyframes actionPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(88,166,255,.55),0 2px 10px rgba(88,166,255,.25)}
+    50%    {box-shadow:0 0 0 7px rgba(88,166,255,0),0 2px 16px rgba(88,166,255,.45)}
+  }
+  @keyframes choicePulse{
+    0%,100%{border-color:var(--acc);box-shadow:0 0 0 0 rgba(88,166,255,.45)}
+    50%    {border-color:#8ec7ff;box-shadow:0 0 0 6px rgba(88,166,255,0)}
+  }
+  /* 다음 단계로 가는 주 버튼 */
+  .btn.next-action{animation:actionPulse 1.8s ease-in-out infinite;position:relative}
+  .btn.next-action::after{content:'';position:absolute;inset:0;border-radius:6px;pointer-events:none}
+  /* 선택을 기다리는 카드(섹터 이벤트 투표 등) */
+  .choice-wait .card{animation:choicePulse 1.8s ease-in-out infinite}
+  /* 지금 조작해야 하는 패널 테두리 강조 */
+  .panel.act-now{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset,0 0 18px rgba(88,166,255,.18)}
+  .act-badge{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:10px;font-size:11px;
+    font-weight:800;color:#001b33;background:var(--acc);animation:actionPulse 1.8s ease-in-out infinite}
+  /* 폰 하단 고정 액션바 — 스크롤 위치와 무관하게 '다음' 버튼이 항상 보이게 */
+  #mobActionBar{display:none}
+
   .btn{background:var(--acc);color:#000;border:none;border-radius:6px;
     padding:8px 14px;font-weight:700;cursor:pointer;font-size:13px}
   .btn:hover{filter:brightness(1.1)}
@@ -570,6 +591,16 @@
     /* (v5.12) 페르소나 선택: 폰에서 2열이면 글자가 너무 좁아 읽기 힘들다 → 1열 */
     .personas{grid-template-columns:1fr!important}
     .modal{padding:14px!important;width:100%!important}
+    /* (v5.12) 하단 고정 액션바 — 베팅하러 아래로 스크롤하면 '확정' 버튼이 화면 위쪽
+       (현재 단계 패널)에 남아 안 보이던 문제. 다음 행동 버튼을 항상 하단에 띄운다. */
+    #mobActionBar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;
+      gap:8px;align-items:center;justify-content:center;
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+      background:linear-gradient(to top,#0a0d12 72%,rgba(10,13,18,.86));
+      border-top:1px solid var(--line);backdrop-filter:blur(6px)}
+    #mobActionBar .btn{font-size:15px;padding:11px 18px;flex:1;max-width:280px}
+    #mobActionBar .mab-hint{font-size:13px;color:var(--acc);font-weight:700;text-align:center}
+    body{padding-bottom:76px}  /* 액션바에 콘텐츠가 가리지 않도록 */
   }
 </style>
 </head>
@@ -755,6 +786,10 @@
     <button class="btn" onclick="location.reload()">새 게임</button>
   </div>
 </div>
+
+<!-- (v5.12) 폰 하단 고정 액션바 — renderAction()이 '다음 행동' 버튼을 여기에 복제한다.
+     베팅하러 아래로 스크롤해도 다음 단계 버튼이 항상 보이도록. 데스크톱에선 숨김. -->
+<div id="mobActionBar"></div>
 
 <script>
 /* === DATA === */
@@ -5109,8 +5144,48 @@ function renderAction(){
   } else if(state.phase === 6){
     a.innerHTML = `<div class="card"><div class="ttl">⏭ 다음 턴 준비</div></div>`;
   }
+  // (v5.12) 다음 행동 안내 — 주 버튼 반짝임 + 폰 하단 고정 액션바
+  highlightNextAction();
   // (v5.9) tutorial — 액션 영역이 바뀔 때도 단계 진행/위치 갱신
   if(typeof TUT !== 'undefined' && TUT.active) tutSync();
+}
+
+/* (v5.12) "지금 뭘 눌러야 하지?" 해소 —
+   ① 다음 단계로 가는 주 버튼에 반짝임(next-action)
+   ② 선택 대기(섹터 이벤트 투표)면 카드에 반짝임 + 안내
+   ③ 베팅 단계면 [내 베팅] 패널을 강조
+   ④ 폰: 주 버튼을 하단 고정 바에 복제해 스크롤 위치와 무관하게 항상 보이게 */
+function highlightNextAction(){
+  const area = document.getElementById('actionArea');
+  const bar = document.getElementById('mobActionBar');
+  if(!area) return;
+
+  // ① 주 버튼 = 액션영역의 첫 번째 일반 .btn (초기화 등 alt/danger 제외)
+  area.querySelectorAll('.btn.next-action').forEach(b => b.classList.remove('next-action'));
+  const primary = [...area.querySelectorAll('button.btn')]
+    .find(b => !b.classList.contains('alt') && !b.classList.contains('danger') && !b.disabled);
+  if(primary) primary.classList.add('next-action');
+
+  // ② 선택 대기 상태(투표 카드가 있고 아직 채택 전)
+  const vote = area.querySelector('.vote');
+  const waitingChoice = !!vote && !state.currentEventChosen;
+  if(vote) vote.classList.toggle('choice-wait', waitingChoice);
+
+  // ③ 베팅 단계엔 '내 베팅' 패널을 강조 (섹터보드와 헷갈리지 않게)
+  const betPanel = document.getElementById('myBetsPanel');
+  const betPanelBox = betPanel ? betPanel.closest('.panel') : null;
+  if(betPanelBox) betPanelBox.classList.toggle('act-now', state.phase === 1);
+
+  // ④ 폰 하단 고정 바
+  if(!bar) return;
+  bar.innerHTML = '';
+  if(waitingChoice){
+    bar.innerHTML = '<div class="mab-hint">👆 위에서 이벤트 카드 하나를 선택하세요</div>';
+  } else if(primary){
+    const clone = primary.cloneNode(true);   // onclick 속성이 함께 복제된다
+    clone.classList.add('next-action');
+    bar.appendChild(clone);
+  }
 }
 
 /* === USER ACTIONS === */
