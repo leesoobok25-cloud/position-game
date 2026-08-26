@@ -1,5 +1,5 @@
 /* POSITION PWA service worker — offline cache */
-const CACHE = 'position-v59-7ee192c';
+const CACHE = 'position-v59-5e1d1ba';
 const ASSETS = ['./', './index.html', './sw.js'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
