@@ -540,6 +540,16 @@
     .grid{padding:6px!important}
     .bet-grid{grid-template-columns:1fr!important}
     .players.players-row{grid-template-columns:1fr 1fr!important}
+    /* (v5.12) 모바일 가로 넘침 방지 — 헤더 등급칩(nowrap)이 화면을 밀어내던 문제.
+       칩 줄은 자체 가로 스크롤로 처리하고, 페이지 본문은 절대 가로로 넘치지 않게 한다. */
+    .header-tier-guide{overflow-x:auto;max-width:100%;scrollbar-width:none}
+    .header-tier-guide::-webkit-scrollbar{display:none}
+    header{max-width:100%;overflow:hidden}
+    header h1{font-size:16px}
+    html,body{max-width:100%;overflow-x:hidden}
+    /* 시작화면(스플래시)도 좁은 화면에 맞춘다 */
+    .sp-title{font-size:30px!important;letter-spacing:6px!important;word-break:break-word}
+    .sp-inner{padding:22px 14px!important}
   }
 </style>
 </head>
