@@ -252,6 +252,18 @@
     font-weight:800;color:#001b33;background:var(--acc);animation:actionPulse 1.8s ease-in-out infinite}
   /* 폰 하단 고정 액션바 — 스크롤 위치와 무관하게 '다음' 버튼이 항상 보이게 */
   #mobActionBar{display:none}
+  /* (v5.12) 초보자 안내 토스트 */
+  #blueHint{position:fixed;left:12px;right:12px;bottom:16px;z-index:70;
+    display:flex;gap:10px;align-items:center;
+    background:#0e1a2b;border:1px solid var(--acc);border-radius:12px;
+    padding:12px 14px;box-shadow:0 8px 30px #000a;
+    font-size:14px;line-height:1.6;color:var(--txt);
+    max-width:520px;margin:0 auto;animation:actionPulse 2.2s ease-in-out infinite}
+  #blueHint .bh-txt{flex:1}
+  #blueHint b{color:var(--acc)}
+  #blueHint .bh-sub{color:var(--mut);font-size:13px}
+  #blueHint .bh-x{background:var(--acc);color:#001b33;border:none;border-radius:8px;
+    padding:8px 14px;font-weight:800;cursor:pointer;font-size:13px;white-space:nowrap}
 
   .btn{background:var(--acc);color:#000;border:none;border-radius:6px;
     padding:8px 14px;font-weight:700;cursor:pointer;font-size:13px}
@@ -515,6 +527,14 @@
   .sp-goal-col p{margin:5px 0 0;color:var(--mut);line-height:1.6}
   .sp-btns{margin-top:18px;display:flex;gap:8px;justify-content:center}
   .sp-start{font-size:15px;padding:11px 34px;animation:tutPulse 1.8s ease-in-out infinite}
+  /* (v5.12) 초보자 안내 박스 — 색으로 다음 행동을 알려준다 */
+  .sp-newbie{margin:14px auto 0;max-width:520px;padding:11px 14px;text-align:left;
+    border:1px solid var(--acc);border-radius:10px;background:#0e1a2b;
+    font-size:14px;line-height:1.65;color:var(--txt)}
+  .sp-newbie b{color:var(--txt)}
+  .sp-blue{color:#0b1220;background:var(--acc);font-weight:800;padding:1px 8px;border-radius:8px;
+    animation:tutPulse 1.8s ease-in-out infinite;display:inline-block}
+  .sp-newbie-sub{color:var(--mut);font-size:13px}
   .sp-footer{margin-top:16px;font-size:11px;color:var(--mut)}
   .sp-footer b{color:var(--txt)}
   .sp-badge{display:inline-block;margin-left:4px;padding:1px 7px;border-radius:10px;
@@ -567,6 +587,7 @@
 
   /* === Mobile Tab Layout (≤768px) === */
   #mobileTabs{display:none}
+  #mobTabHint{display:none}
   @media(max-width:768px){
     .grid-mid{display:flex!important;flex-direction:column!important}
     .grid-mid > div{display:none}
@@ -575,6 +596,16 @@
     #mobileTabs::-webkit-scrollbar{display:none}
     .mob-tab{flex:1;min-width:60px;padding:8px 6px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;color:var(--mut);border-bottom:3px solid transparent;background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap}
     .mob-tab.active{color:var(--acc);border-bottom-color:var(--acc)}
+    /* (v5.12) 아직 안 본 탭에 점 표시 — 지표·로그를 그냥 지나치지 않도록 */
+    .mob-tab{position:relative}
+    .mob-tab.tab-unseen::after{content:'';position:absolute;top:5px;right:8px;
+      width:7px;height:7px;border-radius:50%;background:var(--acc);
+      box-shadow:0 0 6px var(--acc);animation:tutPulse 1.6s ease-in-out infinite}
+    #mobTabHint{display:block;margin:-4px 0 8px;padding:5px 8px;border-radius:6px;
+      background:#0e1a2b;border:1px solid #1d355a;
+      font-size:12px;color:var(--mut);line-height:1.5;text-align:center}
+    #mobTabHint b{color:var(--acc)}
+    #mobTabHint .mth-dot{color:var(--acc);font-weight:900}
     .grid{padding:6px!important}
     .bet-grid{grid-template-columns:1fr!important}
     .players.players-row{grid-template-columns:1fr 1fr!important}
@@ -601,6 +632,7 @@
     #mobActionBar .btn{font-size:15px;padding:11px 18px;flex:1;max-width:280px}
     #mobActionBar .mab-hint{font-size:13px;color:var(--acc);font-weight:700;text-align:center}
     body{padding-bottom:76px}  /* 액션바에 콘텐츠가 가리지 않도록 */
+    #blueHint{bottom:calc(84px + env(safe-area-inset-bottom))}  /* 액션바 위로 */
   }
 </style>
 </head>
@@ -618,6 +650,12 @@
     </div>
     <h1 class="sp-title">POSITION</h1>
       <div class="sp-sub">시장의 사계절을 읽는 투자 전략 보드게임</div>
+    <!-- (v5.12) 초보자 안내 — 제일 먼저 읽히도록 상단 배치. "지금 뭘 눌러야 하지?"의 답을 색으로 통일 -->
+    <div class="sp-newbie">
+      <b>처음이신가요?</b> 규칙을 다 몰라도 괜찮아요.<br>
+      화면에서 <span class="sp-blue">파랗게 빛나는 곳</span>이 <b>지금 눌러야 할 곳</b>입니다. 그것만 따라가면 한 판이 끝나요.<br>
+      <span class="sp-newbie-sub">차근차근 배우고 싶다면 게임 화면 상단의 <b>🎓 튜토리얼</b> 버튼으로 시작하세요.</span>
+    </div>
     <div class="sp-seasons">
       <div class="sp-sea"><span>❄️</span><b>겨울 · 불황</b><i>방어와 채권의 시간. 공포 속에 기회의 씨앗이 묻혀 있다.</i></div>
       <div class="sp-sea"><span>🍂</span><b>가을 · 침체</b><i>둔화의 신호를 먼저 읽는 자가 겨울을 준비한다.</i></div>
@@ -664,6 +702,9 @@
     <button class="mob-tab" onclick="switchMobTab(1)">🏦 섹터/로그</button>
     <button class="mob-tab" onclick="switchMobTab(2)">💰 베팅</button>
   </div>
+  <!-- (v5.12) 폰: 탭을 안 눌러보고 지나치는 경우가 많아 안내를 상시 노출한다.
+       새 정보가 있는 탭에는 점(•)이 표시된다. -->
+  <div id="mobTabHint">👆 <b>탭을 눌러</b> 지표·로그·섹터 현황을 확인하세요 <span class="mth-dot">•</span> 표시는 새 내용이 있다는 뜻</div>
 
   <!-- MID ROW: 지표+플레이어 | 로그 | 베팅 -->
   <div class="grid-mid" id="gridMid">
@@ -2641,6 +2682,8 @@ function setPhase(idx){
      && window.matchMedia && window.matchMedia('(max-width:768px)').matches){
     switchMobTab(2);
   }
+  // (v5.12) 새 턴(리포트 단계) 시작 → 지표·로그 탭을 '안 본 상태'로 되돌려 확인 유도
+  if(idx === 0 && prev !== 0 && typeof resetTabSeen === 'function') resetTabSeen();
   saveGame(); // (v1.0) 단계마다 자동 저장 — 브라우저를 꺼도 이어하기 가능
 }
 
@@ -2910,6 +2953,10 @@ function startGame(humanPersonaId){
   logRow(`게임 시작 [${MODE_DEF[state.gameMode].label}] — 페르소나 ${humanPersonaId} 선택. 충격카드 4장 각 사이클 덱에 무작위 배정됨 (일반턴에 함께 추첨).`, 'ev');
   phase1_report();
   setPhase(0); // Phase 1 = index 0
+  // (v5.12) 초보자 안내 — 튜토리얼 모드가 아닐 때만(튜토리얼은 자체 안내가 있음)
+  if(typeof showBlueHint === 'function' && !(typeof TUT !== 'undefined' && TUT.active)){
+    setTimeout(showBlueHint, 700);
+  }
 }
 
 /* PHASE 1 — REPORT */
@@ -5172,9 +5219,11 @@ function highlightNextAction(){
   if(vote) vote.classList.toggle('choice-wait', waitingChoice);
 
   // ③ 베팅 단계엔 '내 베팅' 패널을 강조 (섹터보드와 헷갈리지 않게)
+  // myBetsPanel 자체가 .panel 이다 (중첩되면 closest로 상위 패널을 찾는다)
   const betPanel = document.getElementById('myBetsPanel');
-  const betPanelBox = betPanel ? betPanel.closest('.panel') : null;
-  if(betPanelBox) betPanelBox.classList.toggle('act-now', state.phase === 1);
+  const betPanelBox = betPanel && typeof betPanel.closest === 'function'
+    ? (betPanel.closest('.panel') || betPanel) : betPanel;
+  if(betPanelBox && betPanelBox.classList) betPanelBox.classList.toggle('act-now', state.phase === 1);
 
   // ④ 폰 하단 고정 바
   if(!bar) return;
@@ -5693,6 +5742,44 @@ function switchMobTab(idx){
   const tabs = document.querySelectorAll('.mob-tab');
   cols.forEach((c,i) => c.classList.toggle('mob-active', i === idx));
   tabs.forEach((t,i) => t.classList.toggle('active', i === idx));
+  TAB_SEEN[idx] = true;          // (v5.12) 본 탭으로 표시
+  updateTabDots();
+}
+
+/* (v5.12) 폰에서 지표·로그 탭을 확인하지 않고 지나치는 문제 —
+   턴이 바뀌면 '안 본 탭'으로 되돌리고 점(•)을 띄워 확인을 유도한다. */
+let TAB_SEEN = {0:false, 1:false, 2:false};
+function updateTabDots(){
+  document.querySelectorAll('.mob-tab').forEach((t,i) => {
+    t.classList.toggle('tab-unseen', !TAB_SEEN[i] && !t.classList.contains('active'));
+  });
+}
+function resetTabSeen(){
+  TAB_SEEN = {0:false, 1:false, 2:false};
+  const active = [...document.querySelectorAll('.mob-tab')].findIndex(t => t.classList.contains('active'));
+  if(active >= 0) TAB_SEEN[active] = true;
+  updateTabDots();
+}
+
+/* (v5.12) 초보자 안내 토스트 — "파랗게 빛나는 곳을 누르세요"를 게임 시작 시 1회.
+   규칙을 몰라도 진행할 수 있다는 확신을 주는 게 목적. 3회 노출 후에는 표시하지 않는다. */
+function showBlueHint(){
+  try {
+    const KEY = 'position_blue_hint_v1';
+    const seen = parseInt(localStorage.getItem(KEY) || '0', 10);
+    if(seen >= 3) return;
+    localStorage.setItem(KEY, String(seen + 1));
+  } catch(e){ /* 저장 불가여도 안내는 표시 */ }
+  const old = document.getElementById('blueHint');
+  if(old) old.remove();
+  const el = document.createElement('div');
+  el.id = 'blueHint';
+  el.innerHTML = `<div class="bh-txt">💡 규칙을 다 몰라도 괜찮아요 —
+      <b>파랗게 빛나는 곳</b>이 지금 눌러야 할 곳입니다.<br>
+      <span class="bh-sub">📊지표 · 🏦로그 탭도 눌러보면 왜 그렇게 됐는지 알 수 있어요.</span></div>
+    <button class="bh-x" onclick="document.getElementById('blueHint').remove()">확인</button>`;
+  document.body.appendChild(el);
+  setTimeout(() => { const e = document.getElementById('blueHint'); if(e) e.remove(); }, 12000);
 }
 </script>
 </body>
